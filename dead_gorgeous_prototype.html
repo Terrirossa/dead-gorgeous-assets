@@ -23,8 +23,8 @@
   html { height: 100%; }
   body {
     margin: 0;
-    height: 100vh;
-    overflow-y: hidden;
+    min-height: 100vh;
+    overflow-y: auto;
     font-family: 'Poppins', sans-serif;
     background: radial-gradient(circle at 20% 10%, #4a3a5c, #211a2c 70%);
     color: var(--card-bg);
@@ -34,6 +34,7 @@
     padding: 20px;
     overscroll-behavior: none;
   }
+  body.no-scroll { overflow-y: hidden; height: 100vh; }
 
   .stage { width: 100%; max-width: 480px; overflow-x: hidden; }
 
@@ -397,26 +398,21 @@
   /* ---------- Result screen ---------- */
   .result .reaction { font-size: 52px; margin-bottom: 4px; }
   .result h2 { font-size: 27px; color: #fff; margin-bottom: 6px; }
-  .result .score { font-size: 16px; color: var(--gold); margin-bottom: 10px; }
-  .result .rel-change { font-size: 13px; color: var(--pink); margin-bottom: 18px; }
-  .score-breakdown { max-width: 280px; margin: 0 auto 18px; background: rgba(255,255,255,0.05); border-radius: 12px; padding: 12px 16px; }
-  .score-row { display: flex; justify-content: space-between; font-size: 13px; color: #cfc6de; padding: 3px 0; }
-  .score-row.total { border-top: 1px solid rgba(255,255,255,0.15); margin-top: 6px; padding-top: 8px; font-weight: 600; color: #ece7f4; }
-  .breakdown-hint { font-size: 11px; color: var(--muted); line-height: 1.4; margin: 0 0 10px; font-style: italic; }
-  .item-breakdown { max-width: 320px; margin: 0 auto 18px; background: rgba(255,255,255,0.04); border-radius: 12px; padding: 14px 16px; text-align: left; }
-  .item-breakdown h4 { margin: 0 0 10px; font-size: 12px; color: var(--gold); text-transform: uppercase; letter-spacing: 0.04em; }
-  .item-row { font-size: 12.5px; margin-bottom: 8px; }
-  .item-row:last-child { margin-bottom: 0; }
-  .item-row b { color: #ece7f4; display: block; margin-bottom: 1px; }
-  .item-row span { color: #b8adc9; }
-  .want-results { display: flex; flex-direction: column; gap: 8px; max-width: 340px; margin: 0 auto 24px; }
-  .want-result-row {
-    display: flex; align-items: center; gap: 10px; background: rgba(255,255,255,0.06);
-    border-radius: 12px; padding: 10px 16px; font-size: 14px; text-align: left;
+  .result .score { font-size: 16px; color: var(--gold); margin-bottom: 4px; }
+  .breakdown-hint { font-size: 10.5px; color: var(--muted); line-height: 1.35; margin: 0 auto 14px; font-style: italic; max-width: 320px; }
+  .result-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
+    max-width: 400px; margin: 0 auto 18px; text-align: left;
   }
-  .want-result-row .icon { font-size: 18px; flex-shrink: 0; }
-  .want-result-row.hit { color: #fff; }
-  .want-result-row.miss { color: #b6adc4; }
+  .result-box { background: rgba(255,255,255,0.05); border-radius: 12px; padding: 10px 12px; font-size: 11.5px; }
+  .result-box h4 { margin: 0 0 6px; font-size: 10px; color: var(--gold); text-transform: uppercase; letter-spacing: 0.03em; }
+  .result-box p { margin: 0 0 5px; color: #cfc6de; line-height: 1.3; }
+  .result-box p:last-child { margin-bottom: 0; }
+  .result-box p b { color: #ece7f4; }
+  .score-row { display: flex; justify-content: space-between; color: #cfc6de; padding: 2px 0; }
+  .score-row.total { border-top: 1px solid rgba(255,255,255,0.15); margin-top: 4px; padding-top: 5px; font-weight: 600; color: #ece7f4; }
+  .new-cards-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; max-width: 360px; margin: 0 auto; }
+  .new-card-item { aspect-ratio: 595.28 / 841.9; }
 
   /* ---------- End / year review ---------- */
   .year-list { display: flex; flex-direction: column; gap: 10px; max-width: 340px; margin: 0 auto 30px; }
@@ -446,32 +442,12 @@
 /* ---------------- DATA ---------------- */
 
 const DECK = [
-  { id: 1, name: "Pink Wrap Top", category: "Top", fit: "Fitted", style: "Romantic", color: "Pink", set: "rosewood",
-    lore: "Sewn by a seamstress who never crossed over — she still hems ghosts' hems for free, if you ask nicely." },
-  { id: 3, name: "Plaid Skirt", category: "Bottom", fit: "Relaxed", style: "Classic", color: "Blue",
-    lore: "Standard uniform issue at Aftercity's afterlife prep school — detention lasts considerably longer here." },
-  { id: 4, name: "Tailored Trousers", category: "Bottom", fit: "Regular", style: "Classic", color: "Black", set: "tailored",
-    lore: "Pressed daily by a phantom valet who can't remember whose closet this used to be." },
   { id: 5, name: "Ballet Flats", category: "Shoes", fit: "Regular", style: "Classic", color: "Pink", rarity: "Basic",
     lore: "Never scuff, never wear out — which is either a blessing or a curse, depending who you ask.",
     fullArt: "https://terrirossa.github.io/dead-gorgeous-assets/cards/card_5_ballet_flats.svg" },
   { id: 29, name: "Ballet Flats", category: "Shoes", fit: "Regular", style: "Classic", color: "Black", rarity: "Basic",
     lore: "Never scuff, never wear out — which is either a blessing or a curse, depending who you ask.",
     fullArt: "https://terrirossa.github.io/dead-gorgeous-assets/cards/card_29_ballet_flats_black.svg" },
-  { id: 6, name: "Biker Boots", category: "Shoes", fit: "Regular", style: "Daring", color: "Black", set: "moto",
-    lore: "Still smell faintly of exhaust. The previous owner insists the crash wasn't their fault." },
-  { id: 8, name: "Floral Wrap Dress", category: "Dress", fit: "Fitted", style: "Romantic", color: "Red",
-    lore: "Grown, not sewn — the petals are real and somehow never wilt in Aftercity's eternal dusk." },
-  { id: 9, name: "Denim Jacket", category: "Jacket", fit: "Relaxed", style: "Cool", color: "Blue",
-    lore: "Covered in patches from bands that broke up decades before their members did." },
-  { id: 10, name: "Cream Blazer", category: "Jacket", fit: "Fitted", style: "Classic", color: "Beige", set: "tailored",
-    lore: "Tailored for a lawyer who's still arguing his own case in the afterlife's endless appeals court." },
-  { id: 20, name: "Velvet Halter Top", category: "Top", fit: "Fitted", style: "Bold", color: "Purple",
-    lore: "Worn once to a party nobody living remembers throwing." },
-  { id: 24, name: "Boho Maxi Dress", category: "Dress", fit: "Relaxed", style: "Cozy", color: "Green",
-    lore: "Smells faintly of a greenhouse that shouldn't be able to grow anything here." },
-  { id: 27, name: "Faux Fur Coat", category: "Jacket", fit: "Oversized", style: "Bold", color: "White",
-    lore: "Nobody will confirm it's faux. Nobody wants to ask directly, either." },
   { id: 30, name: "Vivien Corset", category: "Top", fit: "Tight", style: "Cool", color: "Multicolor", rarity: "Rare", set: "viviensSet",
     lore: "Named for a soul who insisted plaid was 'criminally underused' in the afterlife.",
     fullArt: "https://terrirossa.github.io/dead-gorgeous-assets/cards/card_30_vivien_corset.svg" },
@@ -770,9 +746,11 @@ const EXTRA_CARDS = [
 // any one specific card out of your remaining deck pile instead of wearing it.
 const JOKER_CARDS = [
   { id: 101, name: "Joker", category: "Joker", fit: "—", style: "Wildcard", color: "—",
-    lore: "A wildcard token from Aftercity's underground game tables — worth nothing, worth everything." },
+    lore: "A wildcard token from Aftercity's underground game tables — worth nothing, worth everything.",
+    fullArt: "https://terrirossa.github.io/dead-gorgeous-assets/cards/card_joker.svg" },
   { id: 102, name: "Joker", category: "Joker", fit: "—", style: "Wildcard", color: "—",
-    lore: "Nobody remembers who dealt the first Joker, only that the game hasn't ended since." },
+    lore: "Nobody remembers who dealt the first Joker, only that the game hasn't ended since.",
+    fullArt: "https://terrirossa.github.io/dead-gorgeous-assets/cards/card_joker.svg" },
 ];
 
 // Only ever purchasable from the strange vendor — never handed out for free,
@@ -951,6 +929,8 @@ let moonCoins = 0; // persists across restarts, like metaUnlocked — this is a 
 
 let deckPile = [];
 let liveDeck = [];
+let unlockedCardIds = new Set();
+let pendingSeasonEnd = false;
 let jokerAvailable = true;
 let selectedHandId = null; // hand card lifted (tapped) but not yet dropped
 let discardPile = [];
@@ -1048,6 +1028,7 @@ function drawBalancedHand(pool) {
 
 function renderIntro() {
   document.getElementById("topBar").classList.add("hidden");
+  document.body.classList.remove("no-scroll");
   stage.innerHTML = `
     <div class="title-fullscreen-bg"></div>
     <div class="title-screen">
@@ -1060,9 +1041,45 @@ function renderIntro() {
   `;
 }
 
+// Progression: start with a smaller pool, unlock 5 more random cards at the
+// end of each of the year's 4 seasons (every 9 jobs, since 36 jobs / 4).
+const STARTER_DECK_SIZE = 20;
+const CARDS_PER_SEASON_UNLOCK = 5;
+const SEASON_END_JOBS = [8, 17, 26, 35]; // 0-indexed job that completes each season
+
+function pickStarterDeck() {
+  const realCards = shuffle([...DECK]);
+  // guarantee at least one of each core category before filling randomly
+  const coreCats = ["Top", "Bottom", "Dress", "Shoes"];
+  const picked = [];
+  coreCats.forEach((cat) => {
+    const found = realCards.find((c) => c.category === cat && !picked.includes(c));
+    if (found) picked.push(found);
+  });
+  for (const c of realCards) {
+    if (picked.length >= STARTER_DECK_SIZE) break;
+    if (!picked.includes(c)) picked.push(c);
+  }
+  return picked;
+}
+
+function unlockRandomCards(n) {
+  const lockedIds = new Set(unlockedCardIds);
+  const pool = shuffle(DECK.filter((c) => !lockedIds.has(c.id)));
+  const newly = pool.slice(0, n);
+  newly.forEach((c) => unlockedCardIds.add(c.id));
+  return newly;
+}
+
+function rebuildLiveDeckFromUnlocked() {
+  const unlocked = DECK.filter((c) => unlockedCardIds.has(c.id));
+  liveDeck = [...unlocked, ...metaUnlocked, ...JOKER_CARDS];
+}
+
 function beginGame() {
   document.getElementById("topBar").classList.remove("hidden");
-  liveDeck = [...DECK, ...metaUnlocked, ...JOKER_CARDS];
+  unlockedCardIds = new Set(pickStarterDeck().map((c) => c.id));
+  rebuildLiveDeckFromUnlocked();
   deckPile = liveDeck.map((c) => c.id);
   discardPile = [];
   relationships = {};
@@ -1224,6 +1241,7 @@ function renderShuffle() {
 function topNavHTML() { return ""; }
 
 function updateTopBar(leftHTML, showInfo) {
+  document.body.classList.remove("no-scroll"); // only the styling screen re-locks this
   document.getElementById("topBarLeft").innerHTML = leftHTML || "";
   const info = document.getElementById("topBarInfo");
   if (showInfo) {
@@ -1433,6 +1451,7 @@ function renderStyle() {
     <button class="corner-action corner-right" id="continueBtn" onclick="finishStyling()" title="See their reaction">✓</button>
   `;
   updateTopBar(`<span class="icon soul-swatch" style="background:${client.color};"></span> Wants: <b>${wantSummary}</b>`, true);
+  document.body.classList.add("no-scroll"); // drag-and-drop during styling needs a fixed viewport
 }
 
 /* ---------------- SLOT RULES ---------------- */
@@ -2030,27 +2049,17 @@ function renderResult(client, score, wantResults, relDelta, moonCoinsEarned, bre
   else if (score >= 35) { reaction = "🙂"; headline = "It'll do."; line = `${client.name.split(",")[0]} shrugs. Not quite what they pictured, but wearable.`; }
   else { reaction = "😐"; headline = "Not it."; line = `${client.name.split(",")[0]} sighs. This is going to haunt them — figuratively, this time.`; }
 
-  const rows = wantResults.map((w) => `
-    <div class="want-result-row ${w.matched ? "hit" : "miss"}">
-      <span class="icon">${w.matched ? "🩷" : "💔"}</span>
-      <span>${w.matched ? "Loved" : "Missed"} the ${w.value.toLowerCase()} ${w.attr}</span>
-    </div>
-  `).join("");
-
-  const relLine = relDelta > 0
-    ? `<div class="rel-change">+${relDelta} ❤ with ${client.name.split(",")[0]} (now ${heartsHTML(relationships[currentClientKey()])})</div>`
-    : `<div class="rel-change">No change in your bond with ${client.name.split(",")[0]}.</div>`;
-
-  const coinLine = moonCoinsEarned > 0
-    ? `<div class="rel-change" style="color:var(--gold);">🌙 +${moonCoinsEarned} mooncoin${moonCoinsEarned > 1 ? "s" : ""} — they were thrilled enough to pay you in Aftercity currency.</div>`
-    : "";
-
-  const setLine = setBonusName
-    ? `<div class="rel-change" style="color:var(--mint);">✨ Bonus: full ${setBonusName} worn together.</div>`
-    : "";
+  // Combine heart/coin/set bonus into one compact box instead of three stacked lines.
+  const bondLines = [];
+  bondLines.push(relDelta > 0
+    ? `+${relDelta} ❤ with ${client.name.split(",")[0]} (now ${heartsHTML(relationships[currentClientKey()])})`
+    : `No change in your bond with ${client.name.split(",")[0]}.`);
+  if (moonCoinsEarned > 0) bondLines.push(`🌙 +${moonCoinsEarned} mooncoin${moonCoinsEarned > 1 ? "s" : ""}`);
+  if (setBonusName) bondLines.push(`✨ Full ${setBonusName} worn together`);
+  const bondHTML = `<div class="result-box"><h4>Bond &amp; rewards</h4>${bondLines.map((l) => `<p>${l}</p>`).join("")}</div>`;
 
   // Aggregate breakdown — always shown, so the math is never a mystery.
-  const briefLabel = breakdown.briefCapped ? "Brief match (capped at 100)" : "Brief match";
+  const briefLabel = breakdown.briefCapped ? "Brief match (capped)" : "Brief match";
   const breakdownRows = [
     { label: briefLabel, value: breakdown.briefScore },
     breakdown.rarityBonus > 0 ? { label: "Rarity bonus", value: breakdown.rarityBonus } : null,
@@ -2062,8 +2071,8 @@ function renderResult(client, score, wantResults, relDelta, moonCoinsEarned, bre
   ].filter(Boolean);
 
   const breakdownHTML = `
-    <div class="score-breakdown">
-      <p class="breakdown-hint">Each matched brief attribute is worth 25 — one piece can only satisfy each attribute once, so wear more pieces that reinforce the ask to climb higher.</p>
+    <div class="result-box">
+      <h4>Score breakdown</h4>
       ${breakdownRows.map((r) => `<div class="score-row"><span>${r.label}</span><span>${r.value >= 0 ? "+" : ""}${r.value}</span></div>`).join("")}
       <div class="score-row total"><span>Total</span><span>${score}</span></div>
     </div>
@@ -2073,30 +2082,33 @@ function renderResult(client, score, wantResults, relDelta, moonCoinsEarned, bre
   const itemRows = breakdown.pieceDetails.map((d) => {
     const bits = [];
     if (d.matchedAttrs.length > 0) {
-      bits.push(d.matchedAttrs.map(([attr, value]) => `matched ${value.toLowerCase()} ${attr}`).join(", ") + ` (+${d.briefPts})`);
+      bits.push(d.matchedAttrs.map(([attr, value]) => `${value.toLowerCase()} ${attr}`).join(", ") + ` (+${d.briefPts})`);
     }
-    if (d.rarityPts > 0) {
-      bits.push(d.matchedAttrs.length > 0
-        ? `${d.piece.rarity} rarity bonus (+${d.rarityPts})`
-        : `${d.piece.rarity} rarity, off-brief bonus (+${d.rarityPts})`);
-    }
-    const verdict = bits.length > 0 ? bits.join(" · ") : "didn't match the brief, no bonus";
-    return `<div class="item-row"><b>${d.piece.name}</b><span>${verdict}</span></div>`;
+    if (d.rarityPts > 0) bits.push(`${d.piece.rarity} (+${d.rarityPts})`);
+    const verdict = bits.length > 0 ? bits.join(" · ") : "no match, no bonus";
+    return `<p><b>${d.piece.name}</b><br>${verdict}</p>`;
   }).join("");
+  const itemHTML = `<div class="result-box"><h4>How each piece performed</h4>${itemRows}</div>`;
 
-  const itemHTML = `<div class="item-breakdown"><h4>How each piece performed</h4>${itemRows}</div>`;
+  const wantHTML = `
+    <div class="result-box">
+      <h4>The brief</h4>
+      ${wantResults.map((w) => `<p>${w.matched ? "🩷" : "💔"} ${w.matched ? "Loved" : "Missed"} ${w.value.toLowerCase()} ${w.attr}</p>`).join("")}
+    </div>
+  `;
 
   stage.innerHTML = `
     <div class="center-col screen-pad result">
       <div class="reaction">${reaction}</div>
       <h2>${headline}</h2>
       <div class="score">Match score: ${score}</div>
-      ${breakdownHTML}
-      ${itemHTML}
-      ${relLine}
-      ${coinLine}
-      ${setLine}
-      <div class="want-results">${rows}</div>
+      <p class="breakdown-hint">Each matched brief attribute is worth 25 — one piece can only satisfy each attribute once, so wear more pieces that reinforce the ask to climb higher.</p>
+      <div class="result-grid">
+        ${wantHTML}
+        ${breakdownHTML}
+        ${itemHTML}
+        ${bondHTML}
+      </div>
       <div class="line">${line}</div>
       <button class="primary" onclick="advanceMonth()">Next client</button>
     </div>
@@ -2193,8 +2205,10 @@ function renderStoryScreen(key, onContinue) {
 }
 
 function advanceMonth() {
-  const eventKey = clientRoundIndex === 0 ? "firstDay" : EVENT_SCHEDULE[`${currentMonthIndex()}-${positionInMonth()}`];
+  const completedJob = clientRoundIndex;
+  const eventKey = completedJob === 0 ? "firstDay" : EVENT_SCHEDULE[`${currentMonthIndex()}-${positionInMonth()}`];
   clientRoundIndex += 1;
+  pendingSeasonEnd = SEASON_END_JOBS.includes(completedJob);
   if (eventKey) {
     renderStoryScreen(eventKey, "afterEventContinue()");
   } else {
@@ -2203,6 +2217,33 @@ function advanceMonth() {
 }
 
 function afterEventContinue() {
+  if (pendingSeasonEnd) {
+    pendingSeasonEnd = false;
+    const newCards = unlockRandomCards(CARDS_PER_SEASON_UNLOCK);
+    rebuildLiveDeckFromUnlocked();
+    deckPile.push(...newCards.map((c) => c.id));
+    renderNewCardsScreen(newCards);
+    return;
+  }
+  if (clientRoundIndex >= 36) { renderEnd(); return; }
+  renderMap();
+}
+
+function renderNewCardsScreen(newCards) {
+  const cardsHTML = newCards.map((c) => `<div class="new-card-item">${gcardHTML(c)}</div>`).join("");
+  stage.innerHTML = `
+    <div class="center-col screen-pad result">
+      <div class="reaction">🎁</div>
+      <h2>New pieces have arrived.</h2>
+      <p class="line" style="margin-bottom:18px;">Word gets around when a stylist earns her keep. A few new pieces have found their way into your closet.</p>
+      <div class="new-cards-grid">${cardsHTML}</div>
+      <button class="primary" style="margin-top:22px;" onclick="afterSeasonReveal()">Continue</button>
+    </div>
+  `;
+  updateTopBar("", true);
+}
+
+function afterSeasonReveal() {
   if (clientRoundIndex >= 36) { renderEnd(); return; }
   renderMap();
 }
