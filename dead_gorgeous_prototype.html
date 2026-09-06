@@ -300,6 +300,7 @@
   .corner-action.corner-left {
     left: 18px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.16); color: #ece7f4;
   }
+  .corner-action.corner-left.corner-left-2 { left: 72px; }
   .corner-action.corner-left.used { opacity: 0.3; pointer-events: none; }
   .corner-action.corner-right {
     right: 18px; background: linear-gradient(135deg, var(--pink), var(--lilac));
@@ -417,6 +418,24 @@
   }
   .result-box { background: rgba(255,255,255,0.05); border-radius: 12px; padding: 10px 12px; font-size: 11.5px; }
   .discovery-box { background: rgba(255,224,138,0.1); border: 1px solid rgba(255,224,138,0.35); }
+  .set-discovery-overlay {
+    position: fixed; inset: 0; z-index: 3000; display: flex; align-items: center; justify-content: center;
+    background: rgba(10,6,16,0.82); padding: 24px; animation: fadeIn 0.25s ease;
+  }
+  .set-discovery-card {
+    background: linear-gradient(160deg, #3a2a4a, #221a2c); border: 1px solid rgba(255,224,138,0.4);
+    border-radius: 20px; padding: 28px 24px; max-width: 320px; text-align: center;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+  }
+  .set-discovery-badge {
+    display: inline-block; font-size: 11px; font-weight: 700; letter-spacing: 0.1em; color: #221a2c;
+    background: var(--gold); border-radius: 20px; padding: 5px 14px; margin-bottom: 12px;
+  }
+  .set-discovery-card h2 { color: #fff; margin-bottom: 10px; }
+  .set-discovery-card p { font-size: 13px; color: #cfc6de; margin-bottom: 14px; }
+  .set-discovery-rewards { font-size: 13px; color: var(--gold); margin-bottom: 6px; }
+  .set-discovery-rewards div { margin-bottom: 4px; }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
   .result-box h4 { margin: 0 0 6px; font-size: 10px; color: var(--gold); text-transform: uppercase; letter-spacing: 0.03em; }
   .result-box p { margin: 0 0 5px; color: #cfc6de; line-height: 1.3; }
   .result-box p:last-child { margin-bottom: 0; }
@@ -486,9 +505,6 @@ const DECK = [
   { id: 37, name: "Ruffled Cardigan", category: "Top", fit: "Regular", style: "Sweet", color: "Blue", rarity: "Uncommon", set: "blueRuffles",
     lore: "Every ruffle was hand-sewn by someone who clearly had nothing but time.",
     fullArt: "https://terrirossa.github.io/dead-gorgeous-assets/cards/card_37_ruffled_cardigan.svg" },
-  { id: 38, name: "Mini Skirt", category: "Bottom", fit: "Regular", style: "Sweet", color: "Blue", rarity: "Uncommon", set: "blueRuffles",
-    lore: "Twirls on its own sometimes. Nobody's figured out why, or how to make it stop.",
-    fullArt: "https://terrirossa.github.io/dead-gorgeous-assets/cards/card_38_mini_skirt.svg" },
   { id: 39, name: "Ruffled Maxiskirt", category: "Bottom", fit: "Regular", style: "Sweet", color: "Blue", rarity: "Uncommon", set: "blueRuffles",
     lore: "Floats a half-second longer than physics should technically allow.",
     fullArt: "https://terrirossa.github.io/dead-gorgeous-assets/cards/card_39_ruffled_maxiskirt.svg" },
@@ -830,7 +846,7 @@ const DECK = [
   { id: 430, name: "Teddy Jacket", category: "Jacket", fit: "Oversized", style: "Cozy", color: "Beige", rarity: "Uncommon",
     lore: "So soft it should count as a personality trait.",
     fullArt: "https://terrirossa.github.io/dead-gorgeous-assets/cards/card_430_teddy_jacket_beige.svg" },
-  { id: 431, name: "White Knit Pullover", category: "Top", fit: "Relaxed", style: "Cozy", color: "White", rarity: "Basic",
+  { id: 431, name: "White Pullover", category: "Top", fit: "Relaxed", style: "Cozy", color: "White", rarity: "Basic",
     lore: "Feels like being hugged by someone who irons their sweaters.",
     fullArt: "https://terrirossa.github.io/dead-gorgeous-assets/cards/card_431_white_knit_pullover.svg" },
   { id: 432, name: "Daisy Midi Skirt", category: "Bottom", fit: "Regular", style: "Romantic", color: "Blue", rarity: "Uncommon", set: "Daisy Set",
@@ -839,7 +855,7 @@ const DECK = [
   { id: 433, name: "Daisy Mini Skirt", category: "Bottom", fit: "Fitted", style: "Sweet", color: "Blue", rarity: "Uncommon", set: "Daisy Set",
     lore: "Every petal was stitched on by hand, which is either devotion or a warning.",
     fullArt: "https://terrirossa.github.io/dead-gorgeous-assets/cards/card_433_daisy_skirt_mini.svg" },
-  { id: 434, name: "Spring Maxi Skirt", category: "Bottom", fit: "Relaxed", style: "Romantic", color: "Green", rarity: "Basic", set: "Spring Set",
+  { id: 434, name: "Spring Skirt", category: "Bottom", fit: "Relaxed", style: "Romantic", color: "Green", rarity: "Basic", set: "Spring Set",
     lore: "Every flower on it was embroidered by someone with more patience than you.",
     fullArt: "https://terrirossa.github.io/dead-gorgeous-assets/cards/card_434_spring_skirt_long.svg" },
   { id: 435, name: "Spring Midi Skirt", category: "Bottom", fit: "Regular", style: "Romantic", color: "Green", rarity: "Basic", set: "Spring Set",
@@ -883,24 +899,18 @@ const JOKER_CARDS = [
   { id: 102, name: "Joker", category: "Joker", fit: "—", style: "Wildcard", color: "—",
     lore: "Nobody remembers who dealt the first Joker, only that the game hasn't ended since.",
     fullArt: "https://terrirossa.github.io/dead-gorgeous-assets/cards/card_joker.svg" },
+  { id: 103, name: "Joker", category: "Joker", fit: "—", style: "Wildcard", color: "—",
+    lore: "A third Joker showing up is either good luck or a rigged deck. Nobody's checked.",
+    fullArt: "https://terrirossa.github.io/dead-gorgeous-assets/cards/card_joker.svg" },
 ];
 
 // Only ever purchasable from the strange vendor — never handed out for free,
 // so buying never competes with the yearly reward.
-const SHOP_CARDS = [
-  { id: 201, name: "Iron Corset", category: "Top", fit: "Fitted", style: "Bold", color: "Silver",
-    lore: "Bram Hollow swears the metal isn't from the living world. He won't say more than that." },
-  { id: 202, name: "Tailored Harness", category: "Jacket", fit: "Fitted", style: "Daring", color: "Black",
-    lore: "Confiscated, allegedly, from a junior infernal auditor who insisted it was 'standard issue.'" },
-  { id: 203, name: "Ceremonial Wrap", category: "Dress", fit: "Fitted", style: "Elegant", color: "Silver",
-    lore: "The vendor swears it isn't couture. It is, obviously, couture." },
-];
-
 // Rarity scaffolding for a future tier system (Basic -> Uncommon -> Rare -> Epic -> Mythic).
 // Not yet used by scoring or visuals — just tagging cards by how they're acquired for now.
 DECK.forEach((c) => { c.rarity = c.rarity || "Basic"; }); // preserve explicit per-card rarity, default the rest to Basic
 EXTRA_CARDS.forEach((c) => { c.rarity = "Uncommon"; });
-SHOP_CARDS.forEach((c) => { c.rarity = "Rare"; });
+// (SHOP_CARDS removed — the vendor now offers real Rare+ cards from DECK directly.)
 JOKER_CARDS.forEach((c) => { c.rarity = "Basic"; });
 
 const CAFE_SNIPPETS = [
@@ -1513,7 +1523,7 @@ const PLACEHOLDER_ART = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAcwAAADbC
 // year's reward should still be there next time you play.
 let metaUnlocked = [];
 let unlockPool = shuffle(EXTRA_CARDS);
-let shopPool = shuffle(SHOP_CARDS);
+let currentShopItem = null;
 const MYSTERY_PRICE = 8;
 let mapMessage = "";
 let restrictedPhase = { castle: 0, garden: 0 };
@@ -1524,6 +1534,7 @@ let liveDeck = [];
 let unlockedCardIds = new Set();
 let pendingSeasonEnd = false;
 let jokerAvailable = true;
+let redrawAvailable = true;
 let selectedHandId = null; // hand card lifted (tapped) but not yet dropped
 let discardPile = [];
 let discoveredSets = new Set();
@@ -1574,6 +1585,7 @@ function startRound() {
   outfit = [null, null, null, null];
   pendingQuestion = null;
   jokerAvailable = true;
+  redrawAvailable = true;
   selectedHandId = null;
 
   const key = currentClientKey();
@@ -1591,10 +1603,14 @@ function startRound() {
   const briefIndex = BRIEF_VISIT_INDICES[Math.min(visitNumber, BRIEF_VISIT_INDICES.length - 1)];
   currentBrief = briefs[briefIndex];
 
-  if (deckPile.length < HAND_SIZE) {
-    deckPile = deckPile.concat(shuffle(discardPile));
-    discardPile = [];
-  }
+  // Redraw from the FULL unlocked pool every round, not a depleting carryover
+  // -- otherwise categories can get temporarily exhausted for several rounds
+  // in a row (everything of one kind sitting in the discard pile), which is
+  // exactly what caused unfair hands like five pairs of shoes with no tops
+  // available to draw at all.
+  const jokerIds = new Set(JOKER_CARDS.map((c) => c.id));
+  deckPile = liveDeck.filter((c) => !jokerIds.has(c.id)).map((c) => c.id);
+  discardPile = [];
   const handIds = drawBalancedHand(deckPile);
   deckPile = deckPile.filter((id) => !handIds.includes(id));
   hand = handIds;
@@ -1619,10 +1635,15 @@ function drawBalancedHand(pool) {
   takeOneOf(["Bottom"]);
   takeOneOf(["Shoes"]);
 
+  // Any remaining slots prefer a category not already doubled-up in hand,
+  // so the 5th card doesn't just pile onto whatever the first four were.
   while (picked.length < HAND_SIZE && remaining.length > 0) {
-    const idx = Math.floor(Math.random() * remaining.length);
-    picked.push(remaining[idx]);
-    remaining.splice(idx, 1);
+    const pickedCats = picked.map((id) => findCard(id).category);
+    const freshCandidates = remaining.filter((id) => !pickedCats.includes(findCard(id).category));
+    const pool = freshCandidates.length > 0 ? freshCandidates : remaining;
+    const choice = pool[Math.floor(Math.random() * pool.length)];
+    remaining = remaining.filter((id) => id !== choice);
+    picked.push(choice);
   }
   return picked;
 }
@@ -1769,24 +1790,28 @@ function lockedTile(key) {
   document.querySelector(".map-message").textContent = mapMessage;
 }
 
+const SHOP_RARITIES = ["Rare", "Iconic", "Legendary"];
+const JOKER_PRICE = 10;
+
+function pickShopItem() {
+  const ownedIds = new Set(unlockedCardIds);
+  const pool = DECK.filter((c) => SHOP_RARITIES.includes(c.rarity) && !ownedIds.has(c.id));
+  if (pool.length === 0) return null;
+  return weightedSample(pool, 1)[0];
+}
+
 function renderShop() {
-  const item = shopPool[0];
+  if (currentShopItem === undefined || currentShopItem === null) currentShopItem = pickShopItem();
+  const item = currentShopItem;
 
   const stockHTML = item
     ? `
-      <div class="shop-mystery-card">
-        <div class="gcard"><div class="gcard-inner">
-          <div class="gpill">???</div>
-          <div class="gname">Secret Item</div>
-          <div class="gart"><div class="art-placeholder"><div class="emoji">❓</div></div></div>
-          <div class="gattrs"><span>???</span><span>???</span><span>???</span></div>
-        </div></div>
-      </div>
-      <p style="max-width:280px;">\u201CCan't tell you what it is, darling — that's rather the point. ${MYSTERY_PRICE} mooncoins and it's yours.\u201D</p>
+      <div class="shop-mystery-card">${gcardHTML(item)}</div>
+      <p style="max-width:280px;">\u201CSomething rare tonight. ${MYSTERY_PRICE} mooncoins and it's yours.\u201D</p>
       <button class="primary" ${moonCoins >= MYSTERY_PRICE ? "" : "disabled"} onclick="buyMysteryCard()">Buy for 🌙 ${MYSTERY_PRICE}</button>
       ${moonCoins < MYSTERY_PRICE ? `<p style="font-size:12px; color:var(--muted);">Not enough mooncoins yet.</p>` : ""}
     `
-    : `<p>\u201CNothing left in the back room tonight. Come back another time.\u201D</p>`;
+    : `<p>\u201CNothing left that you don't already own. Come back another time.\u201D</p>`;
 
   stage.innerHTML = `
     <div class="center-col screen-pad">
@@ -1795,6 +1820,9 @@ function renderShop() {
       <div class="speech">\u201COh — a customer. How rare.\u201D</div>
       <div class="mini-brief" style="justify-content:center; margin-bottom:18px;">🌙 You have ${moonCoins} mooncoins</div>
       ${stockHTML}
+      <div class="shop-mystery-card" style="margin-top:8px;">${gcardHTML(JOKER_CARDS[0])}</div>
+      <p style="max-width:280px;">\u201COr something less honest. A Joker, ${JOKER_PRICE} mooncoins.\u201D</p>
+      <button class="primary" ${moonCoins >= JOKER_PRICE ? "" : "disabled"} onclick="buyJoker()">Buy Joker for 🌙 ${JOKER_PRICE}</button>
       <button class="ghost" style="margin-top:22px;" onclick="renderMap()">Back to the map</button>
     </div>
   `;
@@ -1802,17 +1830,34 @@ function renderShop() {
 }
 
 function buyMysteryCard() {
-  const item = shopPool.shift();
+  const item = currentShopItem;
   if (!item || moonCoins < MYSTERY_PRICE) return;
   moonCoins -= MYSTERY_PRICE;
-  liveDeck.push(item);
-  deckPile.push(item.id);
+  unlockedCardIds.add(item.id);
+  rebuildLiveDeckFromUnlocked();
+  currentShopItem = null;
 
   stage.innerHTML = `
     <div class="center-col screen-pad">
       <h2>Sold.</h2>
       <div class="shop-mystery-card">${gcardHTML(item)}</div>
       <div class="card-detail-lore" style="margin-top:14px;">${item.lore}</div>
+      <button class="primary" style="margin-top:22px;" onclick="renderMap()">Back to the map</button>
+    </div>
+  `;
+  updateTopBar("", true);
+}
+
+function buyJoker() {
+  if (moonCoins < JOKER_PRICE) return;
+  moonCoins -= JOKER_PRICE;
+  deckPile.push(JOKER_CARDS[0].id);
+
+  stage.innerHTML = `
+    <div class="center-col screen-pad">
+      <h2>Sold.</h2>
+      <div class="shop-mystery-card">${gcardHTML(JOKER_CARDS[0])}</div>
+      <div class="card-detail-lore" style="margin-top:14px;">${JOKER_CARDS[0].lore}</div>
       <button class="primary" style="margin-top:22px;" onclick="renderMap()">Back to the map</button>
     </div>
   `;
@@ -2055,6 +2100,28 @@ function fanTransform(i, n) {
   return `translateX(${x.toFixed(1)}px) translateY(${y.toFixed(1)}px) rotate(${angle.toFixed(1)}deg)`;
 }
 
+// Redraw: swap out your current (unplaced) hand for a fresh one, capped at
+// the highest rarity you already had in hand -- so it fixes a bad draw
+// without becoming a free way to fish for something better. One fewer card
+// than you started with, once per client visit, never touches placed cards.
+function redrawHand() {
+  if (!redrawAvailable || hand.length === 0) return;
+  const maxRarityIdx = Math.max(...hand.map((id) => RARITY_ORDER[findCard(id).rarity] ?? 0));
+  const allowedRarities = Object.keys(RARITY_ORDER).filter((r) => RARITY_ORDER[r] <= maxRarityIdx);
+
+  const oldHand = [...hand];
+  const newCount = Math.max(0, oldHand.length - 1);
+
+  const jokerIds = new Set(JOKER_CARDS.map((c) => c.id));
+  const pool = liveDeck.filter((c) => !jokerIds.has(c.id) && !oldHand.includes(c.id) && allowedRarities.includes(c.rarity)).map((c) => c.id);
+  const newHand = drawBalancedHand(pool).slice(0, newCount);
+
+  discardPile.push(...oldHand);
+  hand = newHand;
+  redrawAvailable = false;
+  renderStyle();
+}
+
 function drawJoker() {
   if (!jokerAvailable || deckPile.length === 0) return;
   const extra = shuffle(deckPile).slice(0, Math.min(2, deckPile.length));
@@ -2098,6 +2165,7 @@ function renderStyle() {
     <div class="hand-fan" id="handFan">${fanHTML}</div>
 
     <div class="corner-action corner-left ${jokerAvailable && deckPile.length > 0 ? "" : "used"}" onclick="drawJoker()" title="Joker: draw 2 extra cards, once per client">🃏</div>
+    <div class="corner-action corner-left corner-left-2 ${redrawAvailable && hand.length > 0 ? "" : "used"}" onclick="redrawHand()" title="Redraw: swap your hand for new cards of the same rarity or lower, once per client">🔄</div>
     <button class="corner-action corner-right" id="continueBtn" onclick="finishStyling()" title="See their reaction">✓</button>
   `;
   updateTopBar(`<span class="icon soul-swatch" style="background:${client.color};"></span> Wants: <b>${wantSummary}</b>`, true);
@@ -2524,6 +2592,7 @@ function renderDeckOverlay() {
       <h3>${picking ? "Choose a card to draw" : "Your deck"}</h3>
       <button class="deck-close" onclick="closeDeck()">✕</button>
     </div>
+    ${picking ? "" : `<p style="text-align:center; color:var(--muted); font-size:12.5px; margin-top:-8px;">${unlockedCardIds.size} of ${DECK.length} cards collected</p>`}
     ${filterPanel}
     ${picking ? `<p style="text-align:center; color:var(--muted); font-size:12.5px; margin:-10px 0 16px;">Only cards still in your deck pool can be picked.</p>` : ""}
     ${picking ? "" : discoveredSetsHTML()}
@@ -2691,7 +2760,35 @@ function finishStyling() {
   if (!hasShoes) { gapPenalty -= 10; gaps.push("No shoes"); }
   if (!hasDress && !hasTop) { gapPenalty -= 10; gaps.push("No top"); }
   if (!hasDress && !hasBottom) { gapPenalty -= 10; gaps.push("No bottom"); }
-  const scoreWithGaps = score + gapPenalty;
+  let scoreWithGaps = score + gapPenalty;
+
+  // A complete matching set, but only when the outfit already works. Resolved
+  // before totalScore/delightedCount/etc so a newly-discovered set's +20
+  // is reflected consistently everywhere the score is used below.
+  let setBonusName = null;
+  let setNewlyDiscovered = false;
+  let setBonusCard = null;
+  if (scoreWithGaps >= 70) {
+    const completed = Object.entries(SET_NAMES).find(([setId]) => {
+      const setPieces = pieces.filter((p) => p.set === setId);
+      const uniqueIds = new Set(setPieces.map((p) => p.id));
+      return uniqueIds.size >= 2;
+    });
+    if (completed) {
+      setBonusName = completed[1];
+      if (!discoveredSets.has(completed[0])) {
+        discoveredSets.add(completed[0]);
+        setNewlyDiscovered = true;
+        scoreWithGaps += 20;
+        const rewarded = unlockRandomCards(1);
+        if (rewarded.length > 0) {
+          rebuildLiveDeckFromUnlocked();
+          deckPile.push(rewarded[0].id);
+          setBonusCard = rewarded[0];
+        }
+      }
+    }
+  }
 
   totalScore += scoreWithGaps;
   if (scoreWithGaps >= 70) delightedCount += 1;
@@ -2701,23 +2798,7 @@ function finishStyling() {
 
   let relDelta = scoreWithGaps >= 70 ? 0.5 : 0;
   if (matchedPreferences.length > 0) relDelta += 0.5;
-
-  // A complete matching set, but only when the outfit already works.
-  let setBonusName = null;
-  if (scoreWithGaps >= 70) {
-    const completed = Object.entries(SET_NAMES).find(([setId]) => {
-      const setPieces = pieces.filter((p) => p.set === setId);
-      const uniqueIds = new Set(setPieces.map((p) => p.id));
-      return uniqueIds.size >= 2;
-    });
-    if (completed) {
-      setBonusName = completed[1];
-      discoveredSets.add(completed[0]);
-      moonCoins += 1;
-      moonCoinsEarned += 1;
-      relDelta += 0.5;
-    }
-  }
+  if (setBonusName) relDelta += 0.5;
 
   // A single job — however perfect — is one relationship-building moment,
   // not three. Capped at a full heart per visit; the relationship itself
@@ -2739,7 +2820,7 @@ function finishStyling() {
     preferenceBonus, preferencePointValue, preferenceCapped, matchedPreferences, newlyDiscovered,
     playerChoice: !!currentBrief.playerChoice,
     comboName: client.combo && comboBonus > 0 ? client.combo.colors.join(" + ") : null,
-    comboNewlyDiscovered,
+    comboNewlyDiscovered, setNewlyDiscovered, setBonusCard,
   };
 
   renderResult(client, scoreWithGaps, wantResults, relDelta, moonCoinsEarned, breakdown, setBonusName);
@@ -2845,6 +2926,26 @@ function renderResult(client, score, wantResults, relDelta, moonCoinsEarned, bre
     </div>
   `;
   updateTopBar("", true);
+  if (breakdown.setNewlyDiscovered) showSetDiscoveryPopup(setBonusName, breakdown.setBonusCard);
+}
+
+function showSetDiscoveryPopup(setName, rewardCard) {
+  const overlay = document.createElement("div");
+  overlay.className = "set-discovery-overlay";
+  overlay.innerHTML = `
+    <div class="set-discovery-card">
+      <div class="set-discovery-badge">SET DISCOVERED</div>
+      <h2>${setName}</h2>
+      <p>You've worn a complete set together for the first time. Aftercity takes notice.</p>
+      <div class="set-discovery-rewards">
+        <div>+20 to this outfit's score</div>
+        ${rewardCard ? `<div>A new piece for your closet</div>` : ""}
+      </div>
+      ${rewardCard ? `<div class="new-card-item" style="width:140px; margin:14px auto;">${gcardHTML(rewardCard)}</div>` : ""}
+      <button class="primary" onclick="this.closest('.set-discovery-overlay').remove()">Nice.</button>
+    </div>
+  `;
+  document.body.appendChild(overlay);
 }
 
 // Seasonal calendar — exact story-screen text from the narrative bible.
