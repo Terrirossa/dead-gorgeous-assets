@@ -208,6 +208,10 @@
     font-size: 12px; font-weight: 600; padding: 5px 12px; border-radius: 999px;
     background: rgba(255,255,255,0.1); color: var(--gold); border: 1px solid rgba(255,224,138,0.4);
   }
+  .soft-direction {
+    font-size: 11.5px; font-style: italic; color: var(--muted); text-align: center;
+    max-width: 320px; margin: -14px auto 20px;
+  }
   .hearts { font-size: 12px; letter-spacing: 1px; }
 
   /* ---------- Compact styling-screen top strip ---------- */
@@ -405,6 +409,7 @@
     max-width: 400px; margin: 0 auto 18px; text-align: left;
   }
   .result-box { background: rgba(255,255,255,0.05); border-radius: 12px; padding: 10px 12px; font-size: 11.5px; }
+  .discovery-box { background: rgba(255,224,138,0.1); border: 1px solid rgba(255,224,138,0.35); }
   .result-box h4 { margin: 0 0 6px; font-size: 10px; color: var(--gold); text-transform: uppercase; letter-spacing: 0.03em; }
   .result-box p { margin: 0 0 5px; color: #cfc6de; line-height: 1.3; }
   .result-box p:last-child { margin-bottom: 0; }
@@ -779,67 +784,527 @@ const CAFE_SNIPPETS = [
   "Someone's watering a plant that has no business blooming this far from the sun. They don't explain, and nobody asks.",
 ];
 
+// --- Styling Briefing System (per DEAD_GORGEOUS_Styling_Briefing_System_DECK_BALANCED) ---
+// A "want" requirement is { attr, value, label } (exact match on a piece's
+// attr), or a rarity requirement { attr:"rarity", anyOf:[...], label } (piece
+// matches if its rarity is one of anyOf). Each worn piece is checked against
+// every requirement independently, so "two styles" briefs (e.g. Elegant +
+// Daring) are meant to be solved by two *different* pieces, not one piece
+// doing double duty. req()/rarityReq() are tiny constructors, kept here (not
+// deeper in the file) purely for readability of the CLIENTS data below —
+// function declarations are hoisted, so definition order doesn't matter.
+function req(attr, value, label) { return { attr, value, label: label || value }; }
+const RARE_OR_HIGHER = ["Rare", "Iconic", "Legendary"];
+function rarityReq(label) { return { attr: "rarity", anyOf: RARE_OR_HIGHER, label: label || "Rare-or-higher" }; }
+// A permanent hidden preference, in the shape preferenceMatches() (below,
+// further down the file — function declarations are hoisted) understands:
+// { type:"attr", attr, value } — separate from the active brief, and not
+// shown to the player until she's worn it once (see finishStyling()).
+function pref(attr, value) { return { type: "attr", attr, value }; }
+
 // The Core Four, per the narrative bible. Greetings and question answers
 // marked [bible] are lifted or lightly adapted from the source document's
 // exact dialogue; those marked [voice] are new lines written to match an
 // established character's tone where the bible didn't specify one for this
 // context (e.g. a Studio greeting). Death is never referenced pre-final-arc.
+//
+// Each client now carries 12 styling jobs (dialogue + a hard brief), running
+// signature -> occasion -> outside-comfort-zone -> experimental -> constraint
+// -> a final "player choice" trust job, per the briefing doc's relationship
+// progression. A visit only ever plays 9 of the 12 (BRIEF_VISIT_INDICES,
+// right below CLIENTS) since a full year is 9 visits per client — spaced
+// across the arc so it still opens on her signature jobs and always closes
+// on the trust job.
+//
+// A brief can also carry:
+//   hint: [...] purely flavour-text attributes mentioned in the dialogue
+//     (e.g. "green, if you have it"). Not separately scored — when a hint
+//     happens to be one of the character's real hidden preferences it's
+//     already covered by the preference bonus below; the rest are one-off
+//     narrative colour that deliberately does nothing mechanically.
+//   suppressPreference: [...] for "against preference" jobs — the matching
+//     hidden-preference bonus is switched off for that one job only, so the
+//     player isn't rewarded for ignoring what she explicitly asked for.
+//   softDirection: a short in-fiction nudge shown under the brief; flavour
+//     only, never changes scoring.
+//   playerChoice: true marks a trust job — there is no hard brief; scoring
+//     comes entirely from hidden preferences (see finishStyling()).
 const CLIENTS = [
   {
     name: "Margo", color: "#3a3a3a",
-    greeting: "\u201CYou're the replacement.\u201D", // [bible] her opening line, verbatim
-    favorites: [
-      { type: "attr", attr: "color", value: "Black" },
-      { type: "name", keyword: "Corset" },
+    greeting: "“You're the replacement.”", // [bible] her opening line, verbatim
+    preferences: [
+      pref("color", "Black"), pref("color", "Red"), pref("style", "Elegant"),
+      pref("style", "Classic"), pref("fit", "Fitted"), pref("style", "Bold"),
     ],
     combo: { colors: ["Black", "Red"], bonus: 8 },
     briefs: [
-      { text: "\u201CNothing beige. Fitted, black, elegant — the way I like it.\u201D", want: { style: "Elegant", fit: "Fitted" } },
-      { text: "\u201CI found something that works for me. You should try it sometime. Bold, and green, if you can manage it.\u201D", want: { style: "Bold", color: "Green" } },
-      { text: "\u201CReal craftsmanship, for once. Classic. Fitted. Don't disappoint me.\u201D", want: { style: "Classic", fit: "Fitted" } },
+      {
+        dialogue: [
+          { who: "MARGO", t: "Black. Fitted. Nothing apologetic." },
+          { who: "YOU", t: "Good morning to you too." },
+          { who: "MARGO", t: "Was that unclear?" },
+        ],
+        want: [req("color", "Black"), req("fit", "Fitted")],
+      },
+      {
+        dialogue: [
+          { who: "MARGO", t: "Elegant. But don't make it polite." },
+          { who: "YOU", t: "There's a difference?" },
+          { who: "MARGO", t: "A considerable one." },
+        ],
+        want: [req("style", "Elegant"), req("style", "Daring")],
+      },
+      {
+        dialogue: [
+          { who: "MARGO", t: "I'll be at the Castle most of the evening." },
+          { who: "YOU", t: "Dinner?" },
+          { who: "MARGO", t: "Watching people pretend they enjoy dinner." },
+        ],
+        want: [req("style", "Classic"), req("color", "Black")],
+      },
+      {
+        dialogue: [
+          { who: "MARGO", t: "No black today." },
+          { who: "YOU", t: "Are you feeling alright?" },
+          { who: "MARGO", t: "Don't make me regret saying it." },
+        ],
+        want: [req("style", "Elegant"), req("fit", "Regular")],
+        suppressPreference: ["Black"],
+        softDirection: "She specifically asked for no black — wearing black won't fail the outfit, but it won't earn her usual love for it here.",
+      },
+      {
+        dialogue: [
+          { who: "MARGO", t: "The Queen is receiving people tonight." },
+          { who: "YOU", t: "And you're invited?" },
+          { who: "MARGO", t: "Everyone is invited. Very few are wanted." },
+        ],
+        want: [req("style", "Elegant"), req("fit", "Regular")],
+      },
+      {
+        dialogue: [
+          { who: "MARGO", t: "Give me something softer." },
+          { who: "YOU", t: "You?" },
+          { who: "MARGO", t: "You have five seconds to stop enjoying this." },
+        ],
+        want: [req("style", "Romantic"), req("fit", "Fitted")],
+      },
+      {
+        dialogue: [
+          { who: "MARGO", t: "Green." },
+          { who: "YOU", t: "Green?" },
+          { who: "MARGO", t: "I remember liking it once." },
+          { who: "MARGO", t: "Don't ask." },
+        ],
+        want: [req("style", "Classic"), req("fit", "Regular")],
+        hint: ["Green"],
+      },
+      {
+        dialogue: [
+          { who: "MARGO", t: "Apparently I intimidate people." },
+          { who: "YOU", t: "Apparently?" },
+          { who: "MARGO", t: "Make me approachable." },
+          { who: "YOU", t: "That might take more than clothes." },
+          { who: "MARGO", t: "Careful." },
+        ],
+        want: [req("style", "Sweet"), req("fit", "Regular")],
+      },
+      {
+        dialogue: [
+          { who: "MARGO", t: "You've been very predictable lately." },
+          { who: "YOU", t: "Me?" },
+          { who: "MARGO", t: "Yes. Surprise me." },
+        ],
+        want: [req("style", "Bold"), req("fit", "Regular")],
+        softDirection: "A non-black look is especially appreciated here.",
+      },
+      {
+        dialogue: [
+          { who: "MARGO", t: "Romantic." },
+          { who: "YOU", t: "Really?" },
+          { who: "MARGO", t: "It's a style. Not a confession." },
+        ],
+        want: [req("style", "Romantic"), req("style", "Daring")],
+        hint: ["Red"],
+      },
+      {
+        dialogue: [
+          { who: "MARGO", t: "Make expensive look effortless." },
+          { who: "YOU", t: "That's annoyingly vague." },
+          { who: "MARGO", t: "Good." },
+        ],
+        want: [rarityReq(), req("style", "Minimal")],
+      },
+      {
+        dialogue: [
+          { who: "MARGO", t: "I don't have a brief." },
+          { who: "YOU", t: "You always have a brief." },
+          { who: "MARGO", t: "I have an opinion. That's different." },
+          { who: "MARGO", t: "Show me yours." },
+        ],
+        playerChoice: true,
+      },
     ],
   },
   {
     name: "Juniper", color: "#8fae7a",
-    greeting: "\u201COh — hello. I wasn't expecting company, but that's rather the theme lately.\u201D", // [voice]
-    favorites: [
-      { type: "attr", attr: "color", value: "Green" },
-      { type: "name", keyword: "Cardigan" },
+    greeting: "“Oh — hello. I wasn't expecting company, but that's rather the theme lately.”", // [voice]
+    preferences: [
+      pref("color", "Green"), pref("style", "Romantic"), pref("style", "Cozy"),
+      pref("style", "Sweet"), pref("fit", "Relaxed"),
     ],
     briefs: [
-      { text: "\u201CSomething Romantic, something green — like my garden used to be.\u201D", want: { style: "Romantic", color: "Green" } },
-      { text: "\u201CCozy and relaxed, please. I've had enough ceremony for one week.\u201D", want: { style: "Cozy", fit: "Relaxed" } },
-      { text: "\u201CSweet, and soft — nothing that fights the plants.\u201D", want: { style: "Sweet", fit: "Relaxed" } },
+      {
+        dialogue: [
+          { who: "JUNIPER", t: "Something soft today. Green, if you have it." },
+          { who: "YOU", t: "Garden clothes?" },
+          { who: "JUNIPER", t: "Everything is garden clothes if you're determined enough." },
+        ],
+        want: [req("style", "Romantic"), req("fit", "Relaxed")],
+        hint: ["Green", "Cozy"],
+      },
+      {
+        dialogue: [
+          { who: "JUNIPER", t: "Romantic, I think." },
+          { who: "YOU", t: "You think?" },
+          { who: "JUNIPER", t: "I'm trying not to overthink everything." },
+        ],
+        want: [req("style", "Romantic"), req("fit", "Relaxed")],
+      },
+      {
+        dialogue: [
+          { who: "JUNIPER", t: "I'm spending the afternoon outside." },
+          { who: "YOU", t: "In the garden?" },
+          { who: "JUNIPER", t: "Hopefully. Margaret has opinions about who counts as 'outside.'" },
+        ],
+        want: [req("fit", "Relaxed"), req("style", "Romantic")],
+        hint: ["Green"],
+      },
+      {
+        dialogue: [
+          { who: "JUNIPER", t: "Black." },
+          { who: "YOU", t: "That's new." },
+          { who: "JUNIPER", t: "I'm going somewhere I'm not supposed to." },
+          { who: "YOU", t: "That's also new." },
+        ],
+        want: [req("color", "Black"), req("style", "Daring")],
+      },
+      {
+        dialogue: [
+          { who: "JUNIPER", t: "There's a gathering in the garden tonight." },
+          { who: "YOU", t: "A party?" },
+          { who: "JUNIPER", t: "Margaret would be offended if you called it that." },
+        ],
+        want: [req("style", "Romantic"), req("style", "Elegant")],
+      },
+      {
+        dialogue: [
+          { who: "JUNIPER", t: "Could we avoid green?" },
+          { who: "YOU", t: "I didn't know you knew how." },
+          { who: "JUNIPER", t: "Neither did I." },
+        ],
+        want: [req("color", "Blue"), req("style", "Sweet")],
+        suppressPreference: ["Green"],
+        softDirection: "She asked to avoid green — wearing green won't fail the outfit, but it won't earn her usual love for it here.",
+      },
+      {
+        dialogue: [
+          { who: "JUNIPER", t: "I want something people notice." },
+          { who: "YOU", t: "You normally hide from people noticing." },
+          { who: "JUNIPER", t: "Yes. I'm trying something." },
+        ],
+        want: [req("style", "Bold"), req("fit", "Fitted")],
+      },
+      {
+        dialogue: [
+          { who: "JUNIPER", t: "I have to go to the Castle." },
+          { who: "YOU", t: "You sound thrilled." },
+          { who: "JUNIPER", t: "I'd rather repot twelve thorn bushes." },
+        ],
+        want: [req("style", "Elegant"), req("fit", "Regular")],
+      },
+      {
+        dialogue: [
+          { who: "JUNIPER", t: "Can you make me look… dangerous?" },
+          { who: "YOU", t: "You?" },
+          { who: "JUNIPER", t: "That reaction is exactly why I'm asking." },
+        ],
+        want: [req("style", "Daring"), req("color", "Black")],
+      },
+      {
+        dialogue: [
+          { who: "JUNIPER", t: "Pink." },
+          { who: "YOU", t: "That sounds more like you." },
+          { who: "JUNIPER", t: "Then make the rest not like me." },
+        ],
+        want: [req("color", "Pink"), req("style", "Cool")],
+      },
+      {
+        dialogue: [
+          { who: "JUNIPER", t: "I keep choosing things that feel safe." },
+          { who: "YOU", t: "Do you want safe?" },
+          { who: "JUNIPER", t: "Not tonight." },
+        ],
+        want: [req("style", "Bold"), req("fit", "Regular")],
+      },
+      {
+        dialogue: [
+          { who: "JUNIPER", t: "Would you choose?" },
+          { who: "YOU", t: "No clues?" },
+          { who: "JUNIPER", t: "You've seen me enough by now." },
+          { who: "JUNIPER", t: "I'm curious what you see." },
+        ],
+        playerChoice: true,
+      },
     ],
   },
   {
     name: "Ivy", color: "#a13d4c",
-    greeting: "\u201CWell hello, stylist. Try to keep up.\u201D", // [voice]
-    favorites: [
-      { type: "attr", attr: "color", value: "Black" },
-      { type: "name", keyword: "Boots" },
+    greeting: "“Well hello, stylist. Try to keep up.”", // [voice]
+    preferences: [
+      pref("color", "Black"), pref("style", "Cool"), pref("style", "Daring"),
+      pref("style", "Bold"), pref("fit", "Relaxed"),
     ],
     briefs: [
-      { text: "\u201CCool and black. Something I can actually move in.\u201D", want: { style: "Cool", color: "Black" } },
-      { text: "\u201CDaring, red — got a delivery after this, don't make it precious.\u201D", want: { style: "Daring", color: "Red" } },
-      { text: "\u201CBold and blue. Practical enough to run in, if it comes to that.\u201D", want: { style: "Bold", color: "Blue" } },
+      {
+        dialogue: [
+          { who: "IVY", t: "Black. Cool. Easy." },
+          { who: "YOU", t: "You always make this sound like a threat." },
+          { who: "IVY", t: "Maybe you're just nervous." },
+        ],
+        want: [req("color", "Black"), req("style", "Cool")],
+      },
+      {
+        dialogue: [
+          { who: "IVY", t: "Got deliveries all afternoon." },
+          { who: "YOU", t: "Comfortable?" },
+          { who: "IVY", t: "Comfortable enough to run." },
+          { who: "YOU", t: "From?" },
+          { who: "IVY", t: "Next question." },
+        ],
+        want: [req("fit", "Relaxed"), req("style", "Cool")],
+      },
+      {
+        dialogue: [
+          { who: "IVY", t: "Got a delivery after this. Make it dangerous." },
+          { who: "YOU", t: "Anything specific?" },
+          { who: "IVY", t: "Red, if you've got it." },
+        ],
+        want: [req("style", "Daring"), req("fit", "Fitted")],
+        hint: ["Red"],
+      },
+      {
+        dialogue: [
+          { who: "IVY", t: "I need to look respectable." },
+          { who: "YOU", t: "Oh, this I have to see." },
+          { who: "IVY", t: "Enjoy it while it lasts." },
+        ],
+        want: [req("style", "Elegant"), req("fit", "Regular")],
+      },
+      {
+        dialogue: [
+          { who: "IVY", t: "Delivery to the Castle." },
+          { who: "YOU", t: "So?" },
+          { who: "IVY", t: "So apparently dropping a package and leaving is 'inappropriate' during a banquet." },
+        ],
+        want: [req("style", "Elegant"), req("color", "Black")],
+      },
+      {
+        dialogue: [
+          { who: "IVY", t: "No black." },
+          { who: "YOU", t: "Who are you and what have you done with Ivy?" },
+          { who: "IVY", t: "I knew this was a mistake." },
+        ],
+        want: [req("color", "Blue"), req("style", "Cool")],
+        suppressPreference: ["Black"],
+        softDirection: "She asked for no black — wearing black won't fail the outfit, but it won't earn her usual love for it here.",
+      },
+      {
+        dialogue: [
+          { who: "IVY", t: "Something Romantic." },
+          { who: "YOU", t: "Excuse me?" },
+          { who: "IVY", t: "It's not for a date." },
+          { who: "YOU", t: "I didn't say it was." },
+          { who: "IVY", t: "Your face did." },
+        ],
+        want: [req("style", "Romantic"), req("color", "Black")],
+        hint: ["Red"],
+      },
+      {
+        dialogue: [
+          { who: "IVY", t: "Someone told me I dress like I'm expecting a fight." },
+          { who: "YOU", t: "Are you?" },
+          { who: "IVY", t: "Usually." },
+          { who: "IVY", t: "Make me look friendly." },
+        ],
+        want: [req("style", "Sweet"), req("fit", "Regular")],
+      },
+      {
+        dialogue: [
+          { who: "IVY", t: "Give me something you think I'd hate." },
+          { who: "YOU", t: "Why?" },
+          { who: "IVY", t: "Maybe I'm getting predictable." },
+        ],
+        want: [req("style", "Romantic"), req("color", "Pink")],
+      },
+      {
+        dialogue: [
+          { who: "IVY", t: "I need to disappear into a crowd tonight." },
+          { who: "YOU", t: "That sounds ominous." },
+          { who: "IVY", t: "Then stop asking questions." },
+        ],
+        want: [req("style", "Minimal"), req("color", "Black")],
+      },
+      {
+        dialogue: [
+          { who: "IVY", t: "Make me look expensive." },
+          { who: "YOU", t: "That's it?" },
+          { who: "IVY", t: "And like I didn't spend an hour trying to look expensive." },
+        ],
+        want: [rarityReq(), req("style", "Cool")],
+      },
+      {
+        dialogue: [
+          { who: "IVY", t: "Your choice." },
+          { who: "YOU", t: "Seriously?" },
+          { who: "IVY", t: "Don't make it weird." },
+          { who: "YOU", t: "You giving up control is a little weird." },
+          { who: "IVY", t: "And it can end at any moment." },
+        ],
+        playerChoice: true,
+      },
     ],
   },
   {
     name: "Holly", color: "#8ea9c1",
-    greeting: "\u201CHolly.\u201D", // [bible] — she introduces herself tersely, never over-explains
-    favorites: [
-      { type: "attr", attr: "color", value: "Silver" },
-      { type: "attr", attr: "fit", value: "Regular" },
+    greeting: "“Holly.”", // [bible] — she introduces herself tersely, never over-explains
+    preferences: [
+      pref("color", "Silver"), pref("color", "White"), pref("color", "Blue"),
+      pref("style", "Classic"), pref("style", "Minimal"), pref("fit", "Regular"),
+      pref("style", "Armour"),
     ],
     combo: { colors: ["White", "Blue"], bonus: 8 },
     briefs: [
-      { text: "\u201CClassic. Minimal. Nothing that gets in the way.\u201D", want: { style: "Classic", fit: "Regular" } },
-      { text: "\u201CWhite, if you have it. Something a soldier could still move in.\u201D", want: { style: "Minimal", color: "White" } },
-      { text: "\u201CRomantic, but not soft. Blue, if you can.\u201D", want: { style: "Romantic", color: "Blue" } },
+      {
+        dialogue: [
+          { who: "HOLLY", t: "Simple. Nothing loose." },
+          { who: "YOU", t: "Any preference?" },
+          { who: "HOLLY", t: "Useful." },
+        ],
+        want: [req("style", "Minimal"), req("fit", "Regular")],
+      },
+      {
+        dialogue: [
+          { who: "HOLLY", t: "Something traditional." },
+          { who: "YOU", t: "Silver?" },
+          { who: "HOLLY", t: "If you have it." },
+        ],
+        want: [req("style", "Classic"), req("fit", "Regular")],
+        hint: ["Silver"],
+      },
+      {
+        dialogue: [
+          { who: "HOLLY", t: "I'll be outside most of the day." },
+          { who: "YOU", t: "Doing what?" },
+          { who: "HOLLY", t: "Walking." },
+          { who: "YOU", t: "That sounded suspicious." },
+          { who: "HOLLY", t: "It wasn't." },
+        ],
+        want: [req("fit", "Regular"), req("style", "Minimal")],
+      },
+      {
+        dialogue: [
+          { who: "HOLLY", t: "There is something at the Castle tonight." },
+          { who: "YOU", t: "Formal?" },
+          { who: "HOLLY", t: "Unfortunately." },
+        ],
+        want: [req("style", "Elegant"), req("style", "Classic")],
+        hint: ["Silver"],
+      },
+      {
+        dialogue: [
+          { who: "HOLLY", t: "They said I should look less intimidating." },
+          { who: "YOU", t: "Who said that?" },
+          { who: "HOLLY", t: "Several people." },
+          { who: "YOU", t: "That many?" },
+          { who: "YOU", t: "Sweet. Got it." },
+        ],
+        want: [req("style", "Sweet"), req("color", "Blue")],
+      },
+      {
+        dialogue: [
+          { who: "HOLLY", t: "Romantic." },
+          { who: "YOU", t: "You're sure?" },
+          { who: "HOLLY", t: "I know what the word means." },
+          { who: "YOU", t: "Just checking." },
+        ],
+        want: [req("style", "Romantic"), req("fit", "Fitted")],
+      },
+      {
+        dialogue: [
+          { who: "HOLLY", t: "Something with more force today." },
+          { who: "YOU", t: "That's new." },
+          { who: "HOLLY", t: "Red, if there is any." },
+        ],
+        want: [req("style", "Daring"), req("style", "Classic")],
+        hint: ["Red"],
+      },
+      {
+        dialogue: [
+          { who: "HOLLY", t: "I was told to wear something cheerful." },
+          { who: "YOU", t: "By whom?" },
+          { who: "HOLLY", t: "Someone who is enjoying this far too much." },
+        ],
+        want: [req("color", "Pink"), req("style", "Sweet")],
+      },
+      {
+        dialogue: [
+          { who: "HOLLY", t: "Something less sensible." },
+          { who: "YOU", t: "How much less sensible?" },
+          { who: "HOLLY", t: "I don't know." },
+        ],
+        want: [req("style", "Daring"), req("fit", "Fitted")],
+      },
+      {
+        dialogue: [
+          { who: "HOLLY", t: "There's a banquet." },
+          { who: "YOU", t: "You hate banquets." },
+          { who: "HOLLY", t: "Correct." },
+          { who: "YOU", t: "So what are we doing?" },
+          { who: "HOLLY", t: "If I must be there, I would prefer to look formidable." },
+        ],
+        want: [req("style", "Elegant"), req("style", "Bold")],
+      },
+      {
+        dialogue: [
+          { who: "HOLLY", t: "You always make choices I wouldn't." },
+          { who: "YOU", t: "Is that a complaint?" },
+          { who: "HOLLY", t: "Not always." },
+          { who: "HOLLY", t: "Do that." },
+        ],
+        want: [req("style", "Daring"), req("fit", "Regular")],
+      },
+      {
+        dialogue: [
+          { who: "HOLLY", t: "Choose for me." },
+          { who: "YOU", t: "Nothing else?" },
+          { who: "HOLLY", t: "You know what I like." },
+          { who: "YOU", t: "And if I ignore that?" },
+          { who: "HOLLY", t: "Then have a reason." },
+        ],
+        playerChoice: true,
+      },
     ],
   },
 ];
+
+// A full playthrough only gives each client 9 visits (36 jobs / 4 clients —
+// see SEASON_END_JOBS below), so only 9 of each character's 12 authored jobs
+// are ever seen. These indices (0-based, into the 12-job list above) are
+// spread across the whole arc — always opening on her signature jobs and
+// always closing on job 12, the player-choice trust job — rather than just
+// truncating the list at 9 and never reaching the trust job at all.
+const BRIEF_VISIT_INDICES = [0, 1, 3, 4, 6, 7, 9, 10, 11];
 
 // Matching sets — wearing both pieces earns a bonus, but only on outfits that
 // already satisfy the brief (score >= 70).
@@ -939,10 +1404,10 @@ let hand = [];
 let outfit = [null, null, null, null]; // 4 free slots, any card in any slot
 let clientRoundIndex = 0;
 let relationships = {};
-let soulProfiles = {};   // per-client: { visits, answered: [ids], facts: [{q,a}] }
+let soulProfiles = {};   // per-client: { visits, answered: [ids], facts: [{q,a}], discovered: ["color:Black", ...] }
 let roundIsFirstMeeting = false;
 let pendingQuestion = null;
-let currentBrief = null; // { text, want } — chosen fresh each round
+let currentBrief = null; // one entry from CLIENTS[key].briefs — chosen fresh each round via BRIEF_VISIT_INDICES
 let totalScore = 0;
 let delightedCount = 0; // "Delighted" (score >= 70) outcomes this session
 let soulStep = 0;
@@ -982,11 +1447,17 @@ function startRound() {
   const key = currentClientKey();
   const profile = soulProfiles[key];
   roundIsFirstMeeting = profile.visits === 0;
+  const visitNumber = profile.visits; // 0-indexed visit about to happen
   profile.visits += 1;
   soulStep = 0;
   dialogueLineIndex = 0;
   const briefs = CLIENTS[key].briefs;
-  currentBrief = briefs[Math.floor(Math.random() * briefs.length)];
+  // See BRIEF_VISIT_INDICES: only 9 of a client's 12 authored jobs are ever
+  // played in one year, spaced across the arc and always ending on the
+  // player-choice trust job. Visits past the 9th (shouldn't normally happen
+  // in a 36-job year, but safe to fall back) just replay the trust job.
+  const briefIndex = BRIEF_VISIT_INDICES[Math.min(visitNumber, BRIEF_VISIT_INDICES.length - 1)];
+  currentBrief = briefs[briefIndex];
 
   if (deckPile.length < HAND_SIZE) {
     deckPile = deckPile.concat(shuffle(discardPile));
@@ -1084,7 +1555,7 @@ function beginGame() {
   discardPile = [];
   relationships = {};
   soulProfiles = {};
-  CLIENTS.forEach((_, i) => { soulProfiles[i] = { visits: 0, answered: [], facts: [] }; });
+  CLIENTS.forEach((_, i) => { soulProfiles[i] = { visits: 0, answered: [], facts: [], discovered: [] }; });
   clientRoundIndex = 0;
   totalScore = 0;
   delightedCount = 0;
@@ -1257,12 +1728,35 @@ function unansweredQuestions(key) {
   return (QUESTIONS[key] || []).filter((q) => !profile.answered.includes(q.id));
 }
 
+// The active brief's hard requirements as pill tags — "Your call" for a
+// player-choice (trust) job, which has no want array at all.
+function wantTagsHTML(brief) {
+  if (brief.playerChoice) return `<span class="want-tag">Your call — style from what you know</span>`;
+  return brief.want.map((r) => `<span class="want-tag">${r.label}</span>`).join("");
+}
+
+// Renders a brief's dialogue array as a stack of speech bubbles, reusing the
+// exact look of the CLIENT_STAGES exchange above (speaker label + line) so
+// a multi-line brief reads the same as any other back-and-forth in the game.
+function briefDialogueHTML(brief, speakerName) {
+  return brief.dialogue.map((line) => {
+    const isYou = line.who === "YOU";
+    const speakerLabel = isYou ? "You" : speakerName;
+    return `
+      <div class="speech" style="${isYou ? "background:rgba(255,255,255,0.06);" : ""}">
+        <b style="display:block; font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:0.04em; margin-bottom:4px;">${speakerLabel}</b>
+        ${line.t}
+      </div>
+    `;
+  }).join("");
+}
+
 function renderSoul() {
   const client = currentClient();
   const key = currentClientKey();
   const rel = relationships[key] || 0;
 
-  const wantTags = Object.entries(currentBrief.want).map(([k, v]) => `<span class="want-tag">${k}: ${v}</span>`).join("");
+  const wantTags = wantTagsHTML(currentBrief);
   const returningNote = rel > 0 ? `<div class="returning-note">You've styled ${client.name.split(",")[0]} before.</div>` : "";
 
   const stageSet = CLIENT_STAGES[key];
@@ -1301,7 +1795,11 @@ function renderSoul() {
       <button class="primary" onclick="proceedToBrief()">Continue</button>
     `;
   } else {
-    body = `<div class="speech">${currentBrief.text}</div><div class="want-tags">${wantTags}</div><button class="primary" onclick="renderStyle()">Start styling</button>`;
+    const briefBody = briefDialogueHTML(currentBrief, client.name.split(",")[0]);
+    const softDirectionHTML = currentBrief.softDirection
+      ? `<div class="soft-direction">${currentBrief.softDirection}</div>`
+      : "";
+    body = `${briefBody}<div class="want-tags">${wantTags}</div>${softDirectionHTML}<button class="primary" onclick="renderStyle()">Start styling</button>`;
   }
 
   stage.innerHTML = `
@@ -1419,7 +1917,9 @@ function drawJoker() {
 function renderStyle() {
   const client = currentClient();
   const monthName = MONTHS[currentMonthIndex()];
-  const wantSummary = Object.values(currentBrief.want).join(", ");
+  const wantSummary = currentBrief.playerChoice
+    ? "Your call"
+    : currentBrief.want.map((r) => r.label).join(", ");
 
   const slotsHTML = outfit.map((card, i) => {
     if (card) return `<div class="board-slot filled ${card.fullArt ? "filled-plain" : ""} slot-${i}" onpointerdown="onSlotPointerDown(event, ${i})">${gcardHTML(card)}</div>`;
@@ -1719,7 +2219,13 @@ function openSouls() {
   const overlay = document.getElementById("soulsOverlay");
   const items = CLIENTS.map((c, i) => {
     const rel = relationships[i] || 0;
-    const profile = soulProfiles[i] || { visits: 0, facts: [] };
+    const profile = soulProfiles[i] || { visits: 0, facts: [], discovered: [] };
+    // Discovered hidden preferences (see finishStyling()'s discovery rule) —
+    // "???" until she's worn something you learn she loves, per the
+    // briefing doc's "Character Profile Behaviour". Never reveals how many
+    // are still unknown.
+    const discoveredLabels = (profile.discovered || []).map((k) => k.split(":").slice(1).join(":")).sort();
+    const preferencesHTML = `<div class="soul-fact"><b>Preferences</b><span>${discoveredLabels.length > 0 ? discoveredLabels.join(" · ") : "???"}</span></div>`;
     const factsHTML = profile.facts.length > 0
       ? profile.facts.map((f) => `<div class="soul-fact"><b>${f.q}</b><span>${f.a}</span></div>`).join("")
       : `<div class="soul-fact-empty">Nothing learned yet — ask them something next time you meet.</div>`;
@@ -1732,7 +2238,7 @@ function openSouls() {
             <div class="hearts">${heartsHTML(rel)}</div>
           </div>
         </div>
-        <div class="soul-facts">${factsHTML}</div>
+        <div class="soul-facts">${preferencesHTML}${factsHTML}</div>
       </div>
     `;
   }).join("");
@@ -1921,24 +2427,40 @@ const RARITY_FIT_BONUS = { Basic: 0, Uncommon: 2, Rare: 6, Iconic: 8, Legendary:
 const RARITY_OFFBRIEF_BONUS = 5;
 const HIGH_RARITY = new Set(["Rare", "Iconic", "Legendary"]);
 
-function favoriteMatches(rule, pieces) {
+// A piece matches a requirement if it's an exact attr/value hit, or (for a
+// rarity requirement) its rarity is one of the acceptable tiers.
+function reqMatches(r, piece) {
+  if (r.anyOf) return r.anyOf.includes(piece[r.attr]);
+  return piece[r.attr] === r.value;
+}
+
+// Hidden preferences reuse the same { type:"attr", attr, value } shape.
+function preferenceMatches(rule, pieces) {
   if (rule.type === "name") return pieces.some((p) => p.name.includes(rule.keyword));
   return pieces.some((p) => p[rule.attr] === rule.value);
 }
 
-function favoriteLabel(rule) {
+function preferenceLabel(rule) {
   return rule.type === "name" ? rule.keyword : `${rule.value} ${rule.attr}`;
+}
+
+// A stable id for a preference, used to track what's been discovered per
+// client (soulProfiles[key].discovered).
+function preferenceKey(rule) {
+  return rule.type === "name" ? `name:${rule.keyword}` : `${rule.attr}:${rule.value}`;
 }
 
 function finishStyling() {
   const client = currentClient();
   const key = currentClientKey();
+  const profile = soulProfiles[key];
   const pieces = Object.values(outfit).filter(Boolean);
+  const wantList = currentBrief.want || []; // empty for a player-choice (trust) job
 
   // Per-piece detail — computed once, used for both the aggregate totals and
   // the itemized breakdown, so the two views can never disagree.
   const pieceDetails = pieces.map((piece) => {
-    const matchedAttrs = Object.entries(currentBrief.want).filter(([attr, value]) => piece[attr] === value);
+    const matchedAttrs = wantList.filter((r) => reqMatches(r, piece));
     const briefPts = matchedAttrs.length * 25;
     let rarityPts = 0;
     if (matchedAttrs.length > 0) rarityPts = RARITY_FIT_BONUS[piece.rarity] || 0;
@@ -1951,9 +2473,26 @@ function finishStyling() {
   const briefCapped = rawBriefScore > 100;
   const rarityBonus = pieceDetails.reduce((sum, d) => sum + d.rarityPts, 0);
 
-  // Personal favorites — even outside the brief, these are worth something to them.
-  const matchedFavorites = (client.favorites || []).filter((rule) => favoriteMatches(rule, pieces));
-  const favoriteBonus = matchedFavorites.length * 8;
+  // Hidden preferences — permanent personal taste, separate from the active
+  // brief (see the briefing doc's "Hidden Preferences & Discovery"). An
+  // "against preference" job can suppress one of these for itself
+  // (currentBrief.suppressPreference) so wearing the thing she just asked
+  // to avoid doesn't quietly still score. A player-choice (trust) job scores
+  // these at +15 each, capped at +60, instead of the usual uncapped +8 each.
+  const suppressed = new Set(currentBrief.suppressPreference || []);
+  const matchedPreferences = (client.preferences || [])
+    .filter((rule) => !suppressed.has(rule.value) && preferenceMatches(rule, pieces));
+  const preferencePointValue = currentBrief.playerChoice ? 15 : 8;
+  const rawPreferenceScore = matchedPreferences.length * preferencePointValue;
+  const preferenceBonus = currentBrief.playerChoice ? Math.min(rawPreferenceScore, 60) : rawPreferenceScore;
+  const preferenceCapped = currentBrief.playerChoice && rawPreferenceScore > 60;
+
+  // A preference scores the moment it's matched, discovered or not (per the
+  // doc: "Discovery is knowledge progression, not an unlock for the
+  // character's taste") — but it only permanently joins her profile, and
+  // only gets the "new preference discovered" callout, the first time.
+  const newlyDiscovered = matchedPreferences.filter((rule) => !profile.discovered.includes(preferenceKey(rule)));
+  newlyDiscovered.forEach((rule) => profile.discovered.push(preferenceKey(rule)));
 
   // A signature color combo they personally love.
   let comboBonus = 0;
@@ -1982,7 +2521,7 @@ function finishStyling() {
   const WELCOME_BONUS = [20, 12, 6];
   const welcomeBonus = WELCOME_BONUS[clientRoundIndex] || 0;
 
-  const score = briefScore + rarityBonus + favoriteBonus + comboBonus + eventBonus + welcomeBonus;
+  const score = briefScore + rarityBonus + preferenceBonus + comboBonus + eventBonus + welcomeBonus;
 
   // Small penalties for real gaps in the outfit. A jacket (or an accessory)
   // is a bonus layer, never required — but going out with no shoes, or no
@@ -2005,7 +2544,7 @@ function finishStyling() {
   if (scoreWithGaps >= 70) { moonCoins += 1; moonCoinsEarned = 1; } // a genuinely good outfit, not just a perfect one
 
   let relDelta = scoreWithGaps >= 70 ? 2 : scoreWithGaps >= 35 ? 1 : 0;
-  if (matchedFavorites.length > 0) relDelta += 1;
+  if (matchedPreferences.length > 0) relDelta += 1;
 
   // A complete matching set, but only when the outfit already works.
   let setBonusName = null;
@@ -2030,12 +2569,14 @@ function finishStyling() {
   deckPile.push(...hand);
   hand = [];
 
-  const wantResults = Object.entries(currentBrief.want).map(([attr, value]) => ({
-    attr, value, matched: pieces.some((p) => p[attr] === value),
+  const wantResults = wantList.map((r) => ({
+    label: r.label, matched: pieces.some((p) => reqMatches(r, p)),
   }));
 
   const breakdown = {
-    briefScore, briefCapped, rarityBonus, favoriteBonus, comboBonus, eventBonus, activeEvent, welcomeBonus, gaps, matchedFavorites, pieceDetails,
+    briefScore, briefCapped, rarityBonus, comboBonus, eventBonus, activeEvent, welcomeBonus, gaps, pieceDetails,
+    preferenceBonus, preferencePointValue, preferenceCapped, matchedPreferences, newlyDiscovered,
+    playerChoice: !!currentBrief.playerChoice,
     comboName: client.combo && comboBonus > 0 ? client.combo.colors.join(" + ") : null,
   };
 
@@ -2060,10 +2601,18 @@ function renderResult(client, score, wantResults, relDelta, moonCoinsEarned, bre
 
   // Aggregate breakdown — always shown, so the math is never a mystery.
   const briefLabel = breakdown.briefCapped ? "Brief match (capped)" : "Brief match";
+  const preferenceRows = breakdown.playerChoice
+    ? [{
+        label: breakdown.preferenceCapped
+          ? `Hidden preferences matched (${breakdown.matchedPreferences.length}, capped)`
+          : `Hidden preferences matched (${breakdown.matchedPreferences.length})`,
+        value: breakdown.preferenceBonus,
+      }]
+    : breakdown.matchedPreferences.map((rule) => ({ label: `Loves ${preferenceLabel(rule).toLowerCase()}`, value: breakdown.preferencePointValue }));
   const breakdownRows = [
-    { label: briefLabel, value: breakdown.briefScore },
+    breakdown.playerChoice ? null : { label: briefLabel, value: breakdown.briefScore },
     breakdown.rarityBonus > 0 ? { label: "Rarity bonus", value: breakdown.rarityBonus } : null,
-    ...breakdown.matchedFavorites.map((rule) => ({ label: `Loves ${favoriteLabel(rule).toLowerCase()}`, value: 8 })),
+    ...preferenceRows,
     breakdown.comboBonus > 0 ? { label: `${breakdown.comboName} combo`, value: breakdown.comboBonus } : null,
     breakdown.eventBonus > 0 ? { label: `${EVENT_LABELS[breakdown.activeEvent]} bonus`, value: breakdown.eventBonus } : null,
     breakdown.welcomeBonus > 0 ? { label: "New stylist grace", value: breakdown.welcomeBonus } : null,
@@ -2082,7 +2631,7 @@ function renderResult(client, score, wantResults, relDelta, moonCoinsEarned, bre
   const itemRows = breakdown.pieceDetails.map((d) => {
     const bits = [];
     if (d.matchedAttrs.length > 0) {
-      bits.push(d.matchedAttrs.map(([attr, value]) => `${value.toLowerCase()} ${attr}`).join(", ") + ` (+${d.briefPts})`);
+      bits.push(d.matchedAttrs.map((r) => r.label.toLowerCase()).join(", ") + ` (+${d.briefPts})`);
     }
     if (d.rarityPts > 0) bits.push(`${d.piece.rarity} (+${d.rarityPts})`);
     const verdict = bits.length > 0 ? bits.join(" · ") : "no match, no bonus";
@@ -2090,21 +2639,36 @@ function renderResult(client, score, wantResults, relDelta, moonCoinsEarned, bre
   }).join("");
   const itemHTML = `<div class="result-box"><h4>How each piece performed</h4>${itemRows}</div>`;
 
-  const wantHTML = `
+  const wantHTML = breakdown.playerChoice
+    ? `<div class="result-box"><h4>The brief</h4><p>No hard ask this time — she wanted your judgment. Scored from the hidden preferences your outfit represented.</p></div>`
+    : `
     <div class="result-box">
       <h4>The brief</h4>
-      ${wantResults.map((w) => `<p>${w.matched ? "🩷" : "💔"} ${w.matched ? "Loved" : "Missed"} ${w.value.toLowerCase()} ${w.attr}</p>`).join("")}
+      ${wantResults.map((w) => `<p>${w.matched ? "🩷" : "💔"} ${w.matched ? "Loved" : "Missed"} ${w.label}</p>`).join("")}
     </div>
   `;
+
+  // Per the doc's discovery rule: the first time a worn piece matches one of
+  // her hidden preferences, it's called out and permanently joins her
+  // profile (see openSouls()) — never shown again as "new" after that.
+  const discoveryHTML = breakdown.newlyDiscovered.length > 0
+    ? `
+    <div class="result-box discovery-box">
+      <h4>New preference${breakdown.newlyDiscovered.length > 1 ? "s" : ""} discovered</h4>
+      ${breakdown.newlyDiscovered.map((rule) => `<p>✨ ${client.name.split(",")[0]} likes ${preferenceLabel(rule).toLowerCase()}.</p>`).join("")}
+    </div>
+  `
+    : "";
 
   stage.innerHTML = `
     <div class="center-col screen-pad result">
       <div class="reaction">${reaction}</div>
       <h2>${headline}</h2>
       <div class="score">Match score: ${score}</div>
-      <p class="breakdown-hint">Each matched brief attribute is worth 25 — one piece can only satisfy each attribute once, so wear more pieces that reinforce the ask to climb higher.</p>
+      <p class="breakdown-hint">${breakdown.playerChoice ? "No hard requirements this time — the whole score comes from her hidden preferences, at +15 each (capped at +60)." : "Each matched brief attribute is worth 25 — one piece can only satisfy each attribute once, so wear more pieces that reinforce the ask to climb higher."}</p>
       <div class="result-grid">
         ${wantHTML}
+        ${discoveryHTML}
         ${breakdownHTML}
         ${itemHTML}
         ${bondHTML}
