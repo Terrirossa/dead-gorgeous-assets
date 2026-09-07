@@ -123,10 +123,11 @@
 
   /* ---------- Meet-soul screen ---------- */
   .portrait {
-    width: 120px; aspect-ratio: 615 / 864; border-radius: 12px;
+    width: 160px; aspect-ratio: 615 / 864; border-radius: 12px;
     display: flex; align-items: center; justify-content: center; font-size: 40px; margin: 0 auto 14px;
-    background: #cdb6ff; overflow: hidden; box-shadow: 0 8px 24px rgba(0,0,0,0.35);
+    overflow: hidden; box-shadow: 0 8px 24px rgba(0,0,0,0.35);
   }
+  .portrait.no-image { background: #cdb6ff; }
   .portrait img { width: 100%; height: 100%; object-fit: cover; display: block; }
   .soul-name { font-size: 20px; color: #fff; margin-bottom: 6px; }
   .soul-hearts { margin-bottom: 16px; }
@@ -165,6 +166,9 @@
   .soul-profile-card { background: rgba(255,255,255,0.05); border-radius: 16px; padding: 16px; }
   .soul-profile-head { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
   .soul-facts { display: flex; flex-direction: column; gap: 8px; }
+  .soul-best-outfit { margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.1); }
+  .soul-best-outfit b { display: block; font-size: 11.5px; color: var(--gold); margin-bottom: 8px; }
+  .soul-best-outfit-cards { display: flex; gap: 6px; flex-wrap: wrap; }
   .soul-fact { background: rgba(255,255,255,0.05); border-radius: 10px; padding: 8px 12px; font-size: 12.5px; }
   .soul-fact b { display: block; color: var(--gold); font-weight: 600; margin-bottom: 3px; }
   .soul-fact span { color: #cfc6de; }
@@ -1735,7 +1739,7 @@ function beginGame() {
   discardPile = [];
   relationships = {};
   soulProfiles = {};
-  CLIENTS.forEach((_, i) => { soulProfiles[i] = { visits: 0, answered: [], facts: [], discovered: [] }; });
+  CLIENTS.forEach((_, i) => { soulProfiles[i] = { visits: 0, answered: [], facts: [], discovered: [], bestScore: null, bestPieces: [] }; });
   clientRoundIndex = 0;
   totalScore = 0;
   delightedCount = 0;
@@ -2007,7 +2011,7 @@ function renderSoul() {
 
   stage.innerHTML = `
     <div class="center-col screen-pad">
-      <div class="portrait" style="background:${client.color};">${client.portrait ? `<img src="${client.portrait}" alt="${client.name}">` : ""}</div>
+      <div class="portrait ${client.portrait ? "" : "no-image"}" style="${client.portrait ? "" : `background:${client.color};`}">${client.portrait ? `<img src="${client.portrait}" alt="${client.name}">` : ""}</div>
       <div class="soul-name">${client.name}</div>
       <div class="soul-hearts hearts">${heartsHTML(rel)}</div>
       ${returningNote}
@@ -2466,16 +2470,30 @@ function openSouls() {
     const factsHTML = profile.facts.length > 0
       ? profile.facts.map((f) => `<div class="soul-fact"><b>${f.q}</b><span>${f.a}</span></div>`).join("")
       : `<div class="soul-fact-empty">Nothing learned yet — ask them something next time you meet.</div>`;
+    const bestOutfitHTML = profile.bestScore !== null
+      ? `
+        <div class="soul-best-outfit">
+          <b>Best outfit so far — ${profile.bestScore} points</b>
+          <div class="soul-best-outfit-cards">
+            ${profile.bestPieces.map((id) => {
+              const card = findCard(id);
+              return card ? `<div class="new-card-item" style="width:60px;">${gcardHTML(card)}</div>` : "";
+            }).join("")}
+          </div>
+        </div>
+      `
+      : "";
     return `
       <div class="soul-profile-card">
         <div class="soul-profile-head">
-          <div class="portrait" style="width:56px;height:56px;background:${c.color};"></div>
+          <div class="portrait ${c.portrait ? "" : "no-image"}" style="width:56px;height:auto;aspect-ratio:615/864;${c.portrait ? "" : `background:${c.color};`}">${c.portrait ? `<img src="${c.portrait}" alt="${c.name}">` : ""}</div>
           <div>
             <div class="soul-name" style="font-size:16px;">${c.name}</div>
             <div class="hearts">${heartsHTML(rel)}</div>
           </div>
         </div>
         <div class="soul-facts">${preferencesHTML}${factsHTML}</div>
+        ${bestOutfitHTML}
       </div>
     `;
   }).join("");
@@ -2738,6 +2756,14 @@ function finishStyling() {
     return { piece, matchedAttrs, briefPts, rarityPts };
   });
 
+  // Whichever single piece contributed the most points -- shown on the
+  // result screen so the player can see exactly what worked.
+  let bestPiece = null;
+  if (pieceDetails.length > 0) {
+    const top = pieceDetails.reduce((best, d) => (d.briefPts + d.rarityPts > best.briefPts + best.rarityPts ? d : best));
+    if (top.briefPts + top.rarityPts > 0) bestPiece = top.piece;
+  }
+
   const rawBriefScore = pieceDetails.reduce((sum, d) => sum + d.briefPts, 0);
   const briefScore = Math.min(rawBriefScore, 100);
   const briefCapped = rawBriefScore > 100;
@@ -2862,6 +2888,12 @@ function finishStyling() {
   relDelta = Math.min(relDelta, 1);
   relationships[key] = Math.min(5, (relationships[key] || 0) + relDelta);
 
+  // Track this client's best-ever outfit, cards and all, for her profile.
+  if (profile.bestScore === null || scoreWithGaps > profile.bestScore) {
+    profile.bestScore = scoreWithGaps;
+    profile.bestPieces = pieces.map((p) => p.id);
+  }
+
   discardPile.push(...pieces.map((p) => p.id));
   deckPile.push(...hand);
   hand = [];
@@ -2875,7 +2907,7 @@ function finishStyling() {
     preferenceBonus, preferencePointValue, preferenceCapped, matchedPreferences, newlyDiscovered,
     playerChoice: !!currentBrief.playerChoice,
     comboName: client.combo && comboBonus > 0 ? client.combo.colors.join(" + ") : null,
-    comboNewlyDiscovered, setNewlyDiscovered, setBonusCard, setBonusId, setPiecesUsed,
+    comboNewlyDiscovered, setNewlyDiscovered, setBonusCard, setBonusId, setPiecesUsed, bestPiece,
   };
 
   renderResult(client, scoreWithGaps, wantResults, relDelta, moonCoinsEarned, breakdown, setBonusName);
@@ -2937,6 +2969,16 @@ function renderResult(client, score, wantResults, relDelta, moonCoinsEarned, bre
   }).join("");
   const itemHTML = `<div class="result-box"><h4>How each piece performed</h4>${itemRows}</div>`;
 
+  const bestPieceHTML = breakdown.bestPiece
+    ? `
+    <div class="result-box best-piece-box">
+      <h4>Best performing piece</h4>
+      <div class="new-card-item" style="width:80px; margin:4px auto 6px;">${gcardHTML(breakdown.bestPiece)}</div>
+      <p style="text-align:center;">${breakdown.bestPiece.name}</p>
+    </div>
+  `
+    : "";
+
   const wantHTML = breakdown.playerChoice
     ? `<div class="result-box"><h4>The brief</h4><p>No hard ask this time — she wanted your judgment. Scored from the hidden preferences your outfit represented.</p></div>`
     : `
@@ -2974,6 +3016,7 @@ function renderResult(client, score, wantResults, relDelta, moonCoinsEarned, bre
         ${discoveryHTML}
         ${breakdownHTML}
         ${itemHTML}
+        ${bestPieceHTML}
         ${bondHTML}
       </div>
       <div class="line">${line}</div>
