@@ -365,7 +365,18 @@
   .set-panel { max-width: 480px; margin: 0 auto 20px; background: rgba(255,255,255,0.04); border-radius: 14px; padding: 14px 16px; }
   .set-panel h4 { margin: 0 0 10px; font-size: 13px; color: var(--gold); }
   .set-empty { font-size: 12.5px; color: var(--muted); font-style: italic; margin: 0; }
-  .set-entry { font-size: 12.5px; margin-bottom: 6px; }
+  .set-entry {
+    font-size: 12.5px; margin-bottom: 8px; display: flex; align-items: center;
+    justify-content: space-between; gap: 10px; background: rgba(255,255,255,0.04);
+    border-radius: 10px; padding: 8px 12px;
+  }
+  .set-entry b { display: block; letter-spacing: 0.03em; font-size: 11.5px; }
+  .set-count { color: var(--gold); font-size: 11px; }
+  .set-showcase-card { max-width: 340px; }
+  .set-showcase-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 14px 0; }
+  .set-showcase-item { aspect-ratio: 595.28/841.9; text-align: center; }
+  .set-showcase-item .gcard-full { width: 100%; height: 85%; }
+  .set-showcase-item span { display: block; font-size: 9px; color: var(--muted); margin-top: 3px; }
   .set-entry b { color: #ece7f4; }
   .set-entry span { color: #cfc6de; display: block; }
   .deck-header h3 { color: #fff; font-size: 19px; }
@@ -434,6 +445,11 @@
   .set-discovery-card h2 { color: #fff; margin-bottom: 10px; }
   .set-discovery-card p { font-size: 13px; color: #cfc6de; margin-bottom: 14px; }
   .set-discovery-rewards { font-size: 13px; color: var(--gold); margin-bottom: 6px; }
+  .set-discovery-count { font-size: 12.5px; color: #cfc6de; margin-top: -6px; margin-bottom: 12px; }
+  .set-piece-row { display: flex; gap: 8px; justify-content: center; margin-bottom: 14px; flex-wrap: wrap; }
+  .set-piece-thumb { width: 72px; text-align: center; }
+  .set-piece-thumb .gcard-full { aspect-ratio: 595.28/841.9; display: block; }
+  .set-piece-thumb span { display: block; font-size: 9px; color: var(--muted); margin-top: 3px; line-height: 1.2; }
   .set-discovery-rewards div { margin-bottom: 4px; }
   @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
   .result-box h4 { margin: 0 0 6px; font-size: 10px; color: var(--gold); text-transform: uppercase; letter-spacing: 0.03em; }
@@ -2103,10 +2119,21 @@ function redrawHand() {
   const oldHand = [...hand];
   const newCount = Math.max(0, oldHand.length - 1);
 
+  // Cards already placed in an outfit slot must be excluded too, not just
+  // the current hand -- otherwise a redraw can hand you a second copy of
+  // whatever you already committed to a slot, which is exactly how a
+  // placed Denim Jacket or Cropped Pullover could turn up duplicated.
+  const placedIds = outfit.filter(Boolean).map((c) => c.id);
+  const unavailable = new Set([...oldHand, ...placedIds]);
+
   const jokerIds = new Set(JOKER_CARDS.map((c) => c.id));
-  const pool = liveDeck.filter((c) => !jokerIds.has(c.id) && !oldHand.includes(c.id) && allowedRarities.includes(c.rarity)).map((c) => c.id);
+  const pool = liveDeck.filter((c) => !jokerIds.has(c.id) && !unavailable.has(c.id) && allowedRarities.includes(c.rarity)).map((c) => c.id);
   const newHand = drawBalancedHand(pool).slice(0, newCount);
 
+  // deckPile and hand must stay mutually exclusive at all times -- the newly
+  // drawn cards have to come OUT of deckPile, or a later Joker draw could
+  // pull one of these same cards straight back out as a second copy.
+  deckPile = deckPile.filter((id) => !newHand.includes(id));
   discardPile.push(...oldHand);
   hand = newHand;
   redrawAvailable = false;
@@ -2535,10 +2562,42 @@ function discoveredSetsHTML() {
     return `<div class="set-panel"><h4>Discovered Sets</h4><p class="set-empty">No sets discovered yet — wear two matching pieces on a great outfit to find one.</p></div>`;
   }
   const rows = known.map(([id, name]) => {
-    const members = liveDeck.filter((c) => c.set === id).map((c) => c.name);
-    return `<div class="set-entry"><b>${name}</b><span>${members.join(" · ")}</span></div>`;
+    const { owned, total } = setOwnedCount(id);
+    return `
+      <div class="set-entry">
+        <div><b>${name.toUpperCase()}</b><span class="set-count">${owned}/${total}</span></div>
+        <button class="sort-btn" onclick="openSetShowcase('${id}')">Show set</button>
+      </div>
+    `;
   }).join("");
   return `<div class="set-panel"><h4>Discovered Sets</h4>${rows}</div>`;
+}
+
+function openSetShowcase(setId) {
+  const setName = SET_NAMES[setId];
+  const members = DECK.filter((c) => c.set === setId);
+  const cardsHTML = members.map((c) => {
+    const owned = unlockedCardIds.has(c.id);
+    return `
+      <div class="set-showcase-item">
+        ${owned ? gcardHTML(c) : `<div class="back-card-face" style="width:100%; height:100%; border-radius:14px;"></div>`}
+        <span>${owned ? c.name : "???"}</span>
+      </div>
+    `;
+  }).join("");
+  const { owned, total } = setOwnedCount(setId);
+
+  const overlay = document.createElement("div");
+  overlay.className = "set-discovery-overlay";
+  overlay.innerHTML = `
+    <div class="set-discovery-card set-showcase-card">
+      <h2>${setName}</h2>
+      <p class="set-discovery-count">${owned} of ${total} pieces in your closet</p>
+      <div class="set-showcase-grid">${cardsHTML}</div>
+      <button class="primary" onclick="this.closest('.set-discovery-overlay').remove()">Close</button>
+    </div>
+  `;
+  document.body.appendChild(overlay);
 }
 
 function renderDeckOverlay() {
@@ -2757,8 +2816,10 @@ function finishStyling() {
   // before totalScore/delightedCount/etc so a newly-discovered set's +20
   // is reflected consistently everywhere the score is used below.
   let setBonusName = null;
+  let setBonusId = null;
   let setNewlyDiscovered = false;
   let setBonusCard = null;
+  let setPiecesUsed = [];
   if (scoreWithGaps >= 70) {
     const completed = Object.entries(SET_NAMES).find(([setId]) => {
       const setPieces = pieces.filter((p) => p.set === setId);
@@ -2767,6 +2828,8 @@ function finishStyling() {
     });
     if (completed) {
       setBonusName = completed[1];
+      setBonusId = completed[0];
+      setPiecesUsed = pieces.filter((p) => p.set === completed[0]);
       if (!discoveredSets.has(completed[0])) {
         discoveredSets.add(completed[0]);
         setNewlyDiscovered = true;
@@ -2811,7 +2874,7 @@ function finishStyling() {
     preferenceBonus, preferencePointValue, preferenceCapped, matchedPreferences, newlyDiscovered,
     playerChoice: !!currentBrief.playerChoice,
     comboName: client.combo && comboBonus > 0 ? client.combo.colors.join(" + ") : null,
-    comboNewlyDiscovered, setNewlyDiscovered, setBonusCard,
+    comboNewlyDiscovered, setNewlyDiscovered, setBonusCard, setBonusId, setPiecesUsed,
   };
 
   renderResult(client, scoreWithGaps, wantResults, relDelta, moonCoinsEarned, breakdown, setBonusName);
@@ -2917,22 +2980,31 @@ function renderResult(client, score, wantResults, relDelta, moonCoinsEarned, bre
     </div>
   `;
   updateTopBar("", true);
-  if (breakdown.setNewlyDiscovered) showSetDiscoveryPopup(setBonusName, breakdown.setBonusCard);
+  if (breakdown.setNewlyDiscovered) showSetDiscoveryPopup(setBonusName, breakdown.setBonusId, breakdown.setPiecesUsed, breakdown.setBonusCard);
 }
 
-function showSetDiscoveryPopup(setName, rewardCard) {
+function setOwnedCount(setId) {
+  const setCards = DECK.filter((c) => c.set === setId);
+  const owned = setCards.filter((c) => unlockedCardIds.has(c.id));
+  return { owned: owned.length, total: setCards.length };
+}
+
+function showSetDiscoveryPopup(setName, setId, piecesUsed, rewardCard) {
+  const { owned, total } = setOwnedCount(setId);
   const overlay = document.createElement("div");
   overlay.className = "set-discovery-overlay";
+  const piecesHTML = piecesUsed.map((p) => `<div class="set-piece-thumb">${gcardHTML(p)}<span>${p.name}</span></div>`).join("");
   overlay.innerHTML = `
     <div class="set-discovery-card">
       <div class="set-discovery-badge">SET DISCOVERED</div>
       <h2>${setName}</h2>
-      <p>You've worn a complete set together for the first time. Aftercity takes notice.</p>
+      <p class="set-discovery-count">${owned} of ${total} pieces in your closet</p>
+      <div class="set-piece-row">${piecesHTML}</div>
       <div class="set-discovery-rewards">
         <div>+20 to this outfit's score</div>
         ${rewardCard ? `<div>A new piece for your closet</div>` : ""}
       </div>
-      ${rewardCard ? `<div class="new-card-item" style="width:140px; margin:14px auto;">${gcardHTML(rewardCard)}</div>` : ""}
+      ${rewardCard ? `<div class="new-card-item" style="width:120px; margin:10px auto;">${gcardHTML(rewardCard)}</div>` : ""}
       <button class="primary" onclick="this.closest('.set-discovery-overlay').remove()">Nice.</button>
     </div>
   `;
