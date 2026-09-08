@@ -129,6 +129,9 @@
   }
   .portrait.no-image { background: #cdb6ff; }
   .portrait img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .portrait-row { display: flex; gap: 10px; justify-content: center; margin: 0 auto 14px; }
+  .portrait-row .portrait { margin: 0; }
+  .portrait-row.portrait-row-multi .portrait { width: 108px; }
   .soul-name { font-size: 20px; color: #fff; margin-bottom: 6px; }
   .soul-hearts { margin-bottom: 16px; }
   .returning-note { font-size: 12px; color: var(--muted); margin-bottom: 14px; font-style: italic; }
@@ -1715,6 +1718,14 @@ let slotDragState = null;
 // once they're built, so the full flag set is declared up front.
 // ---------------------------------------------------------------------------
 let currentYear = 1;
+// True right after starting any styling job (core client or special job),
+// false once that job's "one earned story beat" has been spent at a
+// secondary location (Castle/Café/Nightgarden). Keeps the game to the
+// existing MAP -> JOB -> optional STORY BEAT -> MAP rhythm the bible already
+// uses for seasonal events, instead of letting those locations be revisited
+// freely for unlimited story content between jobs. See visitCastle()/
+// visitCafe()/visitGarden() near renderMap() for where this is spent.
+let storyBeatAvailable = true;
 let activeKeyIds = new Set();
 
 // Shared
@@ -1856,6 +1867,7 @@ function startRound() {
   jokerAvailable = true;
   redrawAvailable = true;
   selectedHandId = null;
+  storyBeatAvailable = true; // starting any job re-earns the next secondary-location story beat
 
   const key = currentClientKey();
   const profile = soulProfiles[key];
@@ -1953,6 +1965,7 @@ function startSpecialRound(virtualClient, brief, jobMeta) {
   selectedHandId = null;
   currentBrief = brief;
   specialJob = { ...jobMeta, virtualClient };
+  storyBeatAvailable = true; // same rule as a normal job -- see startRound()
 
   const jokerIds = new Set(JOKER_CARDS.map((c) => c.id));
   deckPile = liveDeck.filter((c) => !jokerIds.has(c.id)).map((c) => c.id);
@@ -2097,6 +2110,7 @@ function beginGame() {
   CLIENTS.forEach((_, i) => { soulProfiles[i] = { visits: 0, yearVisits: 0, answered: [], facts: [], discovered: [], bestScore: null, bestPieces: [] }; });
   clientRoundIndex = 0;
   currentYear = 1;
+  storyBeatAvailable = true;
   totalScore = 0;
   delightedCount = 0;
   restrictedPhase = { castle: 0, garden: 0 };
@@ -2217,6 +2231,47 @@ const RESTRICTED_PHASES = {
   ],
 };
 
+// ---------------------------------------------------------------------------
+// Story-beat pacing gate. Keeps Castle/Café/Nightgarden on the same rhythm
+// the bible already uses for seasonal events: one earned story beat per job,
+// not free unlimited re-clicking. See the comment on `let storyBeatAvailable`.
+// Each wrapper still lets through content that was never meant to be gated
+// in the first place (Castle's pre-unlock flavor cycle, Nightgarden's
+// seasonal closed message) -- only the actual character content is paced.
+// ---------------------------------------------------------------------------
+function visitCastle() {
+  if (!castleGateCharactersUnlocked) { renderCastle(); return; }
+  if (!storyBeatAvailable) {
+    renderCastleScene([{ who: "NARRATION", t: "The two guards stand exactly where they always do." }], "Back to the map", "renderMap()");
+    return;
+  }
+  storyBeatAvailable = false;
+  renderCastle();
+}
+
+function visitCafe() {
+  if (!storyBeatAvailable) {
+    // Café already always had a harmless flavor-only fallback before Maya
+    // existed -- reuse it here instead of a blocking message, so a quick
+    // visit still feels like the café rather than a locked door.
+    const snippet = CAFE_SNIPPETS[Math.floor(Math.random() * CAFE_SNIPPETS.length)];
+    renderCafeScreen([{ who: "NARRATION", t: snippet }], "Leave", "renderMap()");
+    return;
+  }
+  storyBeatAvailable = false;
+  renderCafe();
+}
+
+function visitGarden() {
+  if (!nightgardenOpen()) { renderGarden(); return; }
+  if (!storyBeatAvailable) {
+    renderGardenScene([{ who: "NARRATION", t: "The garden is quiet. Whatever's out there isn't showing itself right now." }], "Back to the map", "renderMap()");
+    return;
+  }
+  storyBeatAvailable = false;
+  renderGarden();
+}
+
 function renderMap() {
   mapMessage = "";
   const monthName = MONTHS[currentMonthIndex()];
@@ -2224,9 +2279,9 @@ function renderMap() {
   const tiles = [
     { key: "studio", label: "Studio", locked: false, action: "renderShuffle()" },
     { key: "shop", label: "Shop", locked: false, action: "renderShop()" },
-    { key: "cafe", label: "Night Café", locked: false, action: "renderCafe()" },
-    { key: "castle", label: "Night Castle", locked: restrictedPhase.castle < 4, action: "renderCastle()" },
-    { key: "garden", label: "Nightgarden", locked: false, action: "renderGarden()" },
+    { key: "cafe", label: "Night Café", locked: false, action: "visitCafe()" },
+    { key: "castle", label: "Night Castle", locked: restrictedPhase.castle < 4, action: "visitCastle()" },
+    { key: "garden", label: "Nightgarden", locked: false, action: "visitGarden()" },
   ];
 
   const tilesHTML = tiles.map((t) => `
@@ -2317,21 +2372,30 @@ function renderShop() {
   updateTopBar("", true);
 }
 
+// Shared "you now own this card" screen -- used after any Shop purchase and
+// after an Unmarked Box find. Note openUnmarkedBox()'s screen has always had
+// the "result" class (affects heading size/color, see .result h2 in the
+// stylesheet) while the three Shop purchase screens never did -- a small
+// pre-existing inconsistency, kept exactly as-is rather than silently
+// "fixed" here, since that's a visual change nobody asked for.
+function renderCardAcquiredScreen(heading, card, buttonLabel, includeResultClass) {
+  const cls = includeResultClass ? "center-col screen-pad result" : "center-col screen-pad";
+  stage.innerHTML = `
+    <div class="${cls}">
+      <h2>${heading}</h2>
+      <div class="shop-mystery-card">${gcardHTML(card)}</div>
+      <div class="card-detail-lore" style="margin-top:14px;">${card.lore || ""}</div>
+      <button class="primary" style="margin-top:22px;" onclick="renderMap()">${buttonLabel}</button>
+    </div>
+  `;
+  updateTopBar("", true);
+}
+
 function buyUnusualKey() {
   if (moonCoins < UNUSUAL_KEY_PRICE || hasUnusualKey || cafeBackRoomUnlocked) return;
   moonCoins -= UNUSUAL_KEY_PRICE;
   awardKeyCard("key_unusual");
-
-  const keyCard = KEY_CARDS_BY_ID.key_unusual;
-  stage.innerHTML = `
-    <div class="center-col screen-pad">
-      <h2>Sold.</h2>
-      <div class="shop-mystery-card">${gcardHTML(keyCard)}</div>
-      <div class="card-detail-lore" style="margin-top:14px;">${keyCard.lore}</div>
-      <button class="primary" style="margin-top:22px;" onclick="renderMap()">Back to the map</button>
-    </div>
-  `;
-  updateTopBar("", true);
+  renderCardAcquiredScreen("Sold.", KEY_CARDS_BY_ID.key_unusual, "Back to the map", false);
 }
 
 function buyMysteryCard() {
@@ -2341,32 +2405,14 @@ function buyMysteryCard() {
   unlockedCardIds.add(item.id);
   rebuildLiveDeckFromUnlocked();
   currentShopItem = null;
-
-  stage.innerHTML = `
-    <div class="center-col screen-pad">
-      <h2>Sold.</h2>
-      <div class="shop-mystery-card">${gcardHTML(item)}</div>
-      <div class="card-detail-lore" style="margin-top:14px;">${item.lore}</div>
-      <button class="primary" style="margin-top:22px;" onclick="renderMap()">Back to the map</button>
-    </div>
-  `;
-  updateTopBar("", true);
+  renderCardAcquiredScreen("Sold.", item, "Back to the map", false);
 }
 
 function buyJoker() {
   if (moonCoins < JOKER_PRICE) return;
   moonCoins -= JOKER_PRICE;
   deckPile.push(JOKER_CARDS[0].id);
-
-  stage.innerHTML = `
-    <div class="center-col screen-pad">
-      <h2>Sold.</h2>
-      <div class="shop-mystery-card">${gcardHTML(JOKER_CARDS[0])}</div>
-      <div class="card-detail-lore" style="margin-top:14px;">${JOKER_CARDS[0].lore}</div>
-      <button class="primary" style="margin-top:22px;" onclick="renderMap()">Back to the map</button>
-    </div>
-  `;
-  updateTopBar("", true);
+  renderCardAcquiredScreen("Sold.", JOKER_CARDS[0], "Back to the map", false);
 }
 
 // ---------------------------------------------------------------------------
@@ -2496,7 +2542,7 @@ function cafeSublocButtonsHTML() {
 function renderCafeScreen(lines, leaveLabel, leaveAction) {
   stage.innerHTML = `
     <div class="center-col screen-pad">
-      <div class="portrait">☕</div>
+      ${portraitHTML(lines, "☕", "#3a2f28")}
       <div class="soul-name">Night Café</div>
       ${sceneHTML(lines, null)}
       ${cafeSublocButtonsHTML()}
@@ -2520,54 +2566,58 @@ function afterMayaAtticHint() {
 // else the very first visit it's eligible) > Maya first meeting > cross-doc
 // reactions > Maya's one-time Attic hint > Maya ambient (monthly cap) >
 // existing generic Café flavor as the final fallback.
+function buildCafeEvents() {
+  const ym = yearMonthKey();
+  return [
+    { eligible: () => hasUnusualKey && !cafeBackDoorDiscovered, run: renderCafeBackDoorReveal },
+    {
+      eligible: () => !metMaya && mayaEligible(),
+      run: () => renderCafeScreen(MAYA_FIRST_SCENE, "Leave", "afterMayaFirst()"),
+    },
+    {
+      eligible: () => metMaya && hasFadedPhotograph && !mayaPhotoReactionSeen,
+      run: () => renderCafeScreen(MAYA_PHOTO_REACTION, "Leave", "afterMayaPhotoReaction()"),
+    },
+    {
+      eligible: () => metMaya && cafeBackRoomUnlocked && !mayaBackRoomReactionSeen,
+      run: () => renderCafeScreen(MAYA_BACKROOM_REACTION, "Leave", "afterMayaBackRoomReaction()"),
+    },
+    {
+      eligible: mayaAtticHintEligible,
+      run: () => renderCafeScreen(MAYA_ATTIC_HINT_SCENE, "Leave", "afterMayaAtticHint()"),
+    },
+    {
+      eligible: () => !!getFestivalReactionFor("maya", metMaya),
+      run: () => {
+        const f = getFestivalReactionFor("maya", metMaya);
+        markSeasonalReactionSeen("maya", f.eventId);
+        renderCafeScreen(f.lines, "Leave", "renderMap()");
+      },
+    },
+    {
+      eligible: () => metMaya && mayaLastAmbientYearMonth !== ym,
+      run: () => {
+        const unseen = MAYA_AMBIENT.map((_, i) => i).filter((i) => !mayaAmbientSeen.includes(i));
+        const pool = unseen.length > 0 ? unseen : MAYA_AMBIENT.map((_, i) => i);
+        const idx = pool[Math.floor(Math.random() * pool.length)];
+        if (!mayaAmbientSeen.includes(idx)) mayaAmbientSeen.push(idx);
+        mayaLastAmbientYearMonth = ym;
+        mayaEncounterCount += 1;
+        renderCafeScreen(MAYA_AMBIENT[idx], "Leave", "renderMap()");
+      },
+    },
+    {
+      eligible: () => true,
+      run: () => {
+        const snippet = CAFE_SNIPPETS[Math.floor(Math.random() * CAFE_SNIPPETS.length)];
+        renderCafeScreen([{ who: "NARRATION", t: snippet }], "Leave", "renderMap()");
+      },
+    },
+  ];
+}
+
 function renderCafe() {
-  if (hasUnusualKey && !cafeBackDoorDiscovered) {
-    renderCafeBackDoorReveal();
-    return;
-  }
-
-  if (!metMaya && mayaEligible()) {
-    renderCafeScreen(MAYA_FIRST_SCENE, "Leave", "afterMayaFirst()");
-    return;
-  }
-
-  if (metMaya && hasFadedPhotograph && !mayaPhotoReactionSeen) {
-    renderCafeScreen(MAYA_PHOTO_REACTION, "Leave", "afterMayaPhotoReaction()");
-    return;
-  }
-  if (metMaya && cafeBackRoomUnlocked && !mayaBackRoomReactionSeen) {
-    renderCafeScreen(MAYA_BACKROOM_REACTION, "Leave", "afterMayaBackRoomReaction()");
-    return;
-  }
-
-  if (mayaAtticHintEligible()) {
-    renderCafeScreen(MAYA_ATTIC_HINT_SCENE, "Leave", "afterMayaAtticHint()");
-    return;
-  }
-
-  const mayaFestival = getFestivalReactionFor("maya", metMaya);
-  if (mayaFestival) {
-    markSeasonalReactionSeen("maya", mayaFestival.eventId);
-    renderCafeScreen(mayaFestival.lines, "Leave", "renderMap()");
-    return;
-  }
-
-  if (metMaya) {
-    const ym = yearMonthKey();
-    if (mayaLastAmbientYearMonth !== ym) {
-      const unseen = MAYA_AMBIENT.map((_, i) => i).filter((i) => !mayaAmbientSeen.includes(i));
-      const pool = unseen.length > 0 ? unseen : MAYA_AMBIENT.map((_, i) => i);
-      const idx = pool[Math.floor(Math.random() * pool.length)];
-      if (!mayaAmbientSeen.includes(idx)) mayaAmbientSeen.push(idx);
-      mayaLastAmbientYearMonth = ym;
-      mayaEncounterCount += 1;
-      renderCafeScreen(MAYA_AMBIENT[idx], "Leave", "renderMap()");
-      return;
-    }
-  }
-
-  const snippet = CAFE_SNIPPETS[Math.floor(Math.random() * CAFE_SNIPPETS.length)];
-  renderCafeScreen([{ who: "NARRATION", t: snippet }], "Leave", "renderMap()");
+  runFirstEligibleEvent(buildCafeEvents());
 }
 
 // --- Café Back Room ---------------------------------------------------
@@ -2712,15 +2762,7 @@ function openUnmarkedBox() {
   unlockedCardIds.add(awarded.id);
   rebuildLiveDeckFromUnlocked();
   backRoomBoxPurchasedYearMonth = ym;
-  stage.innerHTML = `
-    <div class="center-col screen-pad result">
-      <h2>Found something.</h2>
-      <div class="shop-mystery-card">${gcardHTML(awarded)}</div>
-      <div class="card-detail-lore" style="margin-top:14px;">${awarded.lore || ""}</div>
-      <button class="primary" style="margin-top:22px;" onclick="renderMap()">Continue</button>
-    </div>
-  `;
-  updateTopBar("", true);
+  renderCardAcquiredScreen("Found something.", awarded, "Continue", true);
 }
 
 // --- Café Attic ---------------------------------------------------------
@@ -2728,7 +2770,7 @@ function openUnmarkedBox() {
 function renderAtticScene(lines, buttonLabel, onContinue) {
   stage.innerHTML = `
     <div class="center-col screen-pad">
-      <div class="portrait no-image" style="background:#3a352c;">🗄️</div>
+      ${portraitHTML(lines, "🗄️", "#3a352c")}
       <div class="soul-name">Café Attic</div>
       ${sceneHTML(lines, null)}
       <button class="primary" onclick="${onContinue}">${buttonLabel}</button>
@@ -2781,35 +2823,65 @@ function takeAtticPhotograph() {
 function afterAtticMenus() { atticMenusSeen = true; renderMap(); }
 function afterAtticCoat() { cafeAtticStaffCoatSeen = true; renderMap(); }
 
-function atticRepeatVisit() {
-  const canOfferLostProperty = atticLostPropertyLastYear !== currentYear;
-  const pool = canOfferLostProperty ? ATTIC_REPEAT_POOL : ATTIC_REPEAT_POOL.filter((e) => e.id !== "lostproperty");
-  const chosen = pool[Math.floor(Math.random() * pool.length)];
+// Shared "repeat pool with an occasional once-per-year rare bonus" mechanic,
+// used by the Café Attic, Glass House, and Royal Garden repeat events. This
+// was previously three separately hand-written copies of the same shape --
+// which is exactly why the same "forgets to cap itself once nothing's left
+// to award" bug had to be fixed in all three places instead of one. Each
+// caller supplies its own pool, its own selection strategy (so each
+// location's exact original random-number behavior is preserved), its own
+// once-per-year state accessors, its own reward eligibility filter, and its
+// own two renderers -- so each location keeps its own look and any extra
+// buttons (e.g. Glass House's Cultivate button).
+function pickUniform(pool) { return pool[Math.floor(Math.random() * pool.length)]; }
+function pickWeighted(pool) {
+  const totalWeight = pool.reduce((sum, e) => sum + e.weight, 0);
+  let roll = Math.random() * totalWeight;
+  let chosen = pool[0];
+  for (const e of pool) { roll -= e.weight; if (roll <= 0) { chosen = e; break; } }
+  return chosen;
+}
+function resolveRepeatPoolVisit({ pool, pickFn, bonusId, getBonusLastYear, setBonusLastYear, eligibleCards, renderPlain, renderReward }) {
+  const canOfferBonus = getBonusLastYear() !== currentYear;
+  const activePool = canOfferBonus ? pool : pool.filter((e) => e.id !== bonusId);
+  const chosen = pickFn(activePool);
 
-  if (chosen.id === "lostproperty") {
-    // Mark the year's slot used the moment this outcome is rolled, win or
-    // not -- otherwise, once every eligible card is already collected, this
-    // exact near-miss can keep re-rolling indefinitely instead of actually
-    // being "once per year" the way the other repeat pools behave.
-    atticLostPropertyLastYear = currentYear;
+  if (chosen.id === bonusId) {
+    // Set eagerly, win or lose -- see the once-per-year edge-case fix.
+    setBonusLastYear(currentYear);
     const owned = new Set(unlockedCardIds);
-    const eligible = DECK.filter((c) => c.category === "Accessory" && ["Uncommon", "Rare"].includes(c.rarity) && !owned.has(c.id));
+    const eligible = eligibleCards().filter((c) => !owned.has(c.id));
     if (eligible.length > 0) {
       const awarded = eligible[Math.floor(Math.random() * eligible.length)];
       unlockedCardIds.add(awarded.id);
       rebuildLiveDeckFromUnlocked();
+      renderReward(chosen, awarded);
+      return;
+    }
+  }
+  renderPlain(chosen);
+}
+
+function atticRepeatVisit() {
+  resolveRepeatPoolVisit({
+    pool: ATTIC_REPEAT_POOL,
+    pickFn: pickUniform,
+    bonusId: "lostproperty",
+    getBonusLastYear: () => atticLostPropertyLastYear,
+    setBonusLastYear: (y) => { atticLostPropertyLastYear = y; },
+    eligibleCards: () => DECK.filter((c) => c.category === "Accessory" && ["Uncommon", "Rare"].includes(c.rarity)),
+    renderPlain: (entry) => renderAtticScene([{ who: "NARRATION", t: entry.t }], "Leave", "renderMap()"),
+    renderReward: (entry, awarded) => {
       stage.innerHTML = `
         <div class="center-col screen-pad result">
-          <div class="speech narration-line">${chosen.t}</div>
+          <div class="speech narration-line">${entry.t}</div>
           <div class="shop-mystery-card" style="margin-top:10px;">${gcardHTML(awarded)}</div>
           <button class="primary" style="margin-top:18px;" onclick="renderMap()">Continue</button>
         </div>
       `;
       updateTopBar("", true);
-      return;
-    }
-  }
-  renderAtticScene([{ who: "NARRATION", t: chosen.t }], "Leave", "renderMap()");
+    },
+  });
 }
 
 function renderCafeAttic() {
@@ -2931,7 +3003,7 @@ function gardenSublocButtonsHTML() {
 function renderGardenScene(lines, leaveLabel, leaveAction) {
   stage.innerHTML = `
     <div class="center-col screen-pad">
-      <div class="portrait no-image" style="background:#243424;">🌿</div>
+      ${portraitHTML(lines, "🌿", "#243424")}
       <div class="soul-name">Nightgarden</div>
       ${sceneHTML(lines, null)}
       ${gardenSublocButtonsHTML()}
@@ -2942,6 +3014,32 @@ function renderGardenScene(lines, leaveLabel, leaveAction) {
 }
 
 function afterOctaviaFirst() { metOctavia = true; octaviaEncounterCount = 1; renderMap(); }
+
+function buildGardenEvents() {
+  return [
+    { eligible: () => !metOctavia, run: () => renderGardenScene(OCT_FIRST_SCENE, "Leave", "afterOctaviaFirst()") },
+    { eligible: octaviaSacrificeEligible, run: () => renderGardenScene(OCT_SACRIFICE_INTRO_LINES, "Continue", "renderOctaviaSacrificePicker()") },
+    {
+      eligible: () => !!getFestivalReactionFor("octavia", metOctavia),
+      run: () => {
+        const f = getFestivalReactionFor("octavia", metOctavia);
+        markSeasonalReactionSeen("octavia", f.eventId);
+        renderGardenScene(f.lines, "Leave", "renderMap()");
+      },
+    },
+    {
+      eligible: () => true,
+      run: () => {
+        const unseen = OCTAVIA_AMBIENT.map((_, i) => i).filter((i) => !octaviaAmbientSeen.includes(i));
+        const pool = unseen.length > 0 ? unseen : OCTAVIA_AMBIENT.map((_, i) => i);
+        const idx = pool[Math.floor(Math.random() * pool.length)];
+        if (!octaviaAmbientSeen.includes(idx)) octaviaAmbientSeen.push(idx);
+        octaviaEncounterCount += 1;
+        renderGardenScene(OCTAVIA_AMBIENT[idx], "Leave", "renderMap()");
+      },
+    },
+  ];
+}
 
 function renderGarden() {
   if (!nightgardenOpen()) {
@@ -2957,32 +3055,7 @@ function renderGarden() {
     return;
   }
 
-  if (!metOctavia) {
-    renderGardenScene(OCT_FIRST_SCENE, "Leave", "afterOctaviaFirst()");
-    return;
-  }
-
-  if (octaviaSacrificeEligible()) {
-    renderGardenScene(OCT_SACRIFICE_INTRO_LINES, "Continue", "renderOctaviaSacrificePicker()");
-    return;
-  }
-
-  // Octavia only has a Flower Fest / Summer Solstice reaction -- Nightgarden
-  // is closed for Moon Fest and Winter Solstice, so getFestivalReactionFor()
-  // naturally returns nothing for those (no entry in FESTIVAL_REACTIONS).
-  const octaviaFestival = getFestivalReactionFor("octavia", metOctavia);
-  if (octaviaFestival) {
-    markSeasonalReactionSeen("octavia", octaviaFestival.eventId);
-    renderGardenScene(octaviaFestival.lines, "Leave", "renderMap()");
-    return;
-  }
-
-  const unseen = OCTAVIA_AMBIENT.map((_, i) => i).filter((i) => !octaviaAmbientSeen.includes(i));
-  const pool = unseen.length > 0 ? unseen : OCTAVIA_AMBIENT.map((_, i) => i);
-  const idx = pool[Math.floor(Math.random() * pool.length)];
-  if (!octaviaAmbientSeen.includes(idx)) octaviaAmbientSeen.push(idx);
-  octaviaEncounterCount += 1;
-  renderGardenScene(OCTAVIA_AMBIENT[idx], "Leave", "renderMap()");
+  runFirstEligibleEvent(buildGardenEvents());
 }
 
 // --- Octavia's "Leave Something Behind" sacrifice quest -----------------
@@ -3101,7 +3174,7 @@ function useGlassHouseKey() {
 function renderGlassHouseScene(lines, buttonLabel, onContinue) {
   stage.innerHTML = `
     <div class="center-col screen-pad">
-      <div class="portrait no-image" style="background:#1f2b22;">🪟</div>
+      ${portraitHTML(lines, "🪟", "#1f2b22")}
       <div class="soul-name">Glass House</div>
       ${sceneHTML(lines, null)}
       <button class="primary" onclick="${onContinue}">${buttonLabel}</button>
@@ -3170,40 +3243,30 @@ function renderGlassHouseAmbient(text) {
 }
 
 function glassHouseAmbientVisit() {
-  const canOfferRareFind = glassHouseRareFindLastYear !== currentYear;
-  const pool = canOfferRareFind ? GH_REPEAT_POOL : GH_REPEAT_POOL.filter((e) => e.id !== "rarefind");
-  const totalWeight = pool.reduce((s, e) => s + e.weight, 0);
-  let roll = Math.random() * totalWeight;
-  let chosen = pool[0];
-  for (const e of pool) { roll -= e.weight; if (roll <= 0) { chosen = e; break; } }
-
-  if (chosen.id === "rarefind") {
-    // Set eagerly (see the identical fix/comment on atticLostPropertyLastYear)
-    // so this can't keep re-rolling forever once every Rare card is owned.
-    glassHouseRareFindLastYear = currentYear;
-    const owned = new Set(unlockedCardIds);
-    const eligible = DECK.filter((c) => c.rarity === "Rare" && !owned.has(c.id));
-    if (eligible.length > 0) {
-      const awarded = eligible[Math.floor(Math.random() * eligible.length)];
-      unlockedCardIds.add(awarded.id);
-      rebuildLiveDeckFromUnlocked();
+  resolveRepeatPoolVisit({
+    pool: GH_REPEAT_POOL,
+    pickFn: pickWeighted,
+    bonusId: "rarefind",
+    getBonusLastYear: () => glassHouseRareFindLastYear,
+    setBonusLastYear: (y) => { glassHouseRareFindLastYear = y; },
+    eligibleCards: () => DECK.filter((c) => c.rarity === "Rare"),
+    renderPlain: (entry) => renderGlassHouseAmbient(entry.t),
+    renderReward: (entry, awarded) => {
       // Cultivate must stay reachable regardless of which ambient outcome
       // fires on a given visit -- otherwise landing on the rare-find screen
       // could make it look temporarily unavailable even though it's unlocked.
       const canCultivate = glassHouseCultivationUnlocked && !glassHouseCultivationPending;
       stage.innerHTML = `
         <div class="center-col screen-pad result">
-          <div class="speech narration-line">${chosen.t}</div>
+          <div class="speech narration-line">${entry.t}</div>
           <div class="shop-mystery-card" style="margin-top:10px;">${gcardHTML(awarded)}</div>
           ${canCultivate ? `<button class="ghost" style="margin-top:10px;" onclick="startGlassHouseCultivate()">Cultivate</button>` : ""}
           <button class="primary" style="margin-top:18px;" onclick="renderMap()">Continue</button>
         </div>
       `;
       updateTopBar("", true);
-      return;
-    }
-  }
-  renderGlassHouseAmbient(chosen.t);
+    },
+  });
 }
 
 // --- Glass House Cultivate mechanic ---------------------------------------
@@ -3356,7 +3419,7 @@ function castleSublocButtonsHTML() {
 function renderCastleScene(lines, buttonLabel, onContinue) {
   stage.innerHTML = `
     <div class="center-col screen-pad">
-      <div class="portrait no-image" style="background:#33323c;">🏰</div>
+      ${portraitHTML(lines, "🏰", "#33323c")}
       <div class="soul-name">Night Castle</div>
       ${sceneHTML(lines, null)}
       ${castleSublocButtonsHTML()}
@@ -3545,7 +3608,7 @@ function renderJulThornRetryPicker() {
   `).join("");
   stage.innerHTML = `
     <div class="center-col screen-pad">
-      <div class="portrait no-image" style="background:#33323c;">🏰</div>
+      <div class="portrait"><img src="${SECONDARY_PORTRAITS.juliette}" alt="juliette"></div>
       <div class="soul-name">Night Castle</div>
       <p style="color:var(--muted); font-size:12.5px;">Choose one Silver piece.</p>
       <div class="deck-grid">${itemsHTML}</div>
@@ -3640,6 +3703,122 @@ function getFestivalReactionFor(characterId, metFlag) {
   return { eventId, lines };
 }
 
+// Small shared dispatcher used by every location's resolver: walks a list of
+// {eligible, run} entries IN ORDER and executes the first one whose
+// eligible() returns true, then stops -- exactly matching the short-circuit
+// behavior of the if/return chain this replaces. The array order IS the
+// priority order; nothing else determines it, so the whole priority list is
+// readable top to bottom in one place instead of buried in nested ifs.
+function runFirstEligibleEvent(events) {
+  for (const event of events) {
+    if (event.eligible()) { event.run(); return; }
+  }
+}
+
+function buildCastleEvents() {
+  const ym = yearMonthKey();
+  return [
+    {
+      eligible: () => !julietteShiftEventSeen && castleVisitsAfterMeeting >= 2,
+      run: () => { julietteShiftEventSeen = true; renderCastleScene(JUL_SHIFT_END_SCENE, "Continue", "renderMap()"); },
+    },
+    { eligible: guardCeremonyEligible, run: startGuardCeremony },
+    { eligible: julThornRetryEligible, run: startJulThornRetry },
+    {
+      eligible: valeryKeyFallbackEligible,
+      run: () => renderCastleScene(VALERY_KEY_FALLBACK_SCENE, "Leave", "afterValeryKeyFallback()"),
+    },
+    {
+      eligible: julietteAtticKeyEligible,
+      run: () => renderCastleScene(JULIETTE_ATTIC_KEY_SCENE, "Leave", "afterJulietteAtticKey()"),
+    },
+    {
+      eligible: () => hasFadedPhotograph && !helenaPhotoReactionSeen,
+      run: () => renderCastleScene(HELENA_PHOTO_REACTION, "Leave", "afterHelenaPhotoReaction()"),
+    },
+    {
+      eligible: () => hasFadedPhotograph && !juliettePhotoReactionSeen,
+      run: () => renderCastleScene(JULIETTE_PHOTO_REACTION, "Leave", "afterJuliettePhotoReaction()"),
+    },
+    {
+      eligible: () => metHelena && !metValery && valeryEligible(),
+      run: () => renderCastleScene(VALERY_FIRST_EXIT_SCENE, "Leave", "afterValeryFirstExit()"),
+    },
+    {
+      eligible: () => !!getFestivalReactionFor("helena", metHelena),
+      run: () => {
+        const f = getFestivalReactionFor("helena", metHelena);
+        markSeasonalReactionSeen("helena", f.eventId);
+        renderCastleScene(f.lines, "Leave", "renderMap()");
+      },
+    },
+    {
+      eligible: () => !!getFestivalReactionFor("juliette", metJuliette),
+      run: () => {
+        const f = getFestivalReactionFor("juliette", metJuliette);
+        markSeasonalReactionSeen("juliette", f.eventId);
+        renderCastleScene(f.lines, "Leave", "renderMap()");
+      },
+    },
+    {
+      eligible: () => !!getFestivalReactionFor("valery", metValery),
+      run: () => {
+        const f = getFestivalReactionFor("valery", metValery);
+        markSeasonalReactionSeen("valery", f.eventId);
+        renderCastleScene(f.lines, "Leave", "renderMap()");
+      },
+    },
+    {
+      eligible: () => helenaJulietteQAStage === 0,
+      run: () => renderCastleScene([{ who: "NARRATION", t: "The two guards, same as always." }], "Does Juliette ever talk?", "askHelenaAboutJuliette(1)"),
+    },
+    {
+      eligible: () => helenaJulietteQAStage === 1,
+      run: () => renderCastleScene([{ who: "NARRATION", t: "The two guards, same as always." }], "Is Juliette okay?", "askHelenaAboutJuliette(2)"),
+    },
+    {
+      eligible: () => helenaLastAmbientYearMonth !== ym,
+      run: () => {
+        const unseen = HELENA_AMBIENT.map((_, i) => i).filter((i) => !helenaAmbientSeen.includes(i));
+        const pool = unseen.length > 0 ? unseen : HELENA_AMBIENT.map((_, i) => i);
+        const idx = pool[Math.floor(Math.random() * pool.length)];
+        if (!helenaAmbientSeen.includes(idx)) helenaAmbientSeen.push(idx);
+        helenaLastAmbientYearMonth = ym;
+        renderCastleScene(HELENA_AMBIENT[idx], "Leave", "renderMap()");
+      },
+    },
+    {
+      eligible: () => julietteLastAmbientYearMonth !== ym,
+      run: () => {
+        const unseen = JULIETTE_AMBIENT.map((_, i) => i).filter((i) => !julietteAmbientSeen.includes(i));
+        const pool = unseen.length > 0 ? unseen : JULIETTE_AMBIENT.map((_, i) => i);
+        const idx = pool[Math.floor(Math.random() * pool.length)];
+        if (!julietteAmbientSeen.includes(idx)) julietteAmbientSeen.push(idx);
+        julietteLastAmbientYearMonth = ym;
+        renderCastleScene(JULIETTE_AMBIENT[idx], "Leave", "renderMap()");
+      },
+    },
+    {
+      eligible: () => metValery,
+      run: () => {
+        const unseen = VALERY_AMBIENT.map((_, i) => i).filter((i) => !valeryAmbientSeen.includes(i));
+        const pool = unseen.length > 0 ? unseen : VALERY_AMBIENT.map((_, i) => i);
+        const idx = pool[Math.floor(Math.random() * pool.length)];
+        if (!valeryAmbientSeen.includes(idx)) valeryAmbientSeen.push(idx);
+        renderCastleScene(VALERY_AMBIENT[idx], "Leave", "renderMap()");
+      },
+    },
+    {
+      eligible: () => true,
+      run: () => renderCastleScene(
+        [{ who: "NARRATION", t: "The two guards stand exactly where they always do." }],
+        "Leave",
+        "renderMap()"
+      ),
+    },
+  ];
+}
+
 function renderCastle() {
   if (!castleGateCharactersUnlocked) {
     renderCastleScene(CASTLE_GUARDS_FIRST_SCENE, "Back to After City", "afterCastleGuardsFirst()");
@@ -3648,99 +3827,7 @@ function renderCastle() {
 
   castleVisitsAfterMeeting += 1;
 
-  if (!julietteShiftEventSeen && castleVisitsAfterMeeting >= 2) {
-    julietteShiftEventSeen = true;
-    renderCastleScene(JUL_SHIFT_END_SCENE, "Continue", "renderMap()");
-    return;
-  }
-
-  if (guardCeremonyEligible()) { startGuardCeremony(); return; }
-  if (julThornRetryEligible()) { startJulThornRetry(); return; }
-  if (valeryKeyFallbackEligible()) {
-    renderCastleScene(VALERY_KEY_FALLBACK_SCENE, "Leave", "afterValeryKeyFallback()");
-    return;
-  }
-
-  if (julietteAtticKeyEligible()) {
-    renderCastleScene(JULIETTE_ATTIC_KEY_SCENE, "Leave", "afterJulietteAtticKey()");
-    return;
-  }
-
-  if (hasFadedPhotograph && !helenaPhotoReactionSeen) {
-    renderCastleScene(HELENA_PHOTO_REACTION, "Leave", "afterHelenaPhotoReaction()");
-    return;
-  }
-  if (hasFadedPhotograph && !juliettePhotoReactionSeen) {
-    renderCastleScene(JULIETTE_PHOTO_REACTION, "Leave", "afterJuliettePhotoReaction()");
-    return;
-  }
-
-  if (metHelena && !metValery && valeryEligible()) {
-    renderCastleScene(VALERY_FIRST_EXIT_SCENE, "Leave", "afterValeryFirstExit()");
-    return;
-  }
-
-  const helenaFestival = getFestivalReactionFor("helena", metHelena);
-  if (helenaFestival) {
-    markSeasonalReactionSeen("helena", helenaFestival.eventId);
-    renderCastleScene(helenaFestival.lines, "Leave", "renderMap()");
-    return;
-  }
-  const julietteFestival = getFestivalReactionFor("juliette", metJuliette);
-  if (julietteFestival) {
-    markSeasonalReactionSeen("juliette", julietteFestival.eventId);
-    renderCastleScene(julietteFestival.lines, "Leave", "renderMap()");
-    return;
-  }
-  const valeryFestival = getFestivalReactionFor("valery", metValery);
-  if (valeryFestival) {
-    markSeasonalReactionSeen("valery", valeryFestival.eventId);
-    renderCastleScene(valeryFestival.lines, "Leave", "renderMap()");
-    return;
-  }
-
-  if (helenaJulietteQAStage === 0) {
-    renderCastleScene([{ who: "NARRATION", t: "The two guards, same as always." }], "Does Juliette ever talk?", "askHelenaAboutJuliette(1)");
-    return;
-  }
-  if (helenaJulietteQAStage === 1) {
-    renderCastleScene([{ who: "NARRATION", t: "The two guards, same as always." }], "Is Juliette okay?", "askHelenaAboutJuliette(2)");
-    return;
-  }
-
-  const ym = yearMonthKey();
-  if (helenaLastAmbientYearMonth !== ym) {
-    const unseen = HELENA_AMBIENT.map((_, i) => i).filter((i) => !helenaAmbientSeen.includes(i));
-    const pool = unseen.length > 0 ? unseen : HELENA_AMBIENT.map((_, i) => i);
-    const idx = pool[Math.floor(Math.random() * pool.length)];
-    if (!helenaAmbientSeen.includes(idx)) helenaAmbientSeen.push(idx);
-    helenaLastAmbientYearMonth = ym;
-    renderCastleScene(HELENA_AMBIENT[idx], "Leave", "renderMap()");
-    return;
-  }
-  if (julietteLastAmbientYearMonth !== ym) {
-    const unseen = JULIETTE_AMBIENT.map((_, i) => i).filter((i) => !julietteAmbientSeen.includes(i));
-    const pool = unseen.length > 0 ? unseen : JULIETTE_AMBIENT.map((_, i) => i);
-    const idx = pool[Math.floor(Math.random() * pool.length)];
-    if (!julietteAmbientSeen.includes(idx)) julietteAmbientSeen.push(idx);
-    julietteLastAmbientYearMonth = ym;
-    renderCastleScene(JULIETTE_AMBIENT[idx], "Leave", "renderMap()");
-    return;
-  }
-  if (metValery) {
-    const unseen = VALERY_AMBIENT.map((_, i) => i).filter((i) => !valeryAmbientSeen.includes(i));
-    const pool = unseen.length > 0 ? unseen : VALERY_AMBIENT.map((_, i) => i);
-    const idx = pool[Math.floor(Math.random() * pool.length)];
-    if (!valeryAmbientSeen.includes(idx)) valeryAmbientSeen.push(idx);
-    renderCastleScene(VALERY_AMBIENT[idx], "Leave", "renderMap()");
-    return;
-  }
-
-  renderCastleScene(
-    [{ who: "NARRATION", t: "The two guards stand exactly where they always do." }],
-    "Leave",
-    "renderMap()"
-  );
+  runFirstEligibleEvent(buildCastleEvents());
 }
 
 function finishSpecialStyling() {
@@ -3818,7 +3905,7 @@ function useRoyalGardenKey() {
 function renderRoyalGardenScene(lines) {
   stage.innerHTML = `
     <div class="center-col screen-pad">
-      <div class="portrait no-image" style="background:#e8e2d0; color:#333;">🌹</div>
+      ${portraitHTML(lines, "🌹", "#e8e2d0")}
       <div class="soul-name">Royal Garden</div>
       ${sceneHTML(lines, null)}
       <div class="subloc-row"><button class="ghost" onclick="renderCastleWallDoor()">Castle Wall</button></div>
@@ -3879,89 +3966,106 @@ function currentSeasonName() {
   return "winter";
 }
 
+function buildRoyalGardenEvents() {
+  return [
+    {
+      eligible: () => !valeryRoyalGardenWelcomeSeen,
+      run: () => {
+        valeryRoyalGardenWelcomeSeen = true;
+        renderRoyalGardenScene([
+          { who: "VALERY", t: "You actually used it." },
+          { who: "YOU", t: "You gave me the key." },
+          { who: "VALERY", t: "People receive invitations all the time. Very few have the confidence to arrive." },
+          { who: "YOU", t: "Was that an invitation?" },
+          { who: "VALERY", t: "You're here, aren't you?" },
+        ]);
+      },
+    },
+    {
+      eligible: () => !helenaRoyalGardenEncounterSeen,
+      run: () => {
+        helenaRoyalGardenEncounterSeen = true;
+        renderRoyalGardenScene([
+          { who: "NARRATION", t: "Helena is sitting beside the fountain without her guard armour." },
+          { who: "YOU", t: "I almost didn't recognize you." },
+          { who: "HELENA", t: "That's concerning." },
+          { who: "YOU", t: "I've never seen you without armour." },
+          { who: "HELENA", t: "That's less concerning." },
+          { who: "YOU", t: "Are you allowed to be here?" },
+          { who: "HELENA", t: "I work here." },
+          { who: "YOU", t: "You work at the gate." },
+          { who: "HELENA", t: "You ask too many location-based questions." },
+        ]);
+      },
+    },
+    {
+      eligible: () => !julietteRoyalGardenFountainSeen,
+      run: () => {
+        julietteRoyalGardenFountainSeen = true;
+        renderRoyalGardenScene([
+          { who: "NARRATION", t: "Juliette is standing beside the fountain, staring into the water." },
+          { who: "YOU", t: "What are you doing here?" },
+          { who: "JULIETTE", t: "Standing." },
+          { who: "YOU", t: "I can see that." },
+          { who: "NARRATION", t: "Pause." },
+          { who: "JULIETTE", t: "Good." },
+        ]);
+      },
+    },
+    {
+      eligible: () => !julietteRoyalGardenFlowerSeen,
+      run: () => {
+        julietteRoyalGardenFlowerSeen = true;
+        renderRoyalGardenScene([
+          { who: "NARRATION", t: "Juliette is touching one of the white flowers with two fingers." },
+          { who: "NARRATION", t: "She notices you." },
+          { who: "NARRATION", t: "Her hand drops immediately." },
+        ]);
+      },
+    },
+    {
+      eligible: () => !helenaCaughtPlayerSeen,
+      run: () => {
+        helenaCaughtPlayerSeen = true;
+        renderRoyalGardenScene([
+          { who: "HELENA", t: "I didn't see you." },
+          { who: "YOU", t: "You're looking directly at me." },
+          { who: "HELENA", t: "Don't make this difficult." },
+          { who: "NARRATION", t: "Helena walks away." },
+        ]);
+      },
+    },
+    {
+      eligible: () => {
+        const rgScenesSeenCount = [valeryRoyalGardenWelcomeSeen, helenaRoyalGardenEncounterSeen, julietteRoyalGardenFountainSeen, helenaCaughtPlayerSeen].filter(Boolean).length;
+        return metOctavia && nightgardenOpen() && !octaviaRoyalGardenSeen && rgScenesSeenCount >= 2;
+      },
+      run: () => {
+        octaviaRoyalGardenSeen = true;
+        renderRoyalGardenScene([
+          { who: "NARRATION", t: "Octavia is standing at the end of the Rose Walk. Valery is already there." },
+          { who: "VALERY", t: "She's not supposed to be here." },
+          { who: "YOU", t: "Octavia?" },
+          { who: "VALERY", t: "Don't say her name like you're inviting her." },
+          { who: "NARRATION", t: "Octavia touches one of the pale roses." },
+          { who: "OCTAVIA", t: "It doesn't like this place." },
+          { who: "VALERY", t: "The rose?" },
+          { who: "OCTAVIA", t: "The garden." },
+          { who: "NARRATION", t: "Octavia walks away." },
+          { who: "VALERY", t: "I preferred her when she wasn't talking." },
+        ]);
+      },
+    },
+    {
+      eligible: () => valeryRoyalGardenWelcomeSeen && valeryMicroRequestSeason !== `${currentYear}-${currentSeasonName()}`,
+      run: renderValeryMicroRequestIntro,
+    },
+    { eligible: () => true, run: royalGardenAmbientVisit },
+  ];
+}
+
 function renderRoyalGardenHub() {
-  if (!valeryRoyalGardenWelcomeSeen) {
-    valeryRoyalGardenWelcomeSeen = true;
-    renderRoyalGardenScene([
-      { who: "VALERY", t: "You actually used it." },
-      { who: "YOU", t: "You gave me the key." },
-      { who: "VALERY", t: "People receive invitations all the time. Very few have the confidence to arrive." },
-      { who: "YOU", t: "Was that an invitation?" },
-      { who: "VALERY", t: "You're here, aren't you?" },
-    ]);
-    return;
-  }
-  if (!helenaRoyalGardenEncounterSeen) {
-    helenaRoyalGardenEncounterSeen = true;
-    renderRoyalGardenScene([
-      { who: "NARRATION", t: "Helena is sitting beside the fountain without her guard armour." },
-      { who: "YOU", t: "I almost didn't recognize you." },
-      { who: "HELENA", t: "That's concerning." },
-      { who: "YOU", t: "I've never seen you without armour." },
-      { who: "HELENA", t: "That's less concerning." },
-      { who: "YOU", t: "Are you allowed to be here?" },
-      { who: "HELENA", t: "I work here." },
-      { who: "YOU", t: "You work at the gate." },
-      { who: "HELENA", t: "You ask too many location-based questions." },
-    ]);
-    return;
-  }
-  if (!julietteRoyalGardenFountainSeen) {
-    julietteRoyalGardenFountainSeen = true;
-    renderRoyalGardenScene([
-      { who: "NARRATION", t: "Juliette is standing beside the fountain, staring into the water." },
-      { who: "YOU", t: "What are you doing here?" },
-      { who: "JULIETTE", t: "Standing." },
-      { who: "YOU", t: "I can see that." },
-      { who: "NARRATION", t: "Pause." },
-      { who: "JULIETTE", t: "Good." },
-    ]);
-    return;
-  }
-  if (!julietteRoyalGardenFlowerSeen) {
-    julietteRoyalGardenFlowerSeen = true;
-    renderRoyalGardenScene([
-      { who: "NARRATION", t: "Juliette is touching one of the white flowers with two fingers." },
-      { who: "NARRATION", t: "She notices you." },
-      { who: "NARRATION", t: "Her hand drops immediately." },
-    ]);
-    return;
-  }
-  if (!helenaCaughtPlayerSeen) {
-    helenaCaughtPlayerSeen = true;
-    renderRoyalGardenScene([
-      { who: "HELENA", t: "I didn't see you." },
-      { who: "YOU", t: "You're looking directly at me." },
-      { who: "HELENA", t: "Don't make this difficult." },
-      { who: "NARRATION", t: "Helena walks away." },
-    ]);
-    return;
-  }
-
-  const rgScenesSeenCount = [valeryRoyalGardenWelcomeSeen, helenaRoyalGardenEncounterSeen, julietteRoyalGardenFountainSeen, helenaCaughtPlayerSeen].filter(Boolean).length;
-  if (metOctavia && nightgardenOpen() && !octaviaRoyalGardenSeen && rgScenesSeenCount >= 2) {
-    octaviaRoyalGardenSeen = true;
-    renderRoyalGardenScene([
-      { who: "NARRATION", t: "Octavia is standing at the end of the Rose Walk. Valery is already there." },
-      { who: "VALERY", t: "She's not supposed to be here." },
-      { who: "YOU", t: "Octavia?" },
-      { who: "VALERY", t: "Don't say her name like you're inviting her." },
-      { who: "NARRATION", t: "Octavia touches one of the pale roses." },
-      { who: "OCTAVIA", t: "It doesn't like this place." },
-      { who: "VALERY", t: "The rose?" },
-      { who: "OCTAVIA", t: "The garden." },
-      { who: "NARRATION", t: "Octavia walks away." },
-      { who: "VALERY", t: "I preferred her when she wasn't talking." },
-    ]);
-    return;
-  }
-
-  if (valeryRoyalGardenWelcomeSeen && valeryMicroRequestSeason !== `${currentYear}-${currentSeasonName()}`) {
-    renderValeryMicroRequestIntro();
-    return;
-  }
-
-  royalGardenAmbientVisit();
+  runFirstEligibleEvent(buildRoyalGardenEvents());
 }
 
 const RG_REPEAT_POOL = [
@@ -3971,50 +4075,45 @@ const RG_REPEAT_POOL = [
   { id: "lostaccessory", t: "Something silver is caught beneath the hedge." },
 ];
 function royalGardenAmbientVisit() {
-  const canOfferLostAccessory = royalGardenLostAccessoryLastYear !== currentYear;
-  const pool = canOfferLostAccessory ? RG_REPEAT_POOL : RG_REPEAT_POOL.filter((e) => e.id !== "lostaccessory");
-  const chosen = pool[Math.floor(Math.random() * pool.length)];
-
-  if (chosen.id === "delivery") {
-    renderRoyalGardenScene([{ who: "NARRATION", t: chosen.t }, { who: "NARRATION", t: "Empty." }]);
-    return;
-  }
-  if (chosen.id === "lostaccessory") {
-    // Set eagerly (see the identical fix on atticLostPropertyLastYear /
-    // glassHouseRareFindLastYear) so this can't keep re-rolling forever once
-    // every eligible Rare Accessory is already owned.
-    royalGardenLostAccessoryLastYear = currentYear;
-    const owned = new Set(unlockedCardIds);
-    const eligible = DECK.filter((c) => c.category === "Accessory" && c.rarity === "Rare" && !owned.has(c.id));
-    if (eligible.length > 0) {
-      const awarded = eligible[Math.floor(Math.random() * eligible.length)];
-      unlockedCardIds.add(awarded.id);
-      rebuildLiveDeckFromUnlocked();
+  resolveRepeatPoolVisit({
+    pool: RG_REPEAT_POOL,
+    pickFn: pickUniform,
+    bonusId: "lostaccessory",
+    getBonusLastYear: () => royalGardenLostAccessoryLastYear,
+    setBonusLastYear: (y) => { royalGardenLostAccessoryLastYear = y; },
+    eligibleCards: () => DECK.filter((c) => c.category === "Accessory" && c.rarity === "Rare"),
+    renderPlain: (entry) => {
+      if (entry.id === "delivery") {
+        renderRoyalGardenScene([{ who: "NARRATION", t: entry.t }, { who: "NARRATION", t: "Empty." }]);
+      } else {
+        renderRoyalGardenScene([{ who: "NARRATION", t: entry.t }]);
+      }
+    },
+    renderReward: (entry, awarded) => {
       stage.innerHTML = `
         <div class="center-col screen-pad result">
-          <div class="speech narration-line">${chosen.t}</div>
+          <div class="speech narration-line">${entry.t}</div>
           <div class="shop-mystery-card" style="margin-top:10px;">${gcardHTML(awarded)}</div>
           <button class="primary" style="margin-top:18px;" onclick="renderMap()">Continue</button>
         </div>
       `;
       updateTopBar("", true);
-      return;
-    }
-  }
-  renderRoyalGardenScene([{ who: "NARRATION", t: chosen.t }]);
+    },
+  });
 }
 
 const VALERY_MICRO_MATCH = { colors: ["Gold", "Pink"], styles: ["Elegant", "Romantic", "Bold"] };
 function renderValeryMicroRequestIntro() {
+  const lines = [
+    { who: "VALERY", t: "Dinner changed rooms." },
+    { who: "YOU", t: "And?" },
+    { who: "VALERY", t: "And now I need one thing that makes the rest look intentional." },
+  ];
   stage.innerHTML = `
     <div class="center-col screen-pad">
-      <div class="portrait no-image" style="background:#e8e2d0; color:#333;">🌹</div>
+      ${portraitHTML(lines, "🌹", "#e8e2d0")}
       <div class="soul-name">Royal Garden</div>
-      ${sceneHTML([
-        { who: "VALERY", t: "Dinner changed rooms." },
-        { who: "YOU", t: "And?" },
-        { who: "VALERY", t: "And now I need one thing that makes the rest look intentional." },
-      ], null)}
+      ${sceneHTML(lines, null)}
       <button class="primary" onclick="renderValeryMicroRequestPicker()">Choose a piece</button>
       <button class="ghost" style="margin-top:10px;" onclick="renderMap()">Not now</button>
     </div>
@@ -4144,6 +4243,54 @@ function briefDialogueHTML(brief, speakerName) {
 // need the one-line-at-a-time stepping that CLIENT_STAGES uses.
 function sceneHTML(lines, speakerName) {
   return lines.map((line) => dialogueLineHTML(line, speakerName)).join("");
+}
+
+// Secondary-character portraits (Helena, Juliette, Maya, Octavia, Valery),
+// hosted the same way as the Core Four's -- portrait_<name>.png in the same
+// GitHub Pages portraits/ folder. Scenes at these locations often involve
+// more than one named character at once (Helena and Juliette are almost
+// always together at the Castle gate), so rather than have every single
+// call site specify who's present, inferPortraitKeys() scans the scene's
+// own dialogue lines and shows whichever of these five actually speak in
+// it -- narration-only scenes correctly fall back to the location glyph.
+const SECONDARY_PORTRAITS = {
+  helena: "https://terrirossa.github.io/dead-gorgeous-assets/portraits/portrait_helena.png",
+  juliette: "https://terrirossa.github.io/dead-gorgeous-assets/portraits/portrait_juliette.png",
+  maya: "https://terrirossa.github.io/dead-gorgeous-assets/portraits/portrait_maya.png",
+  octavia: "https://terrirossa.github.io/dead-gorgeous-assets/portraits/portrait_octavia.png",
+  valery: "https://terrirossa.github.io/dead-gorgeous-assets/portraits/portrait_valery.png",
+};
+const SECONDARY_PORTRAIT_ORDER = ["helena", "juliette", "maya", "octavia", "valery"];
+
+function inferPortraitKeys(lines) {
+  const present = new Set();
+  (lines || []).forEach((l) => {
+    const who = (l.who || "").toLowerCase();
+    if (SECONDARY_PORTRAITS[who]) present.add(who);
+    // Narration often introduces a present-but-not-yet-speaking character by
+    // name (e.g. "She's Juliette." / "Juliette does not react.") -- catch
+    // those too, so she isn't left out of a scene she's clearly standing in.
+    // Scoped to narration only: a YOU/other-character line just mentioning
+    // someone in passing (e.g. "Maya said...") shouldn't pull in a portrait
+    // for someone who isn't actually there.
+    if (who === "narration") {
+      const text = (l.t || "").toLowerCase();
+      SECONDARY_PORTRAIT_ORDER.forEach((k) => { if (text.includes(k)) present.add(k); });
+    }
+  });
+  return SECONDARY_PORTRAIT_ORDER.filter((k) => present.has(k));
+}
+
+// Renders one portrait per named character actually speaking in `lines`
+// (side by side if more than one), or the location's fallback glyph if
+// nobody named is present (e.g. a pure-narration or not-yet-met scene).
+function portraitHTML(lines, fallbackEmoji, fallbackBg) {
+  const keys = inferPortraitKeys(lines);
+  if (keys.length === 0) {
+    return `<div class="portrait no-image" style="background:${fallbackBg};">${fallbackEmoji}</div>`;
+  }
+  const rowClass = keys.length > 1 ? "portrait-row portrait-row-multi" : "portrait-row";
+  return `<div class="${rowClass}">${keys.map((k) => `<div class="portrait"><img src="${SECONDARY_PORTRAITS[k]}" alt="${k}"></div>`).join("")}</div>`;
 }
 
 function renderSoul() {
