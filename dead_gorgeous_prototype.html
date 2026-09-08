@@ -895,27 +895,6 @@ const DECK = [
     fullArt: "https://terrirossa.github.io/dead-gorgeous-assets/cards/card_437_zebra_mini_skirt.svg" },
 ];
 
-// Surprise pieces — one gets added to the closet as a reward for a good year,
-// in shuffled order, until this pool runs out.
-const EXTRA_CARDS = [
-  { id: 11, name: "Sequin Mini Dress", category: "Dress", fit: "Fitted", style: "Bold", color: "Gold",
-    lore: "Every sequin is a tiny mirror. Some clients swear they've seen their old life flicker in one." },
-  { id: 12, name: "Velvet Blazer", category: "Jacket", fit: "Fitted", style: "Elegant", color: "Purple",
-    lore: "Belonged to a nightclub owner who's still trying to get Aftercity's zoning board to approve a rooftop bar." },
-  { id: 13, name: "Combat Boots", category: "Shoes", fit: "Regular", style: "Daring", color: "Black",
-    lore: "Standard issue for souls who insist they're 'just passing through.' None of them are." },
-  { id: 14, name: "Linen Trousers", category: "Bottom", fit: "Relaxed", style: "Minimal", color: "Beige",
-    lore: "Impossibly wrinkle-free. The monks who wove them meditated for exactly one hundred years first." },
-  { id: 15, name: "Cropped Cardigan", category: "Top", fit: "Fitted", style: "Sweet", color: "Pink",
-    lore: "Knitted by someone's grandmother, who arrived in Aftercity and simply kept knitting." },
-  { id: 16, name: "Satin Slip Skirt", category: "Bottom", fit: "Fitted", style: "Romantic", color: "Red", set: "rosewood",
-    lore: "Cut from the same bolt of fabric as a wedding dress that never made it down the aisle." },
-  { id: 17, name: "Chrome Sunglasses Jacket", category: "Jacket", fit: "Oversized", style: "Cool", color: "Silver",
-    lore: "The lenses stitched into the collar still catch the light of a sun this jacket will never see again." },
-  { id: 18, name: "Platform Sneakers", category: "Shoes", fit: "Regular", style: "Bold", color: "White",
-    lore: "Squeak faintly on Aftercity's marble floors — the only sound most residents still recognize from home." },
-];
-
 // Wildcards, dealt into the deck from the start. Playing one lets you pick
 // any one specific card out of your remaining deck pile instead of wearing it.
 const JOKER_CARDS = [
@@ -982,7 +961,6 @@ function consumeKeyCard(keyId) {
 // Rarity scaffolding for a future tier system (Basic -> Uncommon -> Rare -> Epic -> Mythic).
 // Not yet used by scoring or visuals — just tagging cards by how they're acquired for now.
 DECK.forEach((c) => { c.rarity = c.rarity || "Basic"; }); // preserve explicit per-card rarity, default the rest to Basic
-EXTRA_CARDS.forEach((c) => { c.rarity = "Uncommon"; });
 // (SHOP_CARDS removed — the vendor now offers real Rare+ cards from DECK directly.)
 JOKER_CARDS.forEach((c) => { c.rarity = "Basic"; });
 
@@ -1535,7 +1513,7 @@ const MARGO_STAGES = [
   [{ who: 'YOU', t: "You don't trust me very much." }, { who: 'MARGO', t: 'Correct.' }, { who: 'YOU', t: "Because I'm a stylist?" }, { who: 'MARGO', t: 'Because the last one was a stylist.' }, { who: 'YOU', t: 'And?' }, { who: 'MARGO', t: "And now you're here." }],
   [{ who: 'MARGO', t: 'Nothing beige.' }, { who: 'YOU', t: 'You really hate beige.' }, { who: 'MARGO', t: 'Beige is what happens when a colour loses its nerve.' }],
   [{ who: 'YOU', t: 'You know a lot about clothes.' }, { who: 'MARGO', t: 'I made costumes.' }, { who: 'YOU', t: 'Theatre?' }, { who: 'MARGO', t: 'Mostly.' }, { who: 'YOU', t: 'Mostly?' }, { who: 'MARGO', t: "You're getting greedy with your questions." }],
-  [{ who: 'MARGO', t: 'No pink.' }, { who: 'YOU', t: "It's Flower Fest." }, { who: 'MARGO', t: 'I know what month it is.' }, { who: 'YOU', t: "Don't you like it?" }, { who: 'MARGO', t: 'I like flowers. I dislike what people do around them.' }],
+  [{ who: 'MARGO', t: 'No pink.' }, { who: 'YOU', t: "You really don't like pink." }, { who: 'MARGO', t: 'Correct.' }, { who: 'YOU', t: "Don't you like flowers?" }, { who: 'MARGO', t: 'I like flowers. I dislike what people do around them.' }],
   [{ who: 'YOU', t: "Juniper said you're in the Garden Circle." }, { who: 'MARGO', t: 'Did she.' }, { who: 'YOU', t: 'Gardening?' }, { who: 'MARGO', t: 'Among other things.' }, { who: 'YOU', t: 'What other things?' }, { who: 'MARGO', t: 'Tea.' }],
   [{ who: 'YOU', t: "You don't seem like a gardening person." }, { who: 'MARGO', t: 'And what does a gardening person look like?' }, { who: 'YOU', t: 'Less black?' }, { who: 'MARGO', t: 'Careful.' }],
   [{ who: 'YOU', t: 'What do you actually grow?' }, { who: 'MARGO', t: 'Nightshade. Belladonna. Foxglove.' }, { who: 'YOU', t: 'Those are all poisonous.' }, { who: 'MARGO', t: 'Are they?' }, { who: 'YOU', t: 'Yes.' }, { who: 'MARGO', t: 'Good to know.' }],
@@ -1559,11 +1537,11 @@ const JUNIPER_STAGES = [
   [{ who: 'YOU', t: 'You were a botanist?' }, { who: 'JUNIPER', t: 'I think I still am.' }, { who: 'YOU', t: "You're dead." }, { who: 'JUNIPER', t: "The plants don't seem bothered." }],
   [{ who: 'YOU', t: 'Where do these plants come from?' }, { who: 'JUNIPER', t: 'Here.' }, { who: 'YOU', t: "I've never seen them around the city." }, { who: 'JUNIPER', t: "You're looking in the wrong places." }],
   [{ who: 'YOU', t: 'You must love Flower Fest.' }, { who: 'JUNIPER', t: 'Why?' }, { who: 'YOU', t: 'Plants.' }, { who: 'JUNIPER', t: "That's like asking a baker if they love being hit with bread." }],
-  [{ who: 'JUNIPER', t: 'No pink today.' }, { who: 'YOU', t: 'During Flower Fest?' }, { who: 'JUNIPER', t: 'Especially during Flower Fest.' }, { who: 'YOU', t: 'Margo said the same thing.' }, { who: 'JUNIPER', t: 'Margo and I agree on many things.' }, { who: 'YOU', t: "That's worrying." }, { who: 'JUNIPER', t: 'It should be.' }],
+  [{ who: 'JUNIPER', t: 'No pink today.' }, { who: 'YOU', t: "That's new." }, { who: 'JUNIPER', t: 'Is it?' }, { who: 'YOU', t: 'Margo said the same thing.' }, { who: 'JUNIPER', t: 'Margo and I agree on many things.' }, { who: 'YOU', t: "That's worrying." }, { who: 'JUNIPER', t: 'It should be.' }],
   [{ who: 'YOU', t: 'How do you know Margo?' }, { who: 'JUNIPER', t: 'Garden Circle.' }, { who: 'YOU', t: 'So it really is gardening.' }, { who: 'JUNIPER', t: 'Yes.' }, { who: 'JUNIPER', t: 'Mostly.' }],
   [{ who: 'YOU', t: "What's the 'mostly'?" }, { who: 'JUNIPER', t: 'Tea.' }, { who: 'YOU', t: 'Margo said that too.' }, { who: 'JUNIPER', t: 'We rehearsed.' }],
   [{ who: 'YOU', t: "What's Nightgarden like?" }, { who: 'JUNIPER', t: 'Beautiful.' }, { who: 'YOU', t: "That's it?" }, { who: 'JUNIPER', t: "That's already more than I should have said." }],
-  [{ who: 'JUNIPER', t: 'I need white.' }, { who: 'YOU', t: "That's unusual for you." }, { who: 'JUNIPER', t: 'Solstice.' }, { who: 'YOU', t: 'Going to the Royal Quarter?' }, { who: 'JUNIPER', t: 'Absolutely not.' }],
+  [{ who: 'JUNIPER', t: 'I need white.' }, { who: 'YOU', t: "That's unusual for you." }, { who: 'JUNIPER', t: 'Special occasion.' }, { who: 'YOU', t: 'Going to the Royal Quarter?' }, { who: 'JUNIPER', t: 'Absolutely not.' }],
   [{ who: 'YOU', t: 'Why not?' }, { who: 'JUNIPER', t: 'Too many people.' }, { who: 'YOU', t: "That's all?" }, { who: 'JUNIPER', t: 'No.' }, { who: 'YOU', t: 'What else?' }, { who: 'JUNIPER', t: "That's all I'm telling you." }],
   [{ who: 'YOU', t: 'Do you remember your garden from when you were alive?' }, { who: 'JUNIPER', t: 'Greenhouse.' }, { who: 'YOU', t: 'Big?' }, { who: 'JUNIPER', t: 'Tiny. Leaked when it rained. The heater broke every winter.' }, { who: 'YOU', t: 'Sounds terrible.' }, { who: 'JUNIPER', t: 'I loved it.' }],
   [{ who: 'YOU', t: 'What did you grow?' }, { who: 'JUNIPER', t: "Everything I wasn't supposed to." }, { who: 'YOU', t: "Some things don't change." }, { who: 'NARRATION', t: 'Juniper smiles.' }],
@@ -1666,15 +1644,11 @@ const PLACEHOLDER_ART = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAcwAAADbC
 
 /* ---------------- STATE ---------------- */
 
-// These two persist across restarts within the same page load — a good
-// year's reward should still be there next time you play.
-let metaUnlocked = [];
-let unlockPool = shuffle(EXTRA_CARDS);
 let currentShopItem = null;
 const MYSTERY_PRICE = 8;
 let mapMessage = "";
 let restrictedPhase = { castle: 0, garden: 0 };
-let moonCoins = 0; // persists across restarts, like metaUnlocked — this is a currency
+let moonCoins = 0; // persists across restarts -- this is a currency
 
 let deckPile = [];
 let liveDeck = [];
@@ -1685,6 +1659,10 @@ let redrawAvailable = true;
 let selectedHandId = null; // hand card lifted (tapped) but not yet dropped
 let discardPile = [];
 let discoveredSets = new Set();
+// Separate from discoveredSets (which tracks wearing a full set together in
+// one outfit) -- this tracks owning every card in a set at once, regardless
+// of whether they were ever worn together. See checkCollectionSetBonuses().
+let collectedSets = new Set();
 let hand = [];
 let outfit = [null, null, null, null]; // 4 free slots, any card in any slot
 let clientRoundIndex = 0;
@@ -1806,15 +1784,19 @@ let glassHouseCultivationPending = false;
 let glassHouseCultivationReadyYear = null;
 let glassHouseCultivationSourceAttributes = null;
 let glassHouseCultivationLastHarvestYear = null;
+let glassHouseCultivationPlantedYear = null;
+let glassHouseCultivationPlantedMonth = null;
+let glassHouseCultivationLastWateredYearMonth = null;
 
 // Story items / found objects (not yet awarded by anything this pass)
 let thornVeilOwned = false;
 let hasSilverBell = false;
 let hasFadedPhotograph = false;
 
-// Café Back Room (not yet built)
+// Café Back Room
 let cafeBackRoomCacheClaimed = false;
 let backRoomBoxPurchasedYearMonth = null;
+let backRoomBoxUsesRemaining = 3; // once used up, the box stays empty for good
 
 // Café Attic (not yet built)
 let cafeAtticFirstVisitSeen = false;
@@ -2091,17 +2073,39 @@ function unlockRandomCards(n) {
   return newly;
 }
 
+// Awards a one-time 10 Moon Coin bonus the moment every card in a named set
+// is owned at once -- separate from discoveredSets (wearing a full set
+// together in one outfit). Called from rebuildLiveDeckFromUnlocked() so it's
+// automatically checked after every single way a card can be acquired
+// (season unlock, shop, back room, attic, glass house, royal garden, year-end
+// reward, starter deck) without needing a separate hook at each call site.
+function checkCollectionSetBonuses() {
+  Object.keys(SET_NAMES).forEach((setId) => {
+    if (collectedSets.has(setId)) return;
+    const { owned, total } = setOwnedCount(setId);
+    if (total > 0 && owned === total) {
+      collectedSets.add(setId);
+      moonCoins += 10;
+    }
+  });
+}
+
 function rebuildLiveDeckFromUnlocked() {
   const unlocked = DECK.filter((c) => unlockedCardIds.has(c.id));
   const activeKeys = KEY_CARDS.filter((k) => activeKeyIds.has(k.id));
   const storyWearables = thornVeilOwned ? [THORN_VEIL] : [];
-  liveDeck = [...unlocked, ...metaUnlocked, ...storyWearables, ...activeKeys, ...JOKER_CARDS];
+  liveDeck = [...unlocked, ...storyWearables, ...activeKeys, ...JOKER_CARDS];
+  checkCollectionSetBonuses();
 }
 
 function beginGame() {
   document.getElementById("topBar").classList.remove("hidden");
   unlockedCardIds = new Set(pickStarterDeck().map((c) => c.id));
   activeKeyIds = new Set();
+  discoveredSets = new Set();
+  collectedSets = new Set(); // must be reset BEFORE rebuildLiveDeckFromUnlocked() runs its set-bonus check below,
+                             // or a set the starter deck already completes pays out, then gets its tracking wiped
+                             // by this line, then pays out AGAIN the next time anything rebuilds the deck.
   rebuildLiveDeckFromUnlocked();
   deckPile = liveDeck.map((c) => c.id);
   discardPile = [];
@@ -2114,7 +2118,6 @@ function beginGame() {
   totalScore = 0;
   delightedCount = 0;
   restrictedPhase = { castle: 0, garden: 0 };
-  discoveredSets = new Set();
   resetSecondaryContentState();
   renderMap();
 }
@@ -2193,6 +2196,9 @@ function resetSecondaryContentState() {
   glassHouseCultivationReadyYear = null;
   glassHouseCultivationSourceAttributes = null;
   glassHouseCultivationLastHarvestYear = null;
+  glassHouseCultivationPlantedYear = null;
+  glassHouseCultivationPlantedMonth = null;
+  glassHouseCultivationLastWateredYearMonth = null;
 
   thornVeilOwned = false;
   hasSilverBell = false;
@@ -2200,6 +2206,7 @@ function resetSecondaryContentState() {
 
   cafeBackRoomCacheClaimed = false;
   backRoomBoxPurchasedYearMonth = null;
+  backRoomBoxUsesRemaining = 3;
 
   cafeAtticFirstVisitSeen = false;
   atticMenusSeen = false;
@@ -2730,10 +2737,10 @@ function renderCafeBackRoom() {
   const pool = DECK.filter((c) => ["Rare", "Iconic", "Legendary"].includes(c.rarity) && !owned.has(c.id));
   const canAfford = moonCoins >= 3;
 
-  const boxHTML = boxAlreadyUsedThisMonth
-    ? `<p style="color:var(--muted);">Already checked this month.</p>`
-    : pool.length === 0
-      ? `<p style="color:var(--muted);">The box is empty.</p>`
+  const boxHTML = backRoomBoxUsesRemaining <= 0 || pool.length === 0
+    ? `<p style="color:var(--muted);">The box is empty.</p>`
+    : boxAlreadyUsedThisMonth
+      ? `<p style="color:var(--muted);">Already checked this month.</p>`
       : `
         <div class="speech narration-line">A small unmarked box is waiting on the shelf.</div>
         <button class="primary" ${canAfford ? "" : "disabled"} onclick="openUnmarkedBox()">Open — 🌙 3</button>
@@ -2753,7 +2760,7 @@ function renderCafeBackRoom() {
 
 function openUnmarkedBox() {
   const ym = yearMonthKey();
-  if (backRoomBoxPurchasedYearMonth === ym || moonCoins < 3) return;
+  if (backRoomBoxUsesRemaining <= 0 || backRoomBoxPurchasedYearMonth === ym || moonCoins < 3) return;
   const owned = new Set(unlockedCardIds);
   const pool = DECK.filter((c) => ["Rare", "Iconic", "Legendary"].includes(c.rarity) && !owned.has(c.id));
   if (pool.length === 0) { renderCafeBackRoom(); return; }
@@ -2762,6 +2769,7 @@ function openUnmarkedBox() {
   unlockedCardIds.add(awarded.id);
   rebuildLiveDeckFromUnlocked();
   backRoomBoxPurchasedYearMonth = ym;
+  backRoomBoxUsesRemaining -= 1;
   renderCardAcquiredScreen("Found something.", awarded, "Continue", true);
 }
 
@@ -2972,7 +2980,7 @@ const GH_REPEAT_POOL = [
 // Thorn Veil — the one new wearable card this content pass adds. Placeholder
 // art only for now (per direction: function first, real art later); it uses
 // the same fallback art path every other art-less card already goes through.
-// Never part of DECK/EXTRA_CARDS, so it can never be drawn by any of the
+// Never part of DECK, so it can never be drawn by any of the
 // existing random-reward systems (season unlock, shop, back room, attic) —
 // the ONLY way to obtain it is the Glass House first visit below.
 const THORN_VEIL = {
@@ -3128,7 +3136,6 @@ function finalizeOctaviaSacrifice(cardId) {
 // Never touches Key Cards, Jokers, or anything not already owned.
 function destroyWearableCard(cardId) {
   unlockedCardIds.delete(cardId);
-  metaUnlocked = metaUnlocked.filter((c) => c.id !== cardId);
   if (cardId === THORN_VEIL.id) thornVeilOwned = false;
   liveDeck = liveDeck.filter((c) => c.id !== cardId);
   deckPile = deckPile.filter((id) => id !== cardId);
@@ -3236,6 +3243,7 @@ function renderGlassHouseAmbient(text) {
       <div class="soul-name">Glass House</div>
       <div class="speech narration-line">${text}</div>
       ${canCultivate ? `<button class="ghost" onclick="startGlassHouseCultivate()">Cultivate</button>` : ""}
+      ${glassHouseCultivationPending ? `<button class="ghost" onclick="renderCultivationStatus()">Check on the planting</button>` : ""}
       <button class="primary" style="margin-top:10px;" onclick="renderMap()">Leave</button>
     </div>
   `;
@@ -3261,6 +3269,7 @@ function glassHouseAmbientVisit() {
           <div class="speech narration-line">${entry.t}</div>
           <div class="shop-mystery-card" style="margin-top:10px;">${gcardHTML(awarded)}</div>
           ${canCultivate ? `<button class="ghost" style="margin-top:10px;" onclick="startGlassHouseCultivate()">Cultivate</button>` : ""}
+          ${glassHouseCultivationPending ? `<button class="ghost" style="margin-top:10px;" onclick="renderCultivationStatus()">Check on the planting</button>` : ""}
           <button class="primary" style="margin-top:18px;" onclick="renderMap()">Continue</button>
         </div>
       `;
@@ -3300,11 +3309,57 @@ function chooseCultivateSacrifice(cardId) {
   destroyWearableCard(cardId);
   glassHouseCultivationPending = true;
   glassHouseCultivationReadyYear = currentYear + 1;
+  glassHouseCultivationPlantedYear = currentYear;
+  glassHouseCultivationPlantedMonth = currentMonthIndex();
+  glassHouseCultivationLastWateredYearMonth = null;
   stage.innerHTML = `
     <div class="center-col screen-pad result">
       <div class="speech narration-line">You bury it beneath the soil.</div>
       <div class="speech narration-line">Whatever grows will be here next year.</div>
       <button class="primary" style="margin-top:18px;" onclick="renderMap()">Continue</button>
+    </div>
+  `;
+  updateTopBar("", true);
+}
+
+// Purely a flavor check-in -- how far along the buried card is, roughly
+// speaking, and a "Water it" action that doesn't change the harvest date
+// (always exactly a year) but gives the player something to do while they
+// wait, per direct request.
+function cultivationMonthsElapsed() {
+  if (glassHouseCultivationPlantedYear === null) return 0;
+  return (currentYear - glassHouseCultivationPlantedYear) * 12 + (currentMonthIndex() - glassHouseCultivationPlantedMonth);
+}
+function cultivationStatusText() {
+  const elapsed = cultivationMonthsElapsed();
+  if (elapsed < 3) return "Just beneath the soil. Nothing to see yet.";
+  if (elapsed < 6) return "A thin green shoot has broken the surface.";
+  if (elapsed < 9) return "Something is definitely growing, though it's too early to say what.";
+  return "Whatever this is, it looks nearly ready.";
+}
+function renderCultivationStatus() {
+  const plantedMonthName = glassHouseCultivationPlantedMonth !== null ? MONTHS[glassHouseCultivationPlantedMonth] : "";
+  const wateredThisVisit = glassHouseCultivationLastWateredYearMonth === yearMonthKey();
+  stage.innerHTML = `
+    <div class="center-col screen-pad">
+      <div class="portrait no-image" style="background:#1f2b22;">🪟</div>
+      <div class="soul-name">Glass House</div>
+      <div class="speech narration-line">${cultivationStatusText()}</div>
+      <p style="color:var(--muted); font-size:12.5px;">It takes a full year. Planted in ${plantedMonthName} -- ready again around ${plantedMonthName} next year.</p>
+      <button class="ghost" ${wateredThisVisit ? "disabled" : ""} onclick="waterCultivation()">${wateredThisVisit ? "Already watered today" : "Water it"}</button>
+      <button class="primary" style="margin-top:10px;" onclick="renderMap()">Leave</button>
+    </div>
+  `;
+  updateTopBar("", true);
+}
+function waterCultivation() {
+  glassHouseCultivationLastWateredYearMonth = yearMonthKey();
+  stage.innerHTML = `
+    <div class="center-col screen-pad">
+      <div class="portrait no-image" style="background:#1f2b22;">🪟</div>
+      <div class="soul-name">Glass House</div>
+      <div class="speech narration-line">You water it carefully. It doesn't seem to need much.</div>
+      <button class="primary" style="margin-top:10px;" onclick="renderMap()">Leave</button>
     </div>
   `;
   updateTopBar("", true);
@@ -3325,6 +3380,9 @@ function harvestGlassHouseCultivation() {
   const pool = candidatePools.find((p) => p.length > 0) || [];
   glassHouseCultivationPending = false;
   glassHouseCultivationLastHarvestYear = currentYear;
+  glassHouseCultivationPlantedYear = null;
+  glassHouseCultivationPlantedMonth = null;
+  glassHouseCultivationLastWateredYearMonth = null;
 
   if (pool.length === 0) {
     renderGlassHouseScene([{ who: "NARRATION", t: "Nothing came up this year." }], "Leave", "renderMap()");
@@ -3577,14 +3635,27 @@ function beginGuardRoundJuliette() {
   startSpecialRound(JULIETTE_VIRTUAL, GUARD_BRIEF, { type: "guard", guard: "juliette" });
   renderStyle();
 }
-function closeGuardCeremony() {
+function closeGuardCeremony(combinedScore) {
   guardCeremonyCompleted = true;
-  renderCastleScene([
-    { who: "HELENA", t: "That will do." },
-    { who: "YOU", t: "High praise." },
-    { who: "HELENA", t: "Don't get used to it." },
-    { who: "NARRATION", t: "Juliette is already looking toward the gate again." },
-  ], "Leave", "renderMap()");
+  const succeeded = combinedScore >= 70;
+  const lines = succeeded
+    ? [
+        { who: "HELENA", t: "That's excellent work." },
+        { who: "YOU", t: "High praise." },
+        { who: "HELENA", t: "Don't get used to it." },
+        { who: "NARRATION", t: "Juliette is already looking toward the gate again." },
+      ]
+    : [
+        { who: "HELENA", t: "That will do." },
+        { who: "YOU", t: "High praise." },
+        { who: "HELENA", t: "Don't get used to it." },
+        { who: "NARRATION", t: "Juliette is already looking toward the gate again." },
+      ];
+  if (succeeded) {
+    moonCoins += 5;
+    lines.push({ who: "NARRATION", t: "Earned 🌙 5 for the ceremony." });
+  }
+  renderCastleScene(lines, "Leave", "renderMap()");
 }
 
 // The one-time retry (§8.1): a smaller Juliette-only single-card fitting,
@@ -3624,7 +3695,14 @@ function chooseJulThornRetry(cardId) {
     renderCastleScene(JUL_THORN_REACTION_LINES, "Leave", "renderMap()");
     return;
   }
-  renderCastleScene([{ who: "HELENA", t: "Fine." }], "Leave", "renderMap()");
+  // Any other Silver piece still earns a small thank-you -- it isn't the
+  // Thorn Veil memory moment, but the player did dress Juliette in something
+  // that fit the ask.
+  moonCoins += 3;
+  renderCastleScene([
+    { who: "HELENA", t: "Fine." },
+    { who: "NARRATION", t: "Earned 🌙 3 for the fitting." },
+  ], "Leave", "renderMap()");
 }
 
 // --- Royal Garden Key: guaranteed fallback (Characters spec §7.4) --------
@@ -3830,6 +3908,8 @@ function renderCastle() {
   runFirstEligibleEvent(buildCastleEvents());
 }
 
+let guardCeremonyHelenaScore = 0; // carries Helena's round score forward to combine with Juliette's
+
 function finishSpecialStyling() {
   const pieces = outfit.filter(Boolean);
   const job = specialJob;
@@ -3839,20 +3919,23 @@ function finishSpecialStyling() {
   hand = [];
 
   if (job.type === "guard") {
+    const score = scoreSpecialOutfit(pieces, job.virtualClient, GUARD_BRIEF);
     if (job.guard === "helena") {
+      guardCeremonyHelenaScore = score;
       specialJob = null;
       beginGuardRoundJuliette();
       return;
     }
+    const combinedScore = Math.round((guardCeremonyHelenaScore + score) / 2);
     const woreThornVeil = pieces.some((p) => p.id === THORN_VEIL.id);
     specialJob = null;
     if (woreThornVeil) {
       thornVeilUsedOnJuliette = true;
       julietteRemembersGlasshouse = true;
-      renderCastleScene(JUL_THORN_REACTION_LINES, "Continue", "closeGuardCeremony()");
+      renderCastleScene(JUL_THORN_REACTION_LINES, "Continue", `closeGuardCeremony(${combinedScore})`);
       return;
     }
-    closeGuardCeremony();
+    closeGuardCeremony(combinedScore);
     return;
   }
 
@@ -4928,15 +5011,17 @@ function filterChipRow(label, dim, options) {
 }
 
 function discoveredSetsHTML() {
-  const known = Object.entries(SET_NAMES).filter(([id]) => discoveredSets.has(id));
-  if (known.length === 0) {
-    return `<div class="set-panel"><h4>Discovered Sets</h4><p class="set-empty">No sets discovered yet — wear two matching pieces on a great outfit to find one.</p></div>`;
+  const relevantIds = Object.keys(SET_NAMES).filter((id) => discoveredSets.has(id) || collectedSets.has(id));
+  if (relevantIds.length === 0) {
+    return `<div class="set-panel"><h4>Discovered Sets</h4><p class="set-empty">No sets discovered yet — wear two matching pieces on a great outfit to find one, or collect every piece of a set for a bonus.</p></div>`;
   }
-  const rows = known.map(([id, name]) => {
+  const rows = relevantIds.map((id) => {
+    const name = SET_NAMES[id];
     const { owned, total } = setOwnedCount(id);
+    const completeTag = collectedSets.has(id) ? `<span class="set-count" style="color:var(--gold); display:block;">✓ Complete — 🌙 10 earned</span>` : "";
     return `
       <div class="set-entry">
-        <div><b>${name.toUpperCase()}</b><span class="set-count">${owned}/${total}</span></div>
+        <div><b>${name.toUpperCase()}</b><span class="set-count">${owned}/${total}</span>${completeTag}</div>
         <button class="sort-btn" onclick="openSetShowcase('${id}')">Show set</button>
       </div>
     `;
@@ -5029,7 +5114,7 @@ function renderDeckOverlay() {
 function foundObjectsHTML() {
   const items = [];
   if (hasSilverBell) items.push({ name: "SILVER BELL", desc: "It doesn't make a sound." });
-  if (hasFadedPhotograph) items.push({ name: "FADED PHOTOGRAPH", desc: "Two familiar faces outside a version of the Night Café you've never seen." });
+  if (hasFadedPhotograph) items.push({ name: "FADED PHOTOGRAPH", desc: "Maya and Juliette, standing outside a version of the Night Café you've never seen." });
   if (items.length === 0) return "";
   return `
     <h3 style="margin:22px 0 8px; text-align:center;">Found Objects</h3>
@@ -5193,7 +5278,7 @@ function finishStyling() {
   // feel punishing before the player has learned how matching works. Fades
   // out completely by the 4th visit.
   const WELCOME_BONUS = [20, 12, 6];
-  const welcomeBonus = WELCOME_BONUS[clientRoundIndex] || 0;
+  const welcomeBonus = currentYear === 1 ? (WELCOME_BONUS[clientRoundIndex] || 0) : 0;
 
   const score = briefScore + rarityBonus + preferenceBonus + comboBonus + eventBonus + welcomeBonus;
 
@@ -5519,7 +5604,7 @@ let lastEventKey = null; // which EVENT_SCHEDULE key (if any) just resolved -- r
 
 function advanceMonth() {
   const completedJob = clientRoundIndex;
-  const eventKey = completedJob === 0 ? "firstDay" : EVENT_SCHEDULE[`${currentMonthIndex()}-${positionInMonth()}`];
+  const eventKey = (completedJob === 0 && currentYear === 1) ? "firstDay" : EVENT_SCHEDULE[`${currentMonthIndex()}-${positionInMonth()}`];
   lastEventKey = eventKey;
   clientRoundIndex += 1;
   pendingSeasonEnd = SEASON_END_JOBS.includes(completedJob);
@@ -5577,7 +5662,7 @@ function beginValerySolsticeRound() {
 }
 function resolveValerySolstice(score) {
   valerySolsticeCompleted = true;
-  let lines;
+  let lines, statusLine;
   if (score >= 90) {
     royalGardenKeyFallbackNeeded = false;
     awardKeyCard("key_royalgarden");
@@ -5586,12 +5671,14 @@ function resolveValerySolstice(score) {
       { who: "VALERY", t: "That's irritating." }, { who: "YOU", t: "What is?" },
       { who: "VALERY", t: "You're good." },
     ];
+    statusLine = { who: "NARRATION", t: "The Royal Garden Key is yours." };
   } else if (score >= 70) {
     royalGardenKeyFallbackNeeded = true;
     lines = [
       { who: "VALERY", t: "Good. Almost annoyingly good." }, { who: "YOU", t: "Almost?" },
       { who: "VALERY", t: "Don't fish." },
     ];
+    statusLine = { who: "NARRATION", t: "Not quite enough for a key tonight — but Valery isn't finished with you yet." };
   } else {
     royalGardenKeyFallbackNeeded = true;
     lines = [
@@ -5599,8 +5686,9 @@ function resolveValerySolstice(score) {
       { who: "VALERY", t: "We'll call this rehearsal." }, { who: "YOU", t: "That's generous." },
       { who: "VALERY", t: "I know." },
     ];
+    statusLine = { who: "NARRATION", t: "No key tonight — but Valery isn't finished with you yet." };
   }
-  renderCastleScene(lines, "Leave", "renderMap()");
+  renderCastleScene([...lines, statusLine], "Leave", "renderMap()");
 }
 
 function afterEventContinue() {
@@ -5661,11 +5749,13 @@ function renderEnd() {
     <div class="year-row"><span><span class="soul-swatch" style="background:${c.color};"></span> ${c.name}</span><span class="hearts">${heartsHTML(relationships[i] || 0)}</span></div>
   `).join("");
 
-  // Reward: one new piece for every 3 "Delighted" outcomes this year,
-  // limited by what's left in the surprise pool.
-  const rewardCount = Math.min(Math.floor(delightedCount / 3), unlockPool.length);
-  const earned = unlockPool.splice(0, rewardCount);
-  metaUnlocked.push(...earned);
+  // Reward: one new piece for every 3 "Delighted" outcomes this year, drawn
+  // from real still-uncollected wardrobe cards (same pool unlockRandomCards()
+  // uses for the quarterly unlocks) rather than a separate placeholder set.
+  const stillLocked = DECK.filter((c) => !unlockedCardIds.has(c.id)).length;
+  const rewardCount = Math.min(Math.floor(delightedCount / 3), stillLocked);
+  const earned = unlockRandomCards(rewardCount);
+  rebuildLiveDeckFromUnlocked();
 
   const rewardLine = earned.length > 0
     ? `<p style="color:var(--gold);">Word got around about your work — ${earned.length} new piece${earned.length > 1 ? "s" : ""} joined your closet for next time: ${earned.map((c) => c.name).join(", ")}.</p>`
