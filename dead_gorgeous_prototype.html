@@ -217,6 +217,17 @@
     font-size: 11.5px; font-style: italic; color: var(--muted); text-align: center;
     max-width: 320px; margin: -14px auto 20px;
   }
+  .narration-line {
+    background: transparent; border: none; box-shadow: none; text-align: center;
+    font-style: italic; color: var(--muted); padding: 4px 10px; margin: 0 auto 14px; font-size: 14px;
+  }
+  .found-object-card {
+    background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12); border-radius: 14px;
+    padding: 12px 16px; margin-bottom: 10px; max-width: 380px;
+  }
+  .found-object-card b { display: block; font-size: 12px; letter-spacing: 0.04em; color: var(--gold); margin-bottom: 4px; }
+  .key-card-glyph { font-size: 40px; text-align: center; }
+  .subloc-row { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; margin: 10px 0 20px; }
   .hearts { font-size: 12px; letter-spacing: 1px; }
   .half-heart {
     display: inline-block; background: linear-gradient(90deg, #ff6b8a 50%, rgba(255,255,255,0.35) 50%);
@@ -916,6 +927,53 @@ const JOKER_CARDS = [
     fullArt: "https://terrirossa.github.io/dead-gorgeous-assets/cards/card_joker.svg" },
 ];
 
+// Key Cards — quest items from the Items/Keys exploration system. They live in
+// the normal draw deck (can bloat a hand like any other card) but are never
+// wearable, never score, and are never chosen by a random-destruction effect.
+// Real key art isn't ready yet, so the center art is a plain glyph per spec —
+// swap in a fullArt SVG later without touching any of the surrounding logic.
+const KEY_CARDS = [
+  { id: "key_glasshouse", type: "KEY", name: "Nightgarden Glass House Key", category: "KEY", wearable: false,
+    rarity: null, lore: "A small iron key tangled with dried roots." },
+  { id: "key_unusual", type: "KEY", name: "Unusual Key", category: "KEY", wearable: false,
+    rarity: null, lore: "The Vendor refuses to tell you what it opens." },
+  { id: "key_cafeattic", type: "KEY", name: "Nightcafe Attic Key", category: "KEY", wearable: false,
+    rarity: null, lore: "An old brass key. Juliette carried it for reasons she no longer seems to remember." },
+  { id: "key_royalgarden", type: "KEY", name: "Royal Garden Key", category: "KEY", wearable: false,
+    rarity: null, lore: "A delicate gold key bearing the crest of the Night Castle." },
+];
+const KEY_CARDS_BY_ID = Object.fromEntries(KEY_CARDS.map((k) => [k.id, k]));
+
+// Keeps each key's has<Key> boolean flag in sync with activeKeyIds so other
+// code (dialogue conditions, UI) can check either without them drifting apart.
+const KEY_FLAG_SETTERS = {
+  key_glasshouse: (v) => { hasGlassHouseKey = v; },
+  key_unusual: (v) => { hasUnusualKey = v; },
+  key_cafeattic: (v) => { hasCafeAtticKey = v; },
+  key_royalgarden: (v) => { hasRoyalGardenKey = v; },
+};
+
+function awardKeyCard(keyId) {
+  activeKeyIds.add(keyId);
+  if (KEY_FLAG_SETTERS[keyId]) KEY_FLAG_SETTERS[keyId](true);
+  rebuildLiveDeckFromUnlocked();
+}
+
+// Central helper for consuming a key at its lock: removes it from every card
+// container it could be sitting in, clears its flag, and rebuilds liveDeck.
+// The destination unlock flag itself is set by the caller (each lock is a
+// different flag), right after calling this.
+function consumeKeyCard(keyId) {
+  activeKeyIds.delete(keyId);
+  liveDeck = liveDeck.filter((c) => c.id !== keyId);
+  deckPile = deckPile.filter((id) => id !== keyId);
+  hand = hand.filter((id) => id !== keyId);
+  discardPile = discardPile.filter((id) => id !== keyId);
+  if (selectedHandId === keyId) selectedHandId = null;
+  if (KEY_FLAG_SETTERS[keyId]) KEY_FLAG_SETTERS[keyId](false);
+  rebuildLiveDeckFromUnlocked();
+}
+
 // Only ever purchasable from the strange vendor — never handed out for free,
 // so buying never competes with the yearly reward.
 // Rarity scaffolding for a future tier system (Basic -> Uncommon -> Rare -> Epic -> Mythic).
@@ -1464,10 +1522,11 @@ const SET_NAMES = { moto: "Moto Set", rosewood: "Rosewood Set", tailored: "Tailo
 // [bible] = adapted from the source document's actual dialogue; [voice] = new
 // line written to match the character where the bible had no Studio Q&A yet.
 // Progressive Studio dialogue, per the narrative bible: each client has
-// numbered stages advanced one per visit. Only Margo's full 20-stage tree
-// has been read and ported from the source document so far; Juniper, Ivy
-// and Holly still fall back to a single generic line until their trees are
-// read and ported the same way — that is real, separate work, not done here.
+// numbered stages advanced one per visit. All four Core Four now have their
+// full 20-stage trees ported verbatim from the bible. A full year only uses
+// 9 studio visits (see BRIEF_VISIT_INDICES), and profile.visits is lifetime
+// (never reset at the Year 1→2 transition — see beginYearTwo()), so Year 2's
+// 9 visits naturally continue on to stages 10–18 of each tree for free.
 const MARGO_STAGES = [
   [{ who: 'MARGO', t: "You're the replacement." }, { who: 'YOU', t: 'Replacement?' }, { who: 'MARGO', t: 'Stylist.' }, { who: 'YOU', t: 'What happened to the last one?' }, { who: 'MARGO', t: "You're new. Try remaining that way." }],
   [{ who: 'YOU', t: "You don't trust me very much." }, { who: 'MARGO', t: 'Correct.' }, { who: 'YOU', t: "Because I'm a stylist?" }, { who: 'MARGO', t: 'Because the last one was a stylist.' }, { who: 'YOU', t: 'And?' }, { who: 'MARGO', t: "And now you're here." }],
@@ -1490,8 +1549,81 @@ const MARGO_STAGES = [
   [{ who: 'YOU', t: 'Were you a witch when you were alive?' }, { who: 'MARGO', t: 'Yes.' }, { who: 'YOU', t: 'Actual magic?' }, { who: 'MARGO', t: 'Mostly disappointing men and improving harvests.' }, { who: 'YOU', t: "You're joking." }, { who: 'MARGO', t: 'About the harvests.' }],
   [{ who: 'YOU', t: 'Is being a witch connected to what happened to the last stylist?' }, { who: 'MARGO', t: "Don't ask that again." }, { who: 'YOU', t: 'Why?' }, { who: 'MARGO', t: "Because I'm beginning to like you." }],
 ];
+const JUNIPER_STAGES = [
+  [{ who: 'JUNIPER', t: "You're the new stylist." }, { who: 'YOU', t: 'Everyone keeps saying that.' }, { who: 'JUNIPER', t: "We haven't had one for a while." }, { who: 'YOU', t: 'Why?' }, { who: 'JUNIPER', t: 'Oh.' }, { who: 'JUNIPER', t: 'Green would be nice.' }],
+  [{ who: 'YOU', t: 'You dodged my question last time.' }, { who: 'JUNIPER', t: 'Yes.' }, { who: 'YOU', t: 'Intentionally?' }, { who: 'JUNIPER', t: 'Yes.' }, { who: 'YOU', t: "At least you're honest." }, { who: 'JUNIPER', t: 'Usually.' }],
+  [{ who: 'YOU', t: 'Is that plant moving?' }, { who: 'JUNIPER', t: 'Yes.' }, { who: 'YOU', t: 'Why?' }, { who: 'JUNIPER', t: 'Wind.' }, { who: 'YOU', t: "We're inside." }, { who: 'JUNIPER', t: 'Then probably not wind.' }],
+  [{ who: 'YOU', t: 'You were a botanist?' }, { who: 'JUNIPER', t: 'I think I still am.' }, { who: 'YOU', t: "You're dead." }, { who: 'JUNIPER', t: "The plants don't seem bothered." }],
+  [{ who: 'YOU', t: 'Where do these plants come from?' }, { who: 'JUNIPER', t: 'Here.' }, { who: 'YOU', t: "I've never seen them around the city." }, { who: 'JUNIPER', t: "You're looking in the wrong places." }],
+  [{ who: 'YOU', t: 'You must love Flower Fest.' }, { who: 'JUNIPER', t: 'Why?' }, { who: 'YOU', t: 'Plants.' }, { who: 'JUNIPER', t: "That's like asking a baker if they love being hit with bread." }],
+  [{ who: 'JUNIPER', t: 'No pink today.' }, { who: 'YOU', t: 'During Flower Fest?' }, { who: 'JUNIPER', t: 'Especially during Flower Fest.' }, { who: 'YOU', t: 'Margo said the same thing.' }, { who: 'JUNIPER', t: 'Margo and I agree on many things.' }, { who: 'YOU', t: "That's worrying." }, { who: 'JUNIPER', t: 'It should be.' }],
+  [{ who: 'YOU', t: 'How do you know Margo?' }, { who: 'JUNIPER', t: 'Garden Circle.' }, { who: 'YOU', t: 'So it really is gardening.' }, { who: 'JUNIPER', t: 'Yes.' }, { who: 'JUNIPER', t: 'Mostly.' }],
+  [{ who: 'YOU', t: "What's the 'mostly'?" }, { who: 'JUNIPER', t: 'Tea.' }, { who: 'YOU', t: 'Margo said that too.' }, { who: 'JUNIPER', t: 'We rehearsed.' }],
+  [{ who: 'YOU', t: "What's Nightgarden like?" }, { who: 'JUNIPER', t: 'Beautiful.' }, { who: 'YOU', t: "That's it?" }, { who: 'JUNIPER', t: "That's already more than I should have said." }],
+  [{ who: 'JUNIPER', t: 'I need white.' }, { who: 'YOU', t: "That's unusual for you." }, { who: 'JUNIPER', t: 'Solstice.' }, { who: 'YOU', t: 'Going to the Royal Quarter?' }, { who: 'JUNIPER', t: 'Absolutely not.' }],
+  [{ who: 'YOU', t: 'Why not?' }, { who: 'JUNIPER', t: 'Too many people.' }, { who: 'YOU', t: "That's all?" }, { who: 'JUNIPER', t: 'No.' }, { who: 'YOU', t: 'What else?' }, { who: 'JUNIPER', t: "That's all I'm telling you." }],
+  [{ who: 'YOU', t: 'Do you remember your garden from when you were alive?' }, { who: 'JUNIPER', t: 'Greenhouse.' }, { who: 'YOU', t: 'Big?' }, { who: 'JUNIPER', t: 'Tiny. Leaked when it rained. The heater broke every winter.' }, { who: 'YOU', t: 'Sounds terrible.' }, { who: 'JUNIPER', t: 'I loved it.' }],
+  [{ who: 'YOU', t: 'What did you grow?' }, { who: 'JUNIPER', t: "Everything I wasn't supposed to." }, { who: 'YOU', t: "Some things don't change." }, { who: 'NARRATION', t: 'Juniper smiles.' }],
+  [{ who: 'YOU', t: 'What happened to the greenhouse?' }, { who: 'JUNIPER', t: "I don't know." }, { who: 'YOU', t: "You don't remember?" }, { who: 'JUNIPER', t: "There's a point where things become... thin." }, { who: 'YOU', t: 'Your memories?' }, { who: 'JUNIPER', t: 'Yes.' }],
+  [{ who: 'YOU', t: 'How much is missing?' }, { who: 'JUNIPER', t: 'Years, maybe.' }, { who: 'YOU', t: "Doesn't that scare you?" }, { who: 'JUNIPER', t: 'Sometimes.' }, { who: 'JUNIPER', t: 'Mostly it annoys me.' }],
+  [{ who: 'YOU', t: 'Margo told me.' }, { who: 'JUNIPER', t: 'Oh.' }, { who: 'YOU', t: "That's your reaction?" }, { who: 'JUNIPER', t: "She told you. You're still here. Seems successful." }, { who: 'YOU', t: "You're a witch too?" }, { who: 'JUNIPER', t: 'Botanist first.' }],
+  [{ who: 'YOU', t: 'Are the plants magic?' }, { who: 'JUNIPER', t: 'Some.' }, { who: 'YOU', t: 'Which ones?' }, { who: 'JUNIPER', t: "The ones you shouldn't touch." }, { who: 'YOU', t: 'Which are—' }, { who: 'JUNIPER', t: 'Most of them.' }],
+  [{ who: 'YOU', t: 'Do the window lights really keep frost creatures away?' }, { who: 'JUNIPER', t: 'Usually.' }, { who: 'YOU', t: "What does 'usually' mean?" }, { who: 'JUNIPER', t: 'Keep yours lit.' }, { who: 'YOU', t: 'Juniper.' }, { who: 'JUNIPER', t: 'Keep. Yours. Lit.' }],
+  [{ who: 'YOU', t: 'Does the Garden Circle know what happened to the previous stylist?' }, { who: 'JUNIPER', t: 'We know pieces.' }, { who: 'YOU', t: 'Will you tell me?' }, { who: 'JUNIPER', t: 'Not yet.' }, { who: 'YOU', t: 'You trust me now.' }, { who: 'JUNIPER', t: "That's why I'm not telling you." }],
+];
+const IVY_STAGES = [
+  [{ who: 'IVY', t: 'New stylist.' }, { who: 'YOU', t: 'Is there a sign on me?' }, { who: 'IVY', t: 'Kind of.' }, { who: 'YOU', t: 'What does it say?' }, { who: 'IVY', t: "'Hasn't learned yet.'" }],
+  [{ who: 'YOU', t: 'Learned what?' }, { who: 'IVY', t: 'Give it a month.' }, { who: 'YOU', t: 'Everyone here talks like that.' }, { who: 'IVY', t: "You'll start doing it too." }],
+  [{ who: 'YOU', t: "That's your bike outside?" }, { who: 'IVY', t: "Don't touch her." }, { who: 'YOU', t: 'Her?' }, { who: 'IVY', t: 'Figure of speech.' }],
+  [{ who: 'YOU', t: 'Your bike moved.' }, { who: 'IVY', t: 'Bikes do that.' }, { who: 'YOU', t: 'It was parked.' }, { who: 'IVY', t: 'Wind.' }, { who: 'YOU', t: 'Inside an alley?' }, { who: 'IVY', t: 'Very local wind.' }],
+  [{ who: 'YOU', t: 'What model is it?' }, { who: 'IVY', t: "Don't know." }, { who: 'YOU', t: "It's your bike." }, { who: 'IVY', t: 'Correct.' }, { who: 'YOU', t: 'Where did you get it?' }, { who: 'IVY', t: 'Found me.' }, { who: 'YOU', t: 'You found it?' }, { who: 'IVY', t: "That's not what I said." }],
+  [{ who: 'IVY', t: 'Boots.' }, { who: 'YOU', t: 'Again?' }, { who: 'IVY', t: 'Have you tried running across wet cobblestones in heels?' }, { who: 'YOU', t: 'Have you?' }, { who: 'IVY', t: 'Once.' }, { who: 'YOU', t: 'And?' }, { who: 'IVY', t: 'Boots.' }],
+  [{ who: 'YOU', t: 'You were a courier when you were alive too?' }, { who: 'IVY', t: 'Yeah.' }, { who: 'YOU', t: 'Motorcycle?' }, { who: 'IVY', t: 'Bike. Motorcycle. Anything fast enough to make bad decisions interesting.' }],
+  [{ who: 'YOU', t: 'And now you deliver things here.' }, { who: 'IVY', t: "Apparently death isn't a career change." }],
+  [{ who: 'YOU', t: 'Where do you deliver?' }, { who: 'IVY', t: 'Everywhere.' }, { who: 'YOU', t: 'Night Castle?' }, { who: 'IVY', t: 'Sometimes.' }, { who: 'YOU', t: 'Nightgarden?' }, { who: 'IVY', t: 'Sometimes.' }, { who: 'YOU', t: "There isn't even a road behind Nightgarden." }, { who: 'IVY', t: 'Sure there is.' }],
+  [{ who: 'YOU', t: 'Show me.' }, { who: 'IVY', t: 'No.' }, { who: 'YOU', t: 'Why?' }, { who: 'IVY', t: 'Because I like you alive—' }, { who: 'IVY', t: 'You know what I mean.' }],
+  [{ who: 'YOU', t: 'Who are you delivering to tonight?' }, { who: 'IVY', t: 'Client confidentiality.' }, { who: 'YOU', t: 'Since when do you care about that?' }, { who: 'IVY', t: 'Since this client has horns.' }, { who: 'YOU', t: 'What?' }, { who: 'IVY', t: 'Black jacket, please.' }],
+  [{ who: 'YOU', t: 'Horns?' }, { who: 'IVY', t: 'Fashion.' }, { who: 'YOU', t: 'Ivy.' }, { who: 'IVY', t: 'Very avant-garde.' }],
+  [{ who: 'IVY', t: 'Need something Classic.' }, { who: 'YOU', t: 'You hate Classic.' }, { who: 'IVY', t: 'Royal Quarter.' }, { who: 'YOU', t: 'You got invited?' }, { who: 'IVY', t: 'God, no.' }, { who: 'YOU', t: 'Delivery?' }, { who: 'IVY', t: 'Yeah.' }],
+  [{ who: 'YOU', t: 'People are acting weird about Solstice.' }, { who: 'IVY', t: 'People act weird about everything.' }, { who: 'YOU', t: "Someone said 'not like last time.'" }, { who: 'IVY', t: "Don't ask about last time." }, { who: 'YOU', t: 'Why?' }, { who: 'IVY', t: 'See? Exactly that.' }],
+  [{ who: 'YOU', t: 'Did you know the previous stylist?' }, { who: 'IVY', t: 'A little.' }, { who: 'YOU', t: "Nobody will tell me what happened." }, { who: 'IVY', t: 'Smart.' }, { who: 'YOU', t: 'You included?' }, { who: 'IVY', t: 'Especially me.' }],
+  [{ who: 'YOU', t: 'Were you there?' }, { who: 'IVY', t: 'Next question.' }, { who: 'YOU', t: "That's not a no." }, { who: 'IVY', t: "That's why I said next question." }],
+  [{ who: 'YOU', t: 'Your bike was looking at me.' }, { who: 'IVY', t: "That's ridiculous." }, { who: 'YOU', t: 'It has no eyes and somehow I know it was looking at me.' }, { who: 'IVY', t: '...' }, { who: 'IVY', t: 'She likes you.' }, { who: 'YOU', t: 'SHE?' }, { who: 'IVY', t: 'Outfit. Now.' }],
+  [{ who: 'YOU', t: 'Is she alive?' }, { who: 'IVY', t: 'Define alive.' }, { who: 'YOU', t: 'Absolutely not.' }, { who: 'IVY', t: 'Finally asking better questions.' }],
+  [{ who: 'YOU', t: 'Is the bike from After City?' }, { who: 'IVY', t: 'No.' }, { who: 'YOU', t: 'Living world?' }, { who: 'IVY', t: 'No.' }, { who: 'YOU', t: 'Then where?' }, { who: 'IVY', t: "That's a third-date question." }, { who: 'YOU', t: "We've known each other for months." }, { who: 'IVY', t: "And yet you've never bought me dinner." }],
+  [{ who: 'YOU', t: "You know what's outside After City." }, { who: 'IVY', t: 'Some of it.' }, { who: 'YOU', t: 'Angels?' }, { who: 'IVY', t: 'Go home before dark tonight.' }, { who: 'YOU', t: 'Ivy—' }, { who: 'IVY', t: 'Seriously.' }],
+];
+const HOLLY_STAGES = [
+  [{ who: 'HOLLY', t: 'You are the new clothier.' }, { who: 'YOU', t: 'Stylist.' }, { who: 'HOLLY', t: 'Is there a difference?' }, { who: 'YOU', t: 'Yes.' }, { who: 'HOLLY', t: 'Then prove it.' }],
+  [{ who: 'YOU', t: "You don't trust me." }, { who: 'HOLLY', t: "I don't know you." }, { who: 'YOU', t: 'Fair.' }, { who: 'HOLLY', t: 'The last one was known.' }, { who: 'YOU', t: 'What happened to them?' }, { who: 'HOLLY', t: 'Exactly.' }],
+  [{ who: 'HOLLY', t: 'White. Simple. Nothing that impedes movement.' }, { who: 'YOU', t: "You're going to dinner." }, { who: 'HOLLY', t: 'Danger does not schedule appointments.' }],
+  [{ who: 'YOU', t: "You always dress like you're expecting trouble." }, { who: 'HOLLY', t: 'I prefer being incorrectly prepared to correctly dead.' }, { who: 'YOU', t: 'Holly.' }, { who: 'HOLLY', t: 'Habit.' }],
+  [{ who: 'YOU', t: 'Were you a soldier?' }, { who: 'HOLLY', t: 'Yes.' }, { who: 'YOU', t: 'When?' }, { who: 'HOLLY', t: 'A long time ago.' }],
+  [{ who: 'YOU', t: 'What kind of soldier?' }, { who: 'HOLLY', t: 'The kind that survived battles.' }, { who: 'YOU', t: "Until you didn't." }, { who: 'HOLLY', t: "Don't." }],
+  [{ who: 'YOU', t: 'Do you remember the battles?' }, { who: 'HOLLY', t: 'Some.' }, { who: 'YOU', t: 'Which?' }, { who: 'HOLLY', t: 'Mud. Horses. Steel.' }, { who: 'YOU', t: "That's not a battle." }, { who: 'HOLLY', t: "That's what remains." }],
+  [{ who: 'YOU', t: 'You fought in armour?' }, { who: 'HOLLY', t: 'Of course.' }, { who: 'YOU', t: 'Heavy?' }, { who: 'HOLLY', t: 'Only if badly made.' }],
+  [{ who: 'HOLLY', t: 'Blue today.' }, { who: 'YOU', t: 'You like blue.' }, { who: 'HOLLY', t: 'Someone I knew wore it.' }, { who: 'YOU', t: 'Who?' }, { who: 'HOLLY', t: "I don't remember." }],
+  [{ who: 'YOU', t: 'Was it the same person you mentioned before?' }, { who: 'HOLLY', t: "I didn't mention anyone." }, { who: 'YOU', t: 'You said someone wore blue.' }, { who: 'HOLLY', t: 'Then why ask?' }],
+  [{ who: 'HOLLY', t: 'There was a woman.' }, { who: 'YOU', t: 'The one in blue?' }, { who: 'HOLLY', t: 'Yes.' }, { who: 'YOU', t: 'Who was she?' }, { who: 'HOLLY', t: 'Isolde.' }],
+  [{ who: 'YOU', t: 'Isolde.' }, { who: 'HOLLY', t: 'Princess Isolde.' }, { who: 'YOU', t: 'You served her?' }, { who: 'HOLLY', t: 'I think so.' }, { who: 'YOU', t: 'You think?' }, { who: 'HOLLY', t: "My memories don't ask permission before leaving." }],
+  [{ who: 'YOU', t: 'Were you her guard?' }, { who: 'HOLLY', t: 'Knight.' }, { who: 'YOU', t: 'Women could be knights?' }, { who: 'HOLLY', t: 'No.' }, { who: 'YOU', t: 'Oh.' }, { who: 'HOLLY', t: 'Precisely.' }],
+  [{ who: 'YOU', t: 'So everyone thought you were a man.' }, { who: 'HOLLY', t: 'Everyone who mattered.' }, { who: 'YOU', t: 'Isolde?' }, { who: 'HOLLY', t: 'Isolde was not easily deceived.' }],
+  [{ who: 'YOU', t: 'Did she know from the beginning?' }, { who: 'HOLLY', t: "I don't know." }, { who: 'YOU', t: 'But eventually?' }, { who: 'HOLLY', t: 'Yes.' }, { who: 'YOU', t: 'Was she angry?' }, { who: 'HOLLY', t: 'She laughed for ten minutes.' }],
+  [{ who: 'HOLLY', t: 'Something Romantic today.' }, { who: 'YOU', t: 'Really?' }, { who: 'HOLLY', t: 'Must you sound surprised?' }, { who: 'YOU', t: 'A little.' }, { who: 'HOLLY', t: 'Knights can appreciate silk.' }, { who: 'YOU', t: 'Apparently.' }, { who: 'HOLLY', t: 'Knights can also leave.' }, { who: 'YOU', t: 'Romantic it is.' }],
+  // [bible note] the source stage opens on "[PLAYER EQUIPS FIRST ARMOR CARD]" —
+  // a mechanic trigger for the Armor system, which is deliberately out of
+  // scope for now (later "late game" pass). The spoken lines are ported as-is;
+  // the mechanic hook (and its "+50 Holly Match" bonus) is left for that pass.
+  [{ who: 'HOLLY', t: 'Where did you get that?' }, { who: 'YOU', t: 'The armour?' }, { who: 'HOLLY', t: 'Take it off.' }, { who: 'YOU', t: "You don't like it?" }, { who: 'HOLLY', t: "I didn't say that." }, { who: 'YOU', t: 'Then—' }, { who: 'HOLLY', t: 'Take it off.' }],
+  [{ who: 'YOU', t: 'You liked the armour last time.' }, { who: 'HOLLY', t: 'I did not.' }, { who: 'YOU', t: 'The score disagrees.' }, { who: 'HOLLY', t: 'Your machine is impertinent.' }, { who: 'YOU', t: 'You recognized it.' }, { who: 'HOLLY', t: 'I recognized armour.' }, { who: 'YOU', t: 'That armour.' }, { who: 'HOLLY', t: 'Yes.' }],
+  [{ who: 'YOU', t: 'Is it like what you wore?' }, { who: 'NARRATION', t: 'Holly runs her hand over the metal.' }, { who: 'HOLLY', t: 'No.' }, { who: 'YOU', t: "What's different?" }, { who: 'HOLLY', t: 'Everything.' }, { who: 'YOU', t: 'Then why does it feel familiar?' }, { who: 'HOLLY', t: "I don't know." }],
+  [{ who: 'YOU', t: 'When you think about Isolde, what do you remember?' }, { who: 'HOLLY', t: 'Her hands.' }, { who: 'YOU', t: 'Anything else?' }, { who: 'HOLLY', t: 'Blue ribbons.' }, { who: 'HOLLY', t: 'She hated pears.' }, { who: 'YOU', t: "That's oddly specific." }, { who: 'HOLLY', t: 'I have forgotten kingdoms.' }, { who: 'HOLLY', t: 'I remember that she hated pears.' }],
+];
 const CLIENT_STAGES = {
-  0: MARGO_STAGES, // Margo
+  0: MARGO_STAGES,   // Margo
+  1: JUNIPER_STAGES, // Juniper
+  2: IVY_STAGES,     // Ivy
+  3: HOLLY_STAGES,   // Holly
 };
 const FALLBACK_STAGE = [{ who: "CLIENT", t: "(This client's Studio dialogue hasn't been ported from the bible yet.)" }];
 
@@ -1558,12 +1690,134 @@ let soulProfiles = {};   // per-client: { visits, answered: [ids], facts: [{q,a}
 let roundIsFirstMeeting = false;
 let pendingQuestion = null;
 let currentBrief = null; // one entry from CLIENTS[key].briefs — chosen fresh each round via BRIEF_VISIT_INDICES
+// Set while a one-off special styling job (Valery's Solstice job, either half
+// of the Guard Ceremony) is running. Reusing the same 4-slot styling UI and
+// hand/deck plumbing as a normal client round, WITHOUT touching soulProfiles,
+// relationships, clientRoundIndex, totalScore or delightedCount -- these jobs
+// are explicitly "extra" per spec and never count toward year totals. See
+// startSpecialRound() / finishSpecialStyling() near the Castle/Royal Garden
+// content, and currentClient() below for how this plugs into the shared UI.
+let specialJob = null;
 let totalScore = 0;
 let delightedCount = 0; // "Delighted" (score >= 70) outcomes this session
 let soulStep = 0;
 let dialogueLineIndex = 0;
 let dragState = null;
 let slotDragState = null;
+
+// ---------------------------------------------------------------------------
+// YEAR 2 CONTENT PASS — secondary characters, hidden locations, key cards.
+// See the two companion specs (Aftercity Characters & Encounters, Items/Keys
+// Exploration). Built incrementally: this pass covers the Year 1→2 transition,
+// the Key Card engine, and Night Castle (Helena + Juliette). Night Café's Maya
+// + Back Room + Attic, Nightgarden's Octavia + Glass House, and Valery/Royal
+// Garden/Guard Ceremony are follow-up work and use the flags declared below
+// once they're built, so the full flag set is declared up front.
+// ---------------------------------------------------------------------------
+let currentYear = 1;
+let activeKeyIds = new Set();
+
+// Shared
+let castleGateCharactersUnlocked = false;
+let castleVisitsAfterMeeting = 0;
+
+// Helena
+let metHelena = false;
+let helenaAmbientSeen = [];
+let helenaLastAmbientYearMonth = null;
+let helenaPhotoReactionSeen = false;
+let helenaRoyalGardenEncounterSeen = false;
+let helenaCaughtPlayerSeen = false;
+let helenaJulietteQAStage = 0; // 0 = neither question asked, 1 = first seen, 2 = both seen
+
+// Juliette
+let metJuliette = false;
+let julietteAmbientSeen = [];
+let julietteLastAmbientYearMonth = null;
+let julietteShiftEventSeen = false;
+let julietteCafeKeyHintAvailable = false;
+let julietteGaveAtticKey = false;
+let juliettePhotoReactionSeen = false;
+let julietteRemembersGlasshouse = false;
+let julietteThornRetrySeen = false;
+let julietteRoyalGardenFountainSeen = false;
+let julietteRoyalGardenFlowerSeen = false;
+
+// Maya (Night Café — not yet built)
+let metMaya = false;
+let mayaEncounterCount = 0;
+let mayaAmbientSeen = [];
+let mayaLastAmbientYearMonth = null;
+let mayaAtticHintGiven = false;
+let mayaPhotoReactionSeen = false;
+let mayaBackRoomReactionSeen = false;
+
+// Octavia (Nightgarden — not yet built)
+let metOctavia = false;
+let octaviaEncounterCount = 0;
+let octaviaAmbientSeen = [];
+let octaviaLastAmbientYearMonth = null;
+let octaviaSacrificeCompleted = false;
+let octaviaRoyalGardenSeen = false;
+
+// Valery (Castle exterior / Royal Garden — not yet built)
+let metValery = false;
+let valeryAmbientSeen = [];
+let valerySolsticeCompleted = false;
+let royalGardenKeyFallbackNeeded = false;
+let valeryRoyalGardenWelcomeSeen = false;
+let valeryMicroRequestSeason = null;
+
+// Guard Ceremony special job (Year 2 — not yet built)
+let guardCeremonyCompleted = false;
+let thornVeilUsedOnJuliette = false;
+
+// Items/Keys — locations
+let hasUnusualKey = false;
+let hasGlassHouseKey = false;
+let hasCafeAtticKey = false;
+let hasRoyalGardenKey = false;
+let glassHouseUnlocked = false;
+let glassHouseDoorOpened = false;
+let cafeBackDoorDiscovered = false;
+let cafeBackRoomUnlocked = false;
+let cafeAtticUnlocked = false;
+let royalGardenUnlocked = false;
+
+// Glass House (Nightgarden sub-location — not yet built)
+let glassHouseFirstVisitSeen = false;
+let glassHouseOctaviaVisitSeen = false;
+let glassHouseJulietteClueSeen = false;
+let glassHouseVisitCount = 0;
+let glassHouseRareFindLastYear = null;
+let glassHouseCultivationUnlocked = false;
+let glassHouseCultivationPending = false;
+let glassHouseCultivationReadyYear = null;
+let glassHouseCultivationSourceAttributes = null;
+let glassHouseCultivationLastHarvestYear = null;
+
+// Story items / found objects (not yet awarded by anything this pass)
+let thornVeilOwned = false;
+let hasSilverBell = false;
+let hasFadedPhotograph = false;
+
+// Café Back Room (not yet built)
+let cafeBackRoomCacheClaimed = false;
+let backRoomBoxPurchasedYearMonth = null;
+
+// Café Attic (not yet built)
+let cafeAtticFirstVisitSeen = false;
+let atticMenusSeen = false;
+let cafeAtticStaffCoatSeen = false;
+let atticLostPropertyLastYear = null;
+
+// Royal Garden (not yet built)
+let royalGardenFirstVisitSeen = false;
+let royalGardenSealedDoorSeen = false;
+let royalGardenLostAccessoryLastYear = null;
+
+// seasonalReactionSeen[characterId][year][eventId] — festival reactions (not yet built)
+let seasonalReactionSeen = {};
 
 const stage = document.getElementById("stage");
 
@@ -1576,7 +1830,10 @@ function shuffle(arr) {
   return a;
 }
 
-function currentClient() { return CLIENTS[clientRoundIndex % CLIENTS.length]; }
+function currentClient() {
+  if (specialJob) return specialJob.virtualClient;
+  return CLIENTS[clientRoundIndex % CLIENTS.length];
+}
 function currentClientKey() { return clientRoundIndex % CLIENTS.length; }
 function findCard(id) { return liveDeck.find((c) => c.id === id); }
 
@@ -1603,8 +1860,14 @@ function startRound() {
   const key = currentClientKey();
   const profile = soulProfiles[key];
   roundIsFirstMeeting = profile.visits === 0;
-  const visitNumber = profile.visits; // 0-indexed visit about to happen
-  profile.visits += 1;
+  profile.visits += 1; // lifetime visits — drives CLIENT_STAGES, never reset at Year 1→2
+  // yearVisits drives which of the 9 authored briefs shows this visit and IS
+  // reset at the Year 1→2 transition (see enterYearTwo()), so Year 2 replays
+  // the same nine-visit brief schedule per the companion spec §17.1, while
+  // CLIENT_STAGES keeps advancing on lifetime visits without a replayed
+  // first-meeting greeting.
+  profile.yearVisits = (profile.yearVisits || 0) + 1;
+  const visitNumberThisYear = profile.yearVisits - 1; // 0-indexed visit about to happen, within the year
   soulStep = 0;
   dialogueLineIndex = 0;
   const briefs = CLIENTS[key].briefs;
@@ -1612,7 +1875,7 @@ function startRound() {
   // played in one year, spaced across the arc and always ending on the
   // player-choice trust job. Visits past the 9th (shouldn't normally happen
   // in a 36-job year, but safe to fall back) just replay the trust job.
-  const briefIndex = BRIEF_VISIT_INDICES[Math.min(visitNumber, BRIEF_VISIT_INDICES.length - 1)];
+  const briefIndex = BRIEF_VISIT_INDICES[Math.min(visitNumberThisYear, BRIEF_VISIT_INDICES.length - 1)];
   currentBrief = briefs[briefIndex];
 
   // Redraw from the FULL unlocked pool every round, not a depleting carryover
@@ -1623,18 +1886,22 @@ function startRound() {
   const jokerIds = new Set(JOKER_CARDS.map((c) => c.id));
   deckPile = liveDeck.filter((c) => !jokerIds.has(c.id)).map((c) => c.id);
   discardPile = [];
-  const handIds = drawBalancedHand(deckPile);
+  const handIds = drawInitialHand(deckPile);
   deckPile = deckPile.filter((id) => !handIds.includes(id));
   hand = handIds;
 }
 
 // Draw a hand that always tries to cover Jacket, Top-or-Dress, Bottom, and
 // Shoes first, so you're never stuck holding five of the same category.
-function drawBalancedHand(pool) {
+// targetSize defaults to a full hand, but callers can ask for fewer slots
+// (e.g. when some slots are already reserved for Key Cards — see
+// drawInitialHand below).
+function drawBalancedHand(pool, targetSize = HAND_SIZE) {
   let remaining = [...pool];
   const picked = [];
 
   function takeOneOf(categories) {
+    if (picked.length >= targetSize) return;
     const candidates = remaining.filter((id) => categories.includes(findCard(id).category));
     if (candidates.length === 0) return;
     const choice = candidates[Math.floor(Math.random() * candidates.length)];
@@ -1649,15 +1916,100 @@ function drawBalancedHand(pool) {
 
   // Any remaining slots prefer a category not already doubled-up in hand,
   // so the 5th card doesn't just pile onto whatever the first four were.
-  while (picked.length < HAND_SIZE && remaining.length > 0) {
+  while (picked.length < targetSize && remaining.length > 0) {
     const pickedCats = picked.map((id) => findCard(id).category);
     const freshCandidates = remaining.filter((id) => !pickedCats.includes(findCard(id).category));
-    const pool = freshCandidates.length > 0 ? freshCandidates : remaining;
-    const choice = pool[Math.floor(Math.random() * pool.length)];
+    const candidatePool = freshCandidates.length > 0 ? freshCandidates : remaining;
+    const choice = candidatePool[Math.floor(Math.random() * candidatePool.length)];
     remaining = remaining.filter((id) => id !== choice);
     picked.push(choice);
   }
   return picked;
+}
+
+// Key Card-aware initial hand draw (Items/Keys spec §2.2). Carrying keys can
+// genuinely make a hand worse — they are NOT exempted or capped. A raw random
+// sample of the full pool decides how many Key Cards (0..HAND_SIZE) land in
+// this hand; whatever's left is filled with the normal balanced wearable draw.
+function drawInitialHand(pool) {
+  const keyIdSet = new Set(KEY_CARDS.map((k) => k.id));
+  const rawSample = shuffle(pool).slice(0, HAND_SIZE);
+  const reservedKeys = rawSample.filter((id) => keyIdSet.has(id));
+
+  const wearablePool = pool.filter((id) => !keyIdSet.has(id));
+  const wearableHand = drawBalancedHand(wearablePool, HAND_SIZE - reservedKeys.length);
+
+  return [...reservedKeys, ...wearableHand];
+}
+
+// Sets up a one-off special styling round (Valery's Solstice job, or one half
+// of the Guard Ceremony) using the exact same hand-draw/deck plumbing as a
+// normal client round, but WITHOUT touching soulProfiles, clientRoundIndex,
+// or any lifetime/per-year counters -- see the comment on `let specialJob`.
+function startSpecialRound(virtualClient, brief, jobMeta) {
+  outfit = [null, null, null, null];
+  jokerAvailable = true;
+  redrawAvailable = true;
+  selectedHandId = null;
+  currentBrief = brief;
+  specialJob = { ...jobMeta, virtualClient };
+
+  const jokerIds = new Set(JOKER_CARDS.map((c) => c.id));
+  deckPile = liveDeck.filter((c) => !jokerIds.has(c.id)).map((c) => c.id);
+  discardPile = [];
+  const handIds = drawInitialHand(deckPile);
+  deckPile = deckPile.filter((id) => !handIds.includes(id));
+  hand = handIds;
+}
+
+// A deliberately smaller, self-contained scoring formula for special jobs:
+// brief match + rarity fit + hidden-preference match (+8 each, uncapped,
+// matching the "core-client style" scoring the specs call for) + the active
+// seasonal event bonus + gap penalty. No welcome bonus (that's specifically
+// for a client's first few EVER visits) and no matching-set bonus (none of
+// the three special jobs' specs mention one) -- keeping this intentionally
+// lean and separate from finishStyling() so the well-tested core client path
+// can never be affected by this one.
+function scoreSpecialOutfit(pieces, virtualClient, brief) {
+  const wantList = brief.want || [];
+  const pieceDetails = pieces.map((piece) => {
+    const matchedAttrs = wantList.filter((r) => reqMatches(r, piece));
+    const briefPts = matchedAttrs.length * 25;
+    let rarityPts = 0;
+    if (matchedAttrs.length > 0) rarityPts = RARITY_FIT_BONUS[piece.rarity] || 0;
+    else if (HIGH_RARITY.has(piece.rarity)) rarityPts = RARITY_OFFBRIEF_BONUS;
+    return { briefPts, rarityPts };
+  });
+  const rawBriefScore = pieceDetails.reduce((sum, d) => sum + d.briefPts, 0);
+  const briefScore = Math.min(rawBriefScore, 100);
+  const rarityBonus = pieceDetails.reduce((sum, d) => sum + d.rarityPts, 0);
+
+  const matchedPreferences = (virtualClient.preferences || []).filter((rule) => preferenceMatches(rule, pieces));
+  const preferenceBonus = matchedPreferences.length * 8;
+
+  const activeEvent = currentMonthEvent();
+  const eventDef = activeEvent ? EVENT_BONUSES[activeEvent] : null;
+  let eventBonus = 0;
+  if (eventDef) {
+    const fits = pieces.some((p) =>
+      (eventDef.styles && eventDef.styles.includes(p.style)) ||
+      (eventDef.colors && eventDef.colors.includes(p.color)) ||
+      (eventDef.categories && eventDef.categories.includes(p.category)) ||
+      (eventDef.rarities && eventDef.rarities.includes(p.rarity))
+    );
+    if (fits) eventBonus = 10;
+  }
+
+  const hasDress = pieces.some((p) => p.category === "Dress");
+  const hasShoes = pieces.some((p) => p.category === "Shoes");
+  const hasTop = pieces.some((p) => p.category === "Top");
+  const hasBottom = pieces.some((p) => p.category === "Bottom");
+  let gapPenalty = 0;
+  if (!hasShoes) gapPenalty -= 10;
+  if (!hasDress && !hasTop) gapPenalty -= 10;
+  if (!hasDress && !hasBottom) gapPenalty -= 10;
+
+  return Math.max(0, briefScore + rarityBonus + preferenceBonus + eventBonus + gapPenalty);
 }
 
 /* ---------------- SCREENS ---------------- */
@@ -1728,24 +2080,123 @@ function unlockRandomCards(n) {
 
 function rebuildLiveDeckFromUnlocked() {
   const unlocked = DECK.filter((c) => unlockedCardIds.has(c.id));
-  liveDeck = [...unlocked, ...metaUnlocked, ...JOKER_CARDS];
+  const activeKeys = KEY_CARDS.filter((k) => activeKeyIds.has(k.id));
+  const storyWearables = thornVeilOwned ? [THORN_VEIL] : [];
+  liveDeck = [...unlocked, ...metaUnlocked, ...storyWearables, ...activeKeys, ...JOKER_CARDS];
 }
 
 function beginGame() {
   document.getElementById("topBar").classList.remove("hidden");
   unlockedCardIds = new Set(pickStarterDeck().map((c) => c.id));
+  activeKeyIds = new Set();
   rebuildLiveDeckFromUnlocked();
   deckPile = liveDeck.map((c) => c.id);
   discardPile = [];
   relationships = {};
   soulProfiles = {};
-  CLIENTS.forEach((_, i) => { soulProfiles[i] = { visits: 0, answered: [], facts: [], discovered: [], bestScore: null, bestPieces: [] }; });
+  CLIENTS.forEach((_, i) => { soulProfiles[i] = { visits: 0, yearVisits: 0, answered: [], facts: [], discovered: [], bestScore: null, bestPieces: [] }; });
   clientRoundIndex = 0;
+  currentYear = 1;
   totalScore = 0;
   delightedCount = 0;
   restrictedPhase = { castle: 0, garden: 0 };
   discoveredSets = new Set();
+  resetSecondaryContentState();
   renderMap();
+}
+
+// Full reset of every Year-2-content-pass flag, for a true "Restart prototype"
+// (whether that happens from Year 1 or after Year 2 — see renderEnd()).
+// enterYearTwo(), by contrast, deliberately does NOT call this: Year 2 keeps
+// all of this state (see its own comment for exactly what does get reset).
+function resetSecondaryContentState() {
+  castleGateCharactersUnlocked = false;
+  castleVisitsAfterMeeting = 0;
+
+  metHelena = false;
+  helenaAmbientSeen = [];
+  helenaLastAmbientYearMonth = null;
+  helenaPhotoReactionSeen = false;
+  helenaRoyalGardenEncounterSeen = false;
+  helenaCaughtPlayerSeen = false;
+  helenaJulietteQAStage = 0;
+
+  metJuliette = false;
+  julietteAmbientSeen = [];
+  julietteLastAmbientYearMonth = null;
+  julietteShiftEventSeen = false;
+  julietteCafeKeyHintAvailable = false;
+  julietteGaveAtticKey = false;
+  juliettePhotoReactionSeen = false;
+  julietteRemembersGlasshouse = false;
+  julietteThornRetrySeen = false;
+  julietteRoyalGardenFountainSeen = false;
+  julietteRoyalGardenFlowerSeen = false;
+
+  metMaya = false;
+  mayaEncounterCount = 0;
+  mayaAmbientSeen = [];
+  mayaLastAmbientYearMonth = null;
+  mayaAtticHintGiven = false;
+  mayaPhotoReactionSeen = false;
+  mayaBackRoomReactionSeen = false;
+
+  metOctavia = false;
+  octaviaEncounterCount = 0;
+  octaviaAmbientSeen = [];
+  octaviaLastAmbientYearMonth = null;
+  octaviaSacrificeCompleted = false;
+  octaviaRoyalGardenSeen = false;
+
+  metValery = false;
+  valeryAmbientSeen = [];
+  valerySolsticeCompleted = false;
+  royalGardenKeyFallbackNeeded = false;
+  valeryRoyalGardenWelcomeSeen = false;
+  valeryMicroRequestSeason = null;
+
+  guardCeremonyCompleted = false;
+  thornVeilUsedOnJuliette = false;
+
+  hasUnusualKey = false;
+  hasGlassHouseKey = false;
+  hasCafeAtticKey = false;
+  hasRoyalGardenKey = false;
+  glassHouseUnlocked = false;
+  glassHouseDoorOpened = false;
+  cafeBackDoorDiscovered = false;
+  cafeBackRoomUnlocked = false;
+  cafeAtticUnlocked = false;
+  royalGardenUnlocked = false;
+
+  glassHouseFirstVisitSeen = false;
+  glassHouseOctaviaVisitSeen = false;
+  glassHouseJulietteClueSeen = false;
+  glassHouseVisitCount = 0;
+  glassHouseRareFindLastYear = null;
+  glassHouseCultivationUnlocked = false;
+  glassHouseCultivationPending = false;
+  glassHouseCultivationReadyYear = null;
+  glassHouseCultivationSourceAttributes = null;
+  glassHouseCultivationLastHarvestYear = null;
+
+  thornVeilOwned = false;
+  hasSilverBell = false;
+  hasFadedPhotograph = false;
+
+  cafeBackRoomCacheClaimed = false;
+  backRoomBoxPurchasedYearMonth = null;
+
+  cafeAtticFirstVisitSeen = false;
+  atticMenusSeen = false;
+  cafeAtticStaffCoatSeen = false;
+  atticLostPropertyLastYear = null;
+
+  royalGardenFirstVisitSeen = false;
+  royalGardenSealedDoorSeen = false;
+  royalGardenLostAccessoryLastYear = null;
+
+  seasonalReactionSeen = {};
 }
 
 const RESTRICTED_PHASES = {
@@ -1755,6 +2206,9 @@ const RESTRICTED_PHASES = {
     "They ignore you completely now. Not even a glance.",
     "\u201CYou need to leave,\u201D one guard says, not unkindly. \u201CNow.\u201D",
   ],
+  // garden's 4-phase cycle is superseded by nightgardenOpen()'s pure seasonal
+  // gate (see renderGarden()) — kept here only so restrictedPhase.garden
+  // doesn't need to be scrubbed from old state, never read anymore.
   garden: [
     "The gate is locked. No sign, no explanation.",
     "You notice movement behind the hedges. Or maybe not.",
@@ -1771,8 +2225,8 @@ function renderMap() {
     { key: "studio", label: "Studio", locked: false, action: "renderShuffle()" },
     { key: "shop", label: "Shop", locked: false, action: "renderShop()" },
     { key: "cafe", label: "Night Café", locked: false, action: "renderCafe()" },
-    { key: "castle", label: "Night Castle", locked: true },
-    { key: "garden", label: "Nightgarden", locked: true },
+    { key: "castle", label: "Night Castle", locked: restrictedPhase.castle < 4, action: "renderCastle()" },
+    { key: "garden", label: "Nightgarden", locked: false, action: "renderGarden()" },
   ];
 
   const tilesHTML = tiles.map((t) => `
@@ -1812,6 +2266,15 @@ function pickShopItem() {
   return weightedSample(pool, 1)[0];
 }
 
+// Earliest the Unusual Key can appear: Year 1 Summer (June) onward, per the
+// Items/Keys spec — and once eligible, it stays eligible (Year 2 is always
+// past this point too, regardless of the in-year month).
+function unusualKeyEligible() {
+  return currentYear >= 2 || currentMonthIndex() >= 5;
+}
+
+const UNUSUAL_KEY_PRICE = 10;
+
 function renderShop() {
   if (currentShopItem === undefined || currentShopItem === null) currentShopItem = pickShopItem();
   const item = currentShopItem;
@@ -1825,6 +2288,18 @@ function renderShop() {
     `
     : `<p>\u201CNothing left that you don't already own. Come back another time.\u201D</p>`;
 
+  // The Unusual Key unlocks the Night Café Back Room — that lock isn't built
+  // yet, so for now the key just sits in the deck once bought (as designed;
+  // see Items/Keys §12, "player buys key but doesn't find/use lock").
+  const showUnusualKey = unusualKeyEligible() && !hasUnusualKey && !cafeBackRoomUnlocked;
+  const unusualKeyHTML = showUnusualKey
+    ? `
+      <div class="shop-mystery-card" style="margin-top:8px;">${gcardHTML(KEY_CARDS_BY_ID.key_unusual)}</div>
+      <p style="max-width:280px;">\u201CI don't know what it opens. I never asked.\u201D</p>
+      <button class="primary" ${moonCoins >= UNUSUAL_KEY_PRICE ? "" : "disabled"} onclick="buyUnusualKey()">Buy for 🌙 ${UNUSUAL_KEY_PRICE}</button>
+    `
+    : "";
+
   stage.innerHTML = `
     <div class="center-col screen-pad">
       <div class="portrait">🕴️</div>
@@ -1832,10 +2307,28 @@ function renderShop() {
       <div class="speech">\u201COh — a customer. How rare.\u201D</div>
       <div class="mini-brief" style="justify-content:center; margin-bottom:18px;">🌙 You have ${moonCoins} mooncoins</div>
       ${stockHTML}
+      ${unusualKeyHTML}
       <div class="shop-mystery-card" style="margin-top:8px;">${gcardHTML(JOKER_CARDS[0])}</div>
       <p style="max-width:280px;">\u201COr something less honest. A Joker, ${JOKER_PRICE} mooncoins.\u201D</p>
       <button class="primary" ${moonCoins >= JOKER_PRICE ? "" : "disabled"} onclick="buyJoker()">Buy Joker for 🌙 ${JOKER_PRICE}</button>
       <button class="ghost" style="margin-top:22px;" onclick="renderMap()">Back to the map</button>
+    </div>
+  `;
+  updateTopBar("", true);
+}
+
+function buyUnusualKey() {
+  if (moonCoins < UNUSUAL_KEY_PRICE || hasUnusualKey || cafeBackRoomUnlocked) return;
+  moonCoins -= UNUSUAL_KEY_PRICE;
+  awardKeyCard("key_unusual");
+
+  const keyCard = KEY_CARDS_BY_ID.key_unusual;
+  stage.innerHTML = `
+    <div class="center-col screen-pad">
+      <h2>Sold.</h2>
+      <div class="shop-mystery-card">${gcardHTML(keyCard)}</div>
+      <div class="card-detail-lore" style="margin-top:14px;">${keyCard.lore}</div>
+      <button class="primary" style="margin-top:22px;" onclick="renderMap()">Back to the map</button>
     </div>
   `;
   updateTopBar("", true);
@@ -1876,17 +2369,1684 @@ function buyJoker() {
   updateTopBar("", true);
 }
 
-function renderCafe() {
-  const snippet = CAFE_SNIPPETS[Math.floor(Math.random() * CAFE_SNIPPETS.length)];
+// ---------------------------------------------------------------------------
+// NIGHT CAFÉ — Maya (main room), the Back Room (Unusual Key), and the Attic
+// (Maya's hint + Juliette's key). Exact wording from the Aftercity Characters
+// & Encounters spec §5, §9, §10, and the Items/Keys Exploration spec §5–6.
+// ---------------------------------------------------------------------------
+
+const MAYA_FIRST_SCENE = [
+  { who: "MAYA", t: "You're the stylist." },
+  { who: "YOU", t: "How do you know?" },
+  { who: "MAYA", t: "Look at you." },
+  { who: "YOU", t: "What's that supposed to mean?" },
+  { who: "MAYA", t: "Exactly what you're worried it means." },
+];
+
+const MAYA_AMBIENT = [
+  [{ who: "MAYA", t: "Holly was here yesterday." }, { who: "YOU", t: "She comes here?" }, { who: "MAYA", t: "Everyone comes here eventually." }],
+  // MAYA_AMB_02 is flavor only — no Ivy debt quest or Moon Coin transfer.
+  [{ who: "MAYA", t: "Ivy owes me three Moon Coins." }, { who: "YOU", t: "For what?" }, { who: "MAYA", t: "Ask her." }, { who: "NARRATION", t: "Maya goes back to her drink." }],
+  [{ who: "MAYA", t: "The Castle's busy tonight." }, { who: "YOU", t: "How can you tell?" }, { who: "MAYA", t: "Helena hasn't been in for six days." }],
+  [{ who: "MAYA", t: "Octavia likes you." }, { who: "YOU", t: "She does?" }, { who: "MAYA", t: "Probably." }, { who: "YOU", t: "That's reassuring." }, { who: "MAYA", t: "It shouldn't be." }],
+  [{ who: "YOU", t: "Do you always sit here?" }, { who: "MAYA", t: "No." }, { who: "YOU", t: "I've only ever seen you here." }, { who: "MAYA", t: "Then your sample size is poor." }],
+  [{ who: "YOU", t: "What are you drinking?" }, { who: "MAYA", t: "Something you don't like." }, { who: "YOU", t: "You don't know that." }, { who: "MAYA", t: "I know enough." }],
+];
+
+const MAYA_ATTIC_HINT_SCENE = [
+  { who: "MAYA", t: "You've never been upstairs." },
+  { who: "YOU", t: "There's an upstairs?" },
+  { who: "MAYA", t: "Apparently not for you." },
+  { who: "YOU", t: "What's up there?" },
+  { who: "MAYA", t: "Dust." },
+  { who: "NARRATION", t: "She looks toward the ceiling." },
+  { who: "MAYA", t: "Mostly." },
+  { who: "YOU", t: "How do I get in?" },
+  { who: "MAYA", t: "With a key." },
+  { who: "YOU", t: "Helpful." },
+  { who: "MAYA", t: "Last person I saw carrying it was a Castle guard." },
+  { who: "YOU", t: "Helena?" },
+  { who: "MAYA", t: "No." },
+];
+
+const MAYA_PHOTO_REACTION = [
+  { who: "YOU", t: "I found this upstairs." },
+  { who: "NARRATION", t: "Maya takes the faded photograph. She looks at it longer than you expected." },
+  { who: "YOU", t: "That's you." },
+  { who: "MAYA", t: "Looks like me." },
+  { who: "YOU", t: "And Juliette." },
+  { who: "MAYA", t: "Looks like her." },
+  { who: "YOU", t: "When was this taken?" },
+  { who: "NARRATION", t: "Maya hands it back." },
+  { who: "MAYA", t: "You ask very expensive questions." },
+];
+
+const MAYA_BACKROOM_REACTION = [
+  { who: "YOU", t: "I found the room behind the Café." },
+  { who: "NARRATION", t: "Maya takes a sip." },
+  { who: "MAYA", t: "Did you." },
+  { who: "YOU", t: "You knew." },
+  { who: "MAYA", t: "Obviously." },
+  { who: "YOU", t: "Why didn't you tell me?" },
+  { who: "MAYA", t: "You found it." },
+  { who: "YOU", t: "That's not an answer." },
+  { who: "MAYA", t: "It wasn't a question worth answering." },
+];
+
+const CAFE_BACK_DOOR_LINES = [
+  { who: "NARRATION", t: "At the far end of the Café, behind a stack of empty crates, is a narrow door." },
+  { who: "NARRATION", t: "You are certain it was there before." },
+  { who: "NARRATION", t: "You are less certain why you never noticed it." },
+];
+
+const ATTIC_FIRST_SCENE = [
+  { who: "NARRATION", t: "The attic is disappointingly ordinary." },
+  { who: "NARRATION", t: "Boxes. Old chairs. Menus tied with string. Coats nobody came back for." },
+  { who: "NARRATION", t: "A painted Café sign leans against the wall. Same name. Different lettering." },
+  { who: "NARRATION", t: "It looks decades older than the sign downstairs." },
+  { who: "NARRATION", t: "On top of a box is a faded photograph." },
+];
+const ATTIC_PHOTO_TAKEN_LINES = [
+  { who: "NARRATION", t: "Two women are standing outside the Café." },
+  { who: "NARRATION", t: "One looks like Maya." },
+  { who: "NARRATION", t: "The other looks like Juliette." },
+  { who: "NARRATION", t: "There is no date." },
+];
+const ATTIC_MENUS_SCENE = [
+  { who: "NARRATION", t: "A stack of old menus has been tied with black ribbon." },
+  { who: "NARRATION", t: "Prices change from page to page. The drinks barely do." },
+  { who: "NARRATION", t: "One order appears over and over in the margins in the same handwriting." },
+  { who: "NARRATION", t: "It is the drink Maya is usually holding downstairs." },
+];
+const ATTIC_COAT_SCENE = [
+  { who: "NARRATION", t: "An old black staff coat hangs behind a wardrobe." },
+  { who: "NARRATION", t: "Inside the lining is a small embroidered crest." },
+  { who: "NARRATION", t: "It matches the crest on the Night Castle gate." },
+];
+// Repeat pool once all three fixed Attic discoveries have been seen. Lost
+// Property is capped at once per in-game year and excluded from the random
+// pick once that year's copy has already been awarded (spec §6.5).
+const ATTIC_REPEAT_POOL = [
+  { id: "dust", t: "Dust moves in the light from the small window. Nothing else has changed." },
+  { id: "guestbook", t: "An old guestbook lies open on a table. Several pages have been torn out." },
+  { id: "frame", t: "An empty frame has been placed face-down on a box." },
+  { id: "lostproperty", t: "Something is caught beneath a pile of old coats." },
+];
+
+// Earliest Maya can appear: first Café visit in March Year 1 or later.
+function mayaEligible() { return currentYear >= 2 || currentMonthIndex() >= 2; }
+
+function mayaAtticHintEligible() {
+  return metMaya && !mayaAtticHintGiven && !cafeAtticUnlocked
+    && mayaEncounterCount >= 3 && currentYear >= 2 && currentMonthIndex() >= 2;
+}
+
+// Shown alongside whatever's currently happening in the main Café room, once
+// each sub-location becomes reachable — same "permanent sub-location button"
+// idea as Night Castle's future Royal Garden Gate.
+function cafeSublocButtonsHTML() {
+  const buttons = [];
+  if (cafeBackRoomUnlocked) buttons.push(`<button class="ghost" onclick="renderCafeBackRoom()">Back Room</button>`);
+  else if (cafeBackDoorDiscovered) buttons.push(`<button class="ghost" onclick="renderCafeBackDoorReveal()">Back Door</button>`);
+  if (mayaAtticHintGiven) buttons.push(`<button class="ghost" onclick="renderCafeAtticEntry()">Attic</button>`);
+  if (buttons.length === 0) return "";
+  return `<div class="subloc-row">${buttons.join("")}</div>`;
+}
+
+function renderCafeScreen(lines, leaveLabel, leaveAction) {
   stage.innerHTML = `
     <div class="center-col screen-pad">
       <div class="portrait">☕</div>
       <div class="soul-name">Night Café</div>
-      <div class="speech">${snippet}</div>
-      <button class="ghost" onclick="renderMap()">Leave</button>
+      ${sceneHTML(lines, null)}
+      ${cafeSublocButtonsHTML()}
+      <button class="primary" onclick="${leaveAction}">${leaveLabel}</button>
     </div>
   `;
   updateTopBar("", true);
+}
+
+function afterMayaFirst() { metMaya = true; mayaEncounterCount += 1; renderMap(); }
+function afterMayaPhotoReaction() { mayaPhotoReactionSeen = true; renderMap(); }
+function afterMayaBackRoomReaction() { mayaBackRoomReactionSeen = true; renderMap(); }
+function afterMayaAtticHint() {
+  mayaAtticHintGiven = true;
+  julietteCafeKeyHintAvailable = true;
+  mayaEncounterCount += 1;
+  renderMap();
+}
+
+// Main-room priority resolver: back-door reveal (must pre-empt everything
+// else the very first visit it's eligible) > Maya first meeting > cross-doc
+// reactions > Maya's one-time Attic hint > Maya ambient (monthly cap) >
+// existing generic Café flavor as the final fallback.
+function renderCafe() {
+  if (hasUnusualKey && !cafeBackDoorDiscovered) {
+    renderCafeBackDoorReveal();
+    return;
+  }
+
+  if (!metMaya && mayaEligible()) {
+    renderCafeScreen(MAYA_FIRST_SCENE, "Leave", "afterMayaFirst()");
+    return;
+  }
+
+  if (metMaya && hasFadedPhotograph && !mayaPhotoReactionSeen) {
+    renderCafeScreen(MAYA_PHOTO_REACTION, "Leave", "afterMayaPhotoReaction()");
+    return;
+  }
+  if (metMaya && cafeBackRoomUnlocked && !mayaBackRoomReactionSeen) {
+    renderCafeScreen(MAYA_BACKROOM_REACTION, "Leave", "afterMayaBackRoomReaction()");
+    return;
+  }
+
+  if (mayaAtticHintEligible()) {
+    renderCafeScreen(MAYA_ATTIC_HINT_SCENE, "Leave", "afterMayaAtticHint()");
+    return;
+  }
+
+  const mayaFestival = getFestivalReactionFor("maya", metMaya);
+  if (mayaFestival) {
+    markSeasonalReactionSeen("maya", mayaFestival.eventId);
+    renderCafeScreen(mayaFestival.lines, "Leave", "renderMap()");
+    return;
+  }
+
+  if (metMaya) {
+    const ym = yearMonthKey();
+    if (mayaLastAmbientYearMonth !== ym) {
+      const unseen = MAYA_AMBIENT.map((_, i) => i).filter((i) => !mayaAmbientSeen.includes(i));
+      const pool = unseen.length > 0 ? unseen : MAYA_AMBIENT.map((_, i) => i);
+      const idx = pool[Math.floor(Math.random() * pool.length)];
+      if (!mayaAmbientSeen.includes(idx)) mayaAmbientSeen.push(idx);
+      mayaLastAmbientYearMonth = ym;
+      mayaEncounterCount += 1;
+      renderCafeScreen(MAYA_AMBIENT[idx], "Leave", "renderMap()");
+      return;
+    }
+  }
+
+  const snippet = CAFE_SNIPPETS[Math.floor(Math.random() * CAFE_SNIPPETS.length)];
+  renderCafeScreen([{ who: "NARRATION", t: snippet }], "Leave", "renderMap()");
+}
+
+// --- Café Back Room ---------------------------------------------------
+
+function renderCafeBackDoorReveal() {
+  stage.innerHTML = `
+    <div class="center-col screen-pad">
+      <div class="portrait">☕</div>
+      <div class="soul-name">Night Café</div>
+      ${sceneHTML(CAFE_BACK_DOOR_LINES, null)}
+      <button class="primary" onclick="tryUnusualKeyOnBackDoor()">Try Unusual Key</button>
+      <button class="ghost" style="margin-top:10px;" onclick="leaveBackDoorUndiscovered()">Leave</button>
+    </div>
+  `;
+  updateTopBar("", true);
+}
+
+function leaveBackDoorUndiscovered() {
+  cafeBackDoorDiscovered = true;
+  renderMap();
+}
+
+function tryUnusualKeyOnBackDoor() {
+  cafeBackDoorDiscovered = true;
+  consumeKeyCard("key_unusual");
+  cafeBackRoomUnlocked = true;
+  stage.innerHTML = `
+    <div class="center-col screen-pad">
+      <div class="portrait">☕</div>
+      <div class="soul-name">Night Café</div>
+      <div class="speech narration-line">The Unusual Key fits.</div>
+      <div class="speech narration-line">The lock opens with a clean click.</div>
+      <button class="primary" onclick="renderCafeBackRoomCache()">Go in</button>
+    </div>
+  `;
+  updateTopBar("", true);
+}
+
+let cacheOfferedCardIds = [];
+let cacheSelectedCardIds = [];
+
+function renderCafeBackRoomCache() {
+  if (cacheOfferedCardIds.length === 0) {
+    const owned = new Set(unlockedCardIds);
+    const pool = DECK.filter((c) => ["Rare", "Iconic", "Legendary"].includes(c.rarity) && !owned.has(c.id));
+    cacheOfferedCardIds = shuffle(pool).slice(0, Math.min(4, pool.length)).map((c) => c.id);
+    cacheSelectedCardIds = [];
+  }
+  const cards = cacheOfferedCardIds.map((id) => DECK.find((c) => c.id === id));
+  const itemsHTML = cards.map((c) => {
+    const selected = cacheSelectedCardIds.includes(c.id);
+    return `
+      <div class="deck-item ${selected ? "status-hand" : "status-pool"}" onclick="toggleCacheCard(${c.id})">
+        ${gcardHTML(c)}
+        <div class="deck-status">${selected ? "Chosen" : "Tap to choose"}</div>
+      </div>
+    `;
+  }).join("");
+  stage.innerHTML = `
+    <div class="center-col screen-pad">
+      <div class="portrait">🗝</div>
+      <div class="soul-name">Back Room</div>
+      <div class="speech narration-line">The room has no windows.</div>
+      <div class="speech narration-line">Shelves cover three walls. Garment boxes are stacked almost to the ceiling.</div>
+      <div class="speech narration-line">Four cards have been laid face-up on a small table.</div>
+      <div class="speech narration-line">No note. No price.</div>
+      <p style="color:var(--muted); font-size:12.5px; margin-bottom:12px;">Choose exactly 2.</p>
+      <div class="deck-grid">${itemsHTML}</div>
+      <button class="primary" style="margin-top:14px;" ${cacheSelectedCardIds.length === 2 ? "" : "disabled"} onclick="confirmCacheChoice()">Take these two</button>
+    </div>
+  `;
+  updateTopBar("", true);
+}
+
+function toggleCacheCard(id) {
+  if (cacheSelectedCardIds.includes(id)) {
+    cacheSelectedCardIds = cacheSelectedCardIds.filter((x) => x !== id);
+  } else if (cacheSelectedCardIds.length < 2) {
+    cacheSelectedCardIds = [...cacheSelectedCardIds, id];
+  }
+  renderCafeBackRoomCache();
+}
+
+function confirmCacheChoice() {
+  if (cacheSelectedCardIds.length !== 2) return;
+  cacheSelectedCardIds.forEach((id) => unlockedCardIds.add(id));
+  rebuildLiveDeckFromUnlocked();
+  hasSilverBell = true;
+  cafeBackRoomCacheClaimed = true;
+  cacheOfferedCardIds = [];
+  cacheSelectedCardIds = [];
+  stage.innerHTML = `
+    <div class="center-col screen-pad result">
+      <div class="reaction">🔔</div>
+      <div class="speech narration-line">Behind the cards is a tiny silver bell.</div>
+      <div class="speech narration-line">You lift it.</div>
+      <div class="speech narration-line">It makes no sound.</div>
+      <button class="primary" style="margin-top:18px;" onclick="renderMap()">Continue</button>
+    </div>
+  `;
+  updateTopBar("", true);
+}
+
+function renderCafeBackRoom() {
+  if (!cafeBackRoomCacheClaimed) { renderCafeBackRoomCache(); return; }
+
+  const ym = yearMonthKey();
+  const boxAlreadyUsedThisMonth = backRoomBoxPurchasedYearMonth === ym;
+  const owned = new Set(unlockedCardIds);
+  const pool = DECK.filter((c) => ["Rare", "Iconic", "Legendary"].includes(c.rarity) && !owned.has(c.id));
+  const canAfford = moonCoins >= 3;
+
+  const boxHTML = boxAlreadyUsedThisMonth
+    ? `<p style="color:var(--muted);">Already checked this month.</p>`
+    : pool.length === 0
+      ? `<p style="color:var(--muted);">The box is empty.</p>`
+      : `
+        <div class="speech narration-line">A small unmarked box is waiting on the shelf.</div>
+        <button class="primary" ${canAfford ? "" : "disabled"} onclick="openUnmarkedBox()">Open — 🌙 3</button>
+        ${!canAfford ? `<p style="font-size:12px; color:var(--muted);">Not enough mooncoins yet.</p>` : ""}
+      `;
+
+  stage.innerHTML = `
+    <div class="center-col screen-pad">
+      <div class="portrait">🗝</div>
+      <div class="soul-name">Back Room</div>
+      ${boxHTML}
+      <button class="ghost" style="margin-top:22px;" onclick="renderMap()">Leave</button>
+    </div>
+  `;
+  updateTopBar("", true);
+}
+
+function openUnmarkedBox() {
+  const ym = yearMonthKey();
+  if (backRoomBoxPurchasedYearMonth === ym || moonCoins < 3) return;
+  const owned = new Set(unlockedCardIds);
+  const pool = DECK.filter((c) => ["Rare", "Iconic", "Legendary"].includes(c.rarity) && !owned.has(c.id));
+  if (pool.length === 0) { renderCafeBackRoom(); return; }
+  moonCoins -= 3;
+  const awarded = pool[Math.floor(Math.random() * pool.length)];
+  unlockedCardIds.add(awarded.id);
+  rebuildLiveDeckFromUnlocked();
+  backRoomBoxPurchasedYearMonth = ym;
+  stage.innerHTML = `
+    <div class="center-col screen-pad result">
+      <h2>Found something.</h2>
+      <div class="shop-mystery-card">${gcardHTML(awarded)}</div>
+      <div class="card-detail-lore" style="margin-top:14px;">${awarded.lore || ""}</div>
+      <button class="primary" style="margin-top:22px;" onclick="renderMap()">Continue</button>
+    </div>
+  `;
+  updateTopBar("", true);
+}
+
+// --- Café Attic ---------------------------------------------------------
+
+function renderAtticScene(lines, buttonLabel, onContinue) {
+  stage.innerHTML = `
+    <div class="center-col screen-pad">
+      <div class="portrait no-image" style="background:#3a352c;">🗄️</div>
+      <div class="soul-name">Café Attic</div>
+      ${sceneHTML(lines, null)}
+      <button class="primary" onclick="${onContinue}">${buttonLabel}</button>
+    </div>
+  `;
+  updateTopBar("", true);
+}
+
+function renderCafeAtticEntry() {
+  if (cafeAtticUnlocked) { renderCafeAttic(); return; }
+  if (!hasCafeAtticKey) {
+    stage.innerHTML = `
+      <div class="center-col screen-pad">
+        <div class="portrait">☕</div>
+        <div class="soul-name">Night Café</div>
+        <div class="speech narration-line">The narrow staircase ends at a locked door.</div>
+        <button class="ghost" style="margin-top:22px;" onclick="renderMap()">Leave</button>
+      </div>
+    `;
+    updateTopBar("", true);
+    return;
+  }
+  stage.innerHTML = `
+    <div class="center-col screen-pad">
+      <div class="portrait">☕</div>
+      <div class="soul-name">Night Café</div>
+      <div class="speech narration-line">The narrow staircase ends at a locked door.</div>
+      <button class="primary" onclick="useAtticKey()">Use Nightcafe Attic Key</button>
+      <button class="ghost" style="margin-top:10px;" onclick="renderMap()">Leave</button>
+    </div>
+  `;
+  updateTopBar("", true);
+}
+
+function useAtticKey() {
+  consumeKeyCard("key_cafeattic");
+  cafeAtticUnlocked = true;
+  renderAtticScene(
+    [{ who: "NARRATION", t: "The brass key turns." }, { who: "NARRATION", t: "Dust falls from the frame as the door opens." }],
+    "Continue",
+    "renderCafeAttic()"
+  );
+}
+
+function takeAtticPhotograph() {
+  hasFadedPhotograph = true;
+  cafeAtticFirstVisitSeen = true;
+  renderAtticScene(ATTIC_PHOTO_TAKEN_LINES, "Continue", "renderMap()");
+}
+function afterAtticMenus() { atticMenusSeen = true; renderMap(); }
+function afterAtticCoat() { cafeAtticStaffCoatSeen = true; renderMap(); }
+
+function atticRepeatVisit() {
+  const canOfferLostProperty = atticLostPropertyLastYear !== currentYear;
+  const pool = canOfferLostProperty ? ATTIC_REPEAT_POOL : ATTIC_REPEAT_POOL.filter((e) => e.id !== "lostproperty");
+  const chosen = pool[Math.floor(Math.random() * pool.length)];
+
+  if (chosen.id === "lostproperty") {
+    // Mark the year's slot used the moment this outcome is rolled, win or
+    // not -- otherwise, once every eligible card is already collected, this
+    // exact near-miss can keep re-rolling indefinitely instead of actually
+    // being "once per year" the way the other repeat pools behave.
+    atticLostPropertyLastYear = currentYear;
+    const owned = new Set(unlockedCardIds);
+    const eligible = DECK.filter((c) => c.category === "Accessory" && ["Uncommon", "Rare"].includes(c.rarity) && !owned.has(c.id));
+    if (eligible.length > 0) {
+      const awarded = eligible[Math.floor(Math.random() * eligible.length)];
+      unlockedCardIds.add(awarded.id);
+      rebuildLiveDeckFromUnlocked();
+      stage.innerHTML = `
+        <div class="center-col screen-pad result">
+          <div class="speech narration-line">${chosen.t}</div>
+          <div class="shop-mystery-card" style="margin-top:10px;">${gcardHTML(awarded)}</div>
+          <button class="primary" style="margin-top:18px;" onclick="renderMap()">Continue</button>
+        </div>
+      `;
+      updateTopBar("", true);
+      return;
+    }
+  }
+  renderAtticScene([{ who: "NARRATION", t: chosen.t }], "Leave", "renderMap()");
+}
+
+function renderCafeAttic() {
+  if (!cafeAtticFirstVisitSeen) { renderAtticScene(ATTIC_FIRST_SCENE, "Take the photograph", "takeAtticPhotograph()"); return; }
+  if (!atticMenusSeen) { renderAtticScene(ATTIC_MENUS_SCENE, "Continue", "afterAtticMenus()"); return; }
+  if (!cafeAtticStaffCoatSeen) { renderAtticScene(ATTIC_COAT_SCENE, "Continue", "afterAtticCoat()"); return; }
+  atticRepeatVisit();
+}
+
+// ---------------------------------------------------------------------------
+// NIGHTGARDEN — Octavia, and the Glass House sub-location. Exact wording from
+// the Aftercity Characters & Encounters spec §6 and the Items/Keys
+// Exploration spec §4. Unlike Night Castle, Nightgarden's access is purely
+// seasonal (open March–August, every year) rather than a one-time unlock —
+// this REPLACES the old generic 4-phase "locked" flavor cycle for this tile.
+// ---------------------------------------------------------------------------
+
+const OCT_FIRST_SCENE = [
+  { who: "NARRATION", t: "A woman is standing beside a bed of pale flowers. You are fairly certain she was not there when you entered." },
+  { who: "OCTAVIA", t: "You're early." },
+  { who: "YOU", t: "For what?" },
+  { who: "OCTAVIA", t: "I don't know yet." },
+  { who: "YOU", t: "That's not very reassuring." },
+  { who: "OCTAVIA", t: "It wasn't meant to be." },
+];
+
+const OCTAVIA_AMBIENT = [
+  [{ who: "OCTAVIA", t: "The garden doesn't like winter." }, { who: "YOU", t: "Gardens usually don't." }, { who: "OCTAVIA", t: "This one takes it personally." }],
+  [{ who: "OCTAVIA", t: "You came back." }, { who: "YOU", t: "You sound surprised." }, { who: "OCTAVIA", t: "I'm not." }],
+  [{ who: "YOU", t: "What are you doing?" }, { who: "OCTAVIA", t: "Waiting." }, { who: "YOU", t: "For?" }, { who: "OCTAVIA", t: "Spring." }, { who: "YOU", t: "It is spring." }, { who: "NARRATION", t: "Octavia looks around." }, { who: "OCTAVIA", t: "Not here." }],
+  [{ who: "YOU", t: "Do you live here?" }, { who: "OCTAVIA", t: "No." }, { who: "YOU", t: "You're always here." }, { who: "OCTAVIA", t: "Those are different things." }],
+  [{ who: "NARRATION", t: "Octavia is tying a strip of white fabric around a dead branch." }, { who: "YOU", t: "What does that do?" }, { who: "OCTAVIA", t: "Nothing." }, { who: "YOU", t: "Then why do it?" }, { who: "OCTAVIA", t: "Not everything needs a job." }],
+];
+
+const OCT_SACRIFICE_INTRO_LINES = [
+  { who: "NARRATION", t: "Octavia is sitting on the edge of an empty planter. She looks at your card case rather than at you." },
+  { who: "OCTAVIA", t: "You brought too much with you." },
+  { who: "YOU", t: "Too much what?" },
+  { who: "OCTAVIA", t: "Things." },
+  { who: "YOU", t: "That clears it up." },
+  { who: "OCTAVIA", t: "Leave one." },
+  { who: "YOU", t: "Here?" },
+  { who: "OCTAVIA", t: "Gone." },
+];
+
+const GH_FIRST_LINES = [
+  { who: "NARRATION", t: "Most of the roof is cracked. Dead vines hang from the iron ribs of the Glass House." },
+  { who: "NARRATION", t: "A long worktable runs beneath the windows. Rusted scissors. Empty bottles. Labels faded white." },
+  { who: "NARRATION", t: "In the center planter, every plant is dead except one." },
+  { who: "NARRATION", t: "A single chair faces the garden." },
+  { who: "NARRATION", t: "Something silver has been left across its back." },
+];
+const GH_OCTAVIA_SCENE = [
+  { who: "NARRATION", t: "Octavia is cutting dead leaves from a plant." },
+  { who: "YOU", t: "I thought this place was abandoned." },
+  { who: "OCTAVIA", t: "It is." },
+  { who: "YOU", t: "You're in it." },
+  { who: "OCTAVIA", t: "So are you." },
+  { who: "YOU", t: "Was the veil yours?" },
+  { who: "OCTAVIA", t: "No." },
+  { who: "YOU", t: "Then whose was it?" },
+  { who: "OCTAVIA", t: "It remembers her." },
+];
+// Gated on julietteRemembersGlasshouse, which only the (not-yet-built) Guard
+// Ceremony's Thorn-Veil-on-Juliette moment can set — dormant until then.
+const GH_JULIETTE_CLUE_LINES = [
+  { who: "NARRATION", t: "A broken pane has been propped open with a curved piece of silver metal." },
+  { who: "NARRATION", t: "You've seen that shape before." },
+  { who: "NARRATION", t: "It matches the edge of Juliette's armour." },
+];
+const GH_CULTIVATE_UNLOCK_LINES = [
+  { who: "NARRATION", t: "Octavia has cleared one of the empty planters." },
+  { who: "OCTAVIA", t: "You can leave something here now." },
+  { who: "YOU", t: "Another card?" },
+  { who: "OCTAVIA", t: "If you want something else later." },
+  { who: "YOU", t: "What grows?" },
+  { who: "OCTAVIA", t: "Depends what you bury." },
+];
+// Weighted repeat pool (spec §4.6): Rare Find is a 10%-weight, once-per-year
+// exception among otherwise equal-weight flavor lines.
+const GH_REPEAT_POOL = [
+  { id: "nothing", weight: 30, t: "The Glass House is exactly as you left it. Somehow that feels less reassuring than change would." },
+  { id: "flower", weight: 30, t: "A pale flower has opened in the central planter. By the time you touch the leaf, it has already begun to close." },
+  { id: "chair", weight: 30, t: "The chair is facing the opposite direction today." },
+  { id: "rarefind", weight: 10, t: "Something catches beneath one of the worktables." },
+];
+
+// Thorn Veil — the one new wearable card this content pass adds. Placeholder
+// art only for now (per direction: function first, real art later); it uses
+// the same fallback art path every other art-less card already goes through.
+// Never part of DECK/EXTRA_CARDS, so it can never be drawn by any of the
+// existing random-reward systems (season unlock, shop, back room, attic) —
+// the ONLY way to obtain it is the Glass House first visit below.
+const THORN_VEIL = {
+  id: 500, name: "Thorn Veil", category: "Accessory", fit: "Regular", style: "Romantic", color: "Silver",
+  rarity: "Rare", lore: "Metal thorns twisted into something strangely delicate.", storyCard: true,
+};
+const STORY_WEARABLE_TOTAL = 1; // bump this if more one-off story cards like Thorn Veil are added later
+
+function nightgardenOpen() {
+  const m = currentMonthIndex();
+  return m >= 2 && m <= 7; // March(2) through August(7), every year
+}
+
+function octaviaSacrificeEligible() {
+  return (currentYear >= 2 || currentMonthIndex() >= 5) // earliest Year 1 Summer (June)
+    && metOctavia && octaviaEncounterCount >= 2 && !octaviaSacrificeCompleted
+    && !hasGlassHouseKey && !glassHouseUnlocked;
+}
+
+function gardenSublocButtonsHTML() {
+  const buttons = [];
+  if (glassHouseUnlocked) buttons.push(`<button class="ghost" onclick="renderGlassHouse()">Glass House</button>`);
+  else if (hasGlassHouseKey) buttons.push(`<button class="ghost" onclick="renderOvergrownPath()">Follow the overgrown path</button>`);
+  if (buttons.length === 0) return "";
+  return `<div class="subloc-row">${buttons.join("")}</div>`;
+}
+
+function renderGardenScene(lines, leaveLabel, leaveAction) {
+  stage.innerHTML = `
+    <div class="center-col screen-pad">
+      <div class="portrait no-image" style="background:#243424;">🌿</div>
+      <div class="soul-name">Nightgarden</div>
+      ${sceneHTML(lines, null)}
+      ${gardenSublocButtonsHTML()}
+      <button class="primary" onclick="${leaveAction}">${leaveLabel}</button>
+    </div>
+  `;
+  updateTopBar("", true);
+}
+
+function afterOctaviaFirst() { metOctavia = true; octaviaEncounterCount = 1; renderMap(); }
+
+function renderGarden() {
+  if (!nightgardenOpen()) {
+    stage.innerHTML = `
+      <div class="center-col screen-pad">
+        <div class="portrait no-image" style="background:#243424;">🌿</div>
+        <div class="soul-name">Nightgarden</div>
+        <div class="speech narration-line">The gate is locked for the season. The vines have grown through the ironwork. Whatever is inside will wait for spring.</div>
+        <button class="ghost" style="margin-top:22px;" onclick="renderMap()">Leave</button>
+      </div>
+    `;
+    updateTopBar("", true);
+    return;
+  }
+
+  if (!metOctavia) {
+    renderGardenScene(OCT_FIRST_SCENE, "Leave", "afterOctaviaFirst()");
+    return;
+  }
+
+  if (octaviaSacrificeEligible()) {
+    renderGardenScene(OCT_SACRIFICE_INTRO_LINES, "Continue", "renderOctaviaSacrificePicker()");
+    return;
+  }
+
+  // Octavia only has a Flower Fest / Summer Solstice reaction -- Nightgarden
+  // is closed for Moon Fest and Winter Solstice, so getFestivalReactionFor()
+  // naturally returns nothing for those (no entry in FESTIVAL_REACTIONS).
+  const octaviaFestival = getFestivalReactionFor("octavia", metOctavia);
+  if (octaviaFestival) {
+    markSeasonalReactionSeen("octavia", octaviaFestival.eventId);
+    renderGardenScene(octaviaFestival.lines, "Leave", "renderMap()");
+    return;
+  }
+
+  const unseen = OCTAVIA_AMBIENT.map((_, i) => i).filter((i) => !octaviaAmbientSeen.includes(i));
+  const pool = unseen.length > 0 ? unseen : OCTAVIA_AMBIENT.map((_, i) => i);
+  const idx = pool[Math.floor(Math.random() * pool.length)];
+  if (!octaviaAmbientSeen.includes(idx)) octaviaAmbientSeen.push(idx);
+  octaviaEncounterCount += 1;
+  renderGardenScene(OCTAVIA_AMBIENT[idx], "Leave", "renderMap()");
+}
+
+// --- Octavia's "Leave Something Behind" sacrifice quest -----------------
+
+function renderOctaviaSacrificePicker() {
+  const jokerIds = new Set(JOKER_CARDS.map((c) => c.id));
+  const eligible = liveDeck.filter((c) => c.type !== "KEY" && !jokerIds.has(c.id));
+  const itemsHTML = eligible.map((c) => `
+    <div class="deck-item status-pool" onclick="chooseOctaviaSacrifice(${c.id})">
+      ${gcardHTML(c)}
+    </div>
+  `).join("");
+  stage.innerHTML = `
+    <div class="center-col screen-pad">
+      <div class="portrait no-image" style="background:#243424;">🌿</div>
+      <div class="soul-name">Nightgarden</div>
+      <p style="color:var(--muted); font-size:12.5px;">Choose one card to permanently destroy.</p>
+      <div class="deck-grid">${itemsHTML}</div>
+      <button class="ghost" style="margin-top:14px;" onclick="cancelOctaviaSacrifice()">Not yet</button>
+    </div>
+  `;
+  updateTopBar("", true);
+}
+
+function cancelOctaviaSacrifice() {
+  renderGardenScene([{ who: "YOU", t: "Not yet." }, { who: "OCTAVIA", t: "Then keep carrying it." }], "Leave", "renderMap()");
+}
+
+function chooseOctaviaSacrifice(cardId) {
+  const card = findCard(cardId);
+  if (!card) return;
+  if (card.rarity === "Legendary") { renderOctaviaSacrificeConfirm(cardId); return; }
+  finalizeOctaviaSacrifice(cardId);
+}
+
+function renderOctaviaSacrificeConfirm(cardId) {
+  const card = findCard(cardId);
+  stage.innerHTML = `
+    <div class="center-col screen-pad">
+      <div class="portrait no-image" style="background:#243424;">🌿</div>
+      <div class="soul-name">Nightgarden</div>
+      <p>This is a Legendary piece. Destroying it is permanent.</p>
+      <div class="shop-mystery-card">${gcardHTML(card)}</div>
+      <button class="primary" onclick="finalizeOctaviaSacrifice(${cardId})">Destroy it</button>
+      <button class="ghost" style="margin-top:10px;" onclick="renderOctaviaSacrificePicker()">Choose something else</button>
+    </div>
+  `;
+  updateTopBar("", true);
+}
+
+function finalizeOctaviaSacrifice(cardId) {
+  destroyWearableCard(cardId);
+  awardKeyCard("key_glasshouse");
+  octaviaSacrificeCompleted = true;
+  renderGardenScene([
+    { who: "NARRATION", t: "Octavia watches the card disappear from your collection. She does not look impressed or disappointed." },
+    { who: "OCTAVIA", t: "There." },
+    { who: "YOU", t: "There what?" },
+    { who: "OCTAVIA", t: "Room." },
+    { who: "NARRATION", t: "She holds out a small iron key. Dried roots are caught between its teeth." },
+    { who: "YOU", t: "What's this for?" },
+    { who: "OCTAVIA", t: "A door." },
+    { who: "YOU", t: "Which door?" },
+    { who: "OCTAVIA", t: "The one it opens." },
+  ], "Leave", "renderMap()");
+}
+
+// Permanently removes a wearable card from the player's collection — used by
+// both Octavia's sacrifice quest and the Glass House Cultivate mechanic.
+// Never touches Key Cards, Jokers, or anything not already owned.
+function destroyWearableCard(cardId) {
+  unlockedCardIds.delete(cardId);
+  metaUnlocked = metaUnlocked.filter((c) => c.id !== cardId);
+  if (cardId === THORN_VEIL.id) thornVeilOwned = false;
+  liveDeck = liveDeck.filter((c) => c.id !== cardId);
+  deckPile = deckPile.filter((id) => id !== cardId);
+  hand = hand.filter((id) => id !== cardId);
+  discardPile = discardPile.filter((id) => id !== cardId);
+  outfit = outfit.map((c) => (c && c.id === cardId ? null : c));
+  if (selectedHandId === cardId) selectedHandId = null;
+}
+
+// --- Glass House ----------------------------------------------------------
+
+function renderOvergrownPath() {
+  stage.innerHTML = `
+    <div class="center-col screen-pad">
+      <div class="portrait no-image" style="background:#243424;">🌿</div>
+      <div class="soul-name">Nightgarden</div>
+      <div class="speech narration-line">The path narrows until the hedges close behind you.</div>
+      <div class="speech narration-line">Glass catches the moonlight ahead. A greenhouse sits behind a wall of ivy.</div>
+      <div class="speech narration-line">The door is locked.</div>
+      <button class="primary" onclick="useGlassHouseKey()">Use Nightgarden Glass House Key</button>
+      <button class="ghost" style="margin-top:10px;" onclick="renderMap()">Leave</button>
+    </div>
+  `;
+  updateTopBar("", true);
+}
+
+function useGlassHouseKey() {
+  consumeKeyCard("key_glasshouse");
+  glassHouseUnlocked = true;
+  glassHouseDoorOpened = true;
+  stage.innerHTML = `
+    <div class="center-col screen-pad">
+      <div class="portrait no-image" style="background:#243424;">🌿</div>
+      <div class="soul-name">Nightgarden</div>
+      <div class="speech narration-line">The iron key turns with more resistance than it should.</div>
+      <div class="speech narration-line">Something inside the lock gives way.</div>
+      <button class="primary" onclick="renderGlassHouse()">Go in</button>
+    </div>
+  `;
+  updateTopBar("", true);
+}
+
+function renderGlassHouseScene(lines, buttonLabel, onContinue) {
+  stage.innerHTML = `
+    <div class="center-col screen-pad">
+      <div class="portrait no-image" style="background:#1f2b22;">🪟</div>
+      <div class="soul-name">Glass House</div>
+      ${sceneHTML(lines, null)}
+      <button class="primary" onclick="${onContinue}">${buttonLabel}</button>
+    </div>
+  `;
+  updateTopBar("", true);
+}
+
+function takeThornVeil() {
+  thornVeilOwned = true;
+  glassHouseFirstVisitSeen = true;
+  rebuildLiveDeckFromUnlocked();
+  renderMap();
+}
+
+function glassHouseCultivateUnlockEligible() {
+  return currentYear >= 2 && currentMonthIndex() >= 5 && currentMonthIndex() <= 7
+    && glassHouseOctaviaVisitSeen && glassHouseVisitCount >= 3 && !glassHouseCultivationUnlocked;
+}
+function afterGlassHouseCultivateUnlock() { glassHouseCultivationUnlocked = true; renderMap(); }
+
+function renderGlassHouse() {
+  if (!glassHouseFirstVisitSeen) {
+    renderGlassHouseScene(GH_FIRST_LINES, "Take it", "takeThornVeil()");
+    return;
+  }
+  glassHouseVisitCount += 1;
+
+  if (!glassHouseOctaviaVisitSeen) {
+    glassHouseOctaviaVisitSeen = true;
+    renderGlassHouseScene(GH_OCTAVIA_SCENE, "Leave", "renderMap()");
+    return;
+  }
+
+  if (julietteRemembersGlasshouse && !glassHouseJulietteClueSeen) {
+    glassHouseJulietteClueSeen = true;
+    renderGlassHouseScene(GH_JULIETTE_CLUE_LINES, "Leave", "renderMap()");
+    return;
+  }
+
+  if (glassHouseCultivateUnlockEligible()) {
+    renderGlassHouseScene(GH_CULTIVATE_UNLOCK_LINES, "Leave", "afterGlassHouseCultivateUnlock()");
+    return;
+  }
+
+  if (glassHouseCultivationPending && currentYear >= glassHouseCultivationReadyYear) {
+    harvestGlassHouseCultivation();
+    return;
+  }
+
+  glassHouseAmbientVisit();
+}
+
+function renderGlassHouseAmbient(text) {
+  const canCultivate = glassHouseCultivationUnlocked && !glassHouseCultivationPending;
+  stage.innerHTML = `
+    <div class="center-col screen-pad">
+      <div class="portrait no-image" style="background:#1f2b22;">🪟</div>
+      <div class="soul-name">Glass House</div>
+      <div class="speech narration-line">${text}</div>
+      ${canCultivate ? `<button class="ghost" onclick="startGlassHouseCultivate()">Cultivate</button>` : ""}
+      <button class="primary" style="margin-top:10px;" onclick="renderMap()">Leave</button>
+    </div>
+  `;
+  updateTopBar("", true);
+}
+
+function glassHouseAmbientVisit() {
+  const canOfferRareFind = glassHouseRareFindLastYear !== currentYear;
+  const pool = canOfferRareFind ? GH_REPEAT_POOL : GH_REPEAT_POOL.filter((e) => e.id !== "rarefind");
+  const totalWeight = pool.reduce((s, e) => s + e.weight, 0);
+  let roll = Math.random() * totalWeight;
+  let chosen = pool[0];
+  for (const e of pool) { roll -= e.weight; if (roll <= 0) { chosen = e; break; } }
+
+  if (chosen.id === "rarefind") {
+    // Set eagerly (see the identical fix/comment on atticLostPropertyLastYear)
+    // so this can't keep re-rolling forever once every Rare card is owned.
+    glassHouseRareFindLastYear = currentYear;
+    const owned = new Set(unlockedCardIds);
+    const eligible = DECK.filter((c) => c.rarity === "Rare" && !owned.has(c.id));
+    if (eligible.length > 0) {
+      const awarded = eligible[Math.floor(Math.random() * eligible.length)];
+      unlockedCardIds.add(awarded.id);
+      rebuildLiveDeckFromUnlocked();
+      // Cultivate must stay reachable regardless of which ambient outcome
+      // fires on a given visit -- otherwise landing on the rare-find screen
+      // could make it look temporarily unavailable even though it's unlocked.
+      const canCultivate = glassHouseCultivationUnlocked && !glassHouseCultivationPending;
+      stage.innerHTML = `
+        <div class="center-col screen-pad result">
+          <div class="speech narration-line">${chosen.t}</div>
+          <div class="shop-mystery-card" style="margin-top:10px;">${gcardHTML(awarded)}</div>
+          ${canCultivate ? `<button class="ghost" style="margin-top:10px;" onclick="startGlassHouseCultivate()">Cultivate</button>` : ""}
+          <button class="primary" style="margin-top:18px;" onclick="renderMap()">Continue</button>
+        </div>
+      `;
+      updateTopBar("", true);
+      return;
+    }
+  }
+  renderGlassHouseAmbient(chosen.t);
+}
+
+// --- Glass House Cultivate mechanic ---------------------------------------
+
+function startGlassHouseCultivate() { renderCultivatePicker(); }
+
+function renderCultivatePicker() {
+  const jokerIds = new Set(JOKER_CARDS.map((c) => c.id));
+  const eligible = liveDeck.filter((c) => c.type !== "KEY" && !jokerIds.has(c.id));
+  const itemsHTML = eligible.map((c) => `
+    <div class="deck-item status-pool" onclick="chooseCultivateSacrifice(${c.id})">
+      ${gcardHTML(c)}
+    </div>
+  `).join("");
+  stage.innerHTML = `
+    <div class="center-col screen-pad">
+      <div class="portrait no-image" style="background:#1f2b22;">🪟</div>
+      <div class="soul-name">Glass House</div>
+      <p style="color:var(--muted); font-size:12.5px;">Choose one card to bury. It won't come back this year.</p>
+      <div class="deck-grid">${itemsHTML}</div>
+      <button class="ghost" style="margin-top:14px;" onclick="renderMap()">Not yet</button>
+    </div>
+  `;
+  updateTopBar("", true);
+}
+
+function chooseCultivateSacrifice(cardId) {
+  const card = findCard(cardId);
+  if (!card) return;
+  glassHouseCultivationSourceAttributes = { color: card.color, style: card.style, rarity: card.rarity, category: card.category };
+  destroyWearableCard(cardId);
+  glassHouseCultivationPending = true;
+  glassHouseCultivationReadyYear = currentYear + 1;
+  stage.innerHTML = `
+    <div class="center-col screen-pad result">
+      <div class="speech narration-line">You bury it beneath the soil.</div>
+      <div class="speech narration-line">Whatever grows will be here next year.</div>
+      <button class="primary" style="margin-top:18px;" onclick="renderMap()">Continue</button>
+    </div>
+  `;
+  updateTopBar("", true);
+}
+
+// Reward pool bias per spec §4.7 -- checked in this exact order, using the
+// first non-empty applicable pool; the last entry is the universal fallback.
+function harvestGlassHouseCultivation() {
+  const src = glassHouseCultivationSourceAttributes || {};
+  const owned = new Set(unlockedCardIds);
+  const candidatePools = [];
+  if (src.color === "Black") candidatePools.push(DECK.filter((c) => !owned.has(c.id) && (c.style === "Daring" || c.style === "Cool")));
+  if (src.color === "Silver") candidatePools.push(DECK.filter((c) => !owned.has(c.id) && (c.style === "Armour" || c.style === "Elegant")));
+  if (src.style === "Romantic") candidatePools.push(DECK.filter((c) => !owned.has(c.id) && c.category === "Accessory" && c.style === "Romantic"));
+  if (["Rare", "Iconic", "Legendary"].includes(src.rarity)) candidatePools.push(DECK.filter((c) => !owned.has(c.id) && ["Rare", "Iconic", "Legendary"].includes(c.rarity)));
+  candidatePools.push(DECK.filter((c) => !owned.has(c.id) && ["Uncommon", "Rare", "Iconic", "Legendary"].includes(c.rarity)));
+
+  const pool = candidatePools.find((p) => p.length > 0) || [];
+  glassHouseCultivationPending = false;
+  glassHouseCultivationLastHarvestYear = currentYear;
+
+  if (pool.length === 0) {
+    renderGlassHouseScene([{ who: "NARRATION", t: "Nothing came up this year." }], "Leave", "renderMap()");
+    return;
+  }
+  const awarded = pool[Math.floor(Math.random() * pool.length)];
+  unlockedCardIds.add(awarded.id);
+  rebuildLiveDeckFromUnlocked();
+  stage.innerHTML = `
+    <div class="center-col screen-pad result">
+      <div class="speech narration-line">Something has grown where you left the card.</div>
+      <div class="speech" style="background:rgba(255,255,255,0.06);"><b style="display:block; font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:0.04em; margin-bottom:4px;">Octavia</b>See?</div>
+      <div class="shop-mystery-card" style="margin-top:10px;">${gcardHTML(awarded)}</div>
+      <button class="primary" style="margin-top:18px;" onclick="renderMap()">Continue</button>
+    </div>
+  `;
+  updateTopBar("", true);
+}
+
+// ---------------------------------------------------------------------------
+// NIGHT CASTLE — Helena (guard) and Juliette (guard). Exact wording from the
+// Aftercity Characters & Encounters spec §4. The Castle interior stays
+// inaccessible; this is all exterior-gate content. Portraits aren't hosted
+// yet (Theresa has the art; it just needs uploading as portrait_helena.png /
+// portrait_juliette.png alongside the existing client portraits) — using a
+// plain emoji placeholder in the meantime, same treatment as the Vendor/Café.
+// ---------------------------------------------------------------------------
+
+const CASTLE_GUARDS_FIRST_SCENE = [
+  { who: "HELENA", t: "Castle's closed." },
+  { who: "NARRATION", t: "The second guard does not look at you. Her eyes stay fixed somewhere beyond the street." },
+  { who: "YOU", t: "I gathered that." },
+  { who: "HELENA", t: "Good." },
+  { who: "YOU", t: "Is she okay?" },
+  { who: "NARRATION", t: "Helena glances at the woman beside her." },
+  { who: "HELENA", t: "She's Juliette." },
+  { who: "NARRATION", t: "Juliette does not react." },
+];
+
+const HELENA_AMBIENT = [
+  [{ who: "HELENA", t: "Castle's closed." }, { who: "YOU", t: "It was closed yesterday." }, { who: "HELENA", t: "Excellent memory." }],
+  [{ who: "YOU", t: "Do you ever get bored standing here?" }, { who: "HELENA", t: "Yes." }, { who: "YOU", t: "That's it?" }, { who: "HELENA", t: "You asked a yes-or-no question." }],
+  [{ who: "YOU", t: "What's happening inside?" }, { who: "HELENA", t: "Things that are inside." }, { who: "YOU", t: "You're impossible." }, { who: "HELENA", t: "And yet you keep visiting." }],
+  [{ who: "YOU", t: "Do you ever get a day off?" }, { who: "HELENA", t: "Yes." }, { who: "YOU", t: "What do you do?" }, { who: "HELENA", t: "Don't stand at gates." }],
+  [{ who: "YOU", t: "Does anyone actually get through here?" }, { who: "HELENA", t: "Yes." }, { who: "YOU", t: "Me?" }, { who: "HELENA", t: "No." }],
+  [{ who: "YOU", t: "You know, most places put up a sign." }, { who: "HELENA", t: "Most people understand a closed gate." }],
+];
+
+const JULIETTE_AMBIENT = [
+  [{ who: "YOU", t: "Hello, Juliette." }, { who: "NARRATION", t: "A long pause." }, { who: "JULIETTE", t: "Hello." }],
+  [{ who: "YOU", t: "Do you like working here?" }, { who: "NARRATION", t: "Juliette keeps looking toward the street." }, { who: "JULIETTE", t: "I work here." }],
+  [{ who: "YOU", t: "Do you ever leave?" }, { who: "JULIETTE", t: "Sometimes." }, { who: "YOU", t: "Where do you go?" }, { who: "NARRATION", t: "Pause." }, { who: "JULIETTE", t: "Back." }],
+  [{ who: "YOU", t: "How long have you been a guard?" }, { who: "NARRATION", t: "A long pause." }, { who: "JULIETTE", t: "Long enough." }],
+  [{ who: "YOU", t: "Are you listening to me?" }, { who: "JULIETTE", t: "Yes." }, { who: "YOU", t: "You didn't look at me." }, { who: "JULIETTE", t: "I heard you." }],
+];
+
+const JUL_SHIFT_END_SCENE = [
+  { who: "HELENA", t: "Your shift ended." },
+  { who: "NARRATION", t: "Juliette does not move." },
+  { who: "HELENA", t: "Juliette." },
+  { who: "NARRATION", t: "Juliette slowly turns her head toward Helena." },
+  { who: "JULIETTE", t: "Right." },
+  { who: "NARRATION", t: "She walks away without saying goodbye. Helena resumes facing the street." },
+];
+
+// The two defined one-time "about Juliette" questions (spec §4.7). Presented
+// as their own full scene when eligible — see the priority order in
+// renderCastle() below. Q1 must be seen before Q2 becomes eligible.
+const HELENA_ABOUT_JULIETTE_Q1 = [
+  { who: "YOU", t: "Does Juliette ever talk?" },
+  { who: "HELENA", t: "You've heard her." },
+  { who: "YOU", t: "Barely." },
+  { who: "HELENA", t: "Then you've heard her." },
+];
+const HELENA_ABOUT_JULIETTE_Q2 = [
+  { who: "YOU", t: "Is Juliette okay?" },
+  { who: "HELENA", t: "She's Juliette." },
+  { who: "YOU", t: "That isn't an answer." },
+  { who: "HELENA", t: "It's the one you're getting." },
+];
+
+function yearMonthKey() { return `${currentYear}-${currentMonthIndex()}`; }
+
+function castleSublocButtonsHTML() {
+  const buttons = [];
+  if (royalGardenUnlocked) buttons.push(`<button class="ghost" onclick="renderRoyalGarden()">Royal Garden</button>`);
+  else if (hasRoyalGardenKey) buttons.push(`<button class="ghost" onclick="renderRoyalGardenGate()">Royal Garden Gate</button>`);
+  if (buttons.length === 0) return "";
+  return `<div class="subloc-row">${buttons.join("")}</div>`;
+}
+
+function renderCastleScene(lines, buttonLabel, onContinue) {
+  stage.innerHTML = `
+    <div class="center-col screen-pad">
+      <div class="portrait no-image" style="background:#33323c;">🏰</div>
+      <div class="soul-name">Night Castle</div>
+      ${sceneHTML(lines, null)}
+      ${castleSublocButtonsHTML()}
+      <button class="primary" onclick="${onContinue}">${buttonLabel}</button>
+    </div>
+  `;
+  updateTopBar("", true);
+}
+
+function afterCastleGuardsFirst() {
+  metHelena = true;
+  metJuliette = true;
+  castleGateCharactersUnlocked = true;
+  renderMap();
+}
+
+function askHelenaAboutJuliette(stageNum) {
+  const lines = stageNum === 1 ? HELENA_ABOUT_JULIETTE_Q1 : HELENA_ABOUT_JULIETTE_Q2;
+  helenaJulietteQAStage = stageNum;
+  renderCastleScene(lines, "Leave", "renderMap()");
+}
+
+// Event resolution priority (Items/Keys §11 / Characters §3), narrowed to the
+// content actually built so far: required first meeting > required Juliette
+// shift-end scene > the two one-time Helena/Juliette questions > ambient pool
+// (Helena takes priority over Juliette, each capped at one per in-game
+// month) > neutral fallback. Photo/back-room reactions and Valery/Royal
+// Garden content plug into this same resolver once their locations exist.
+// The Juliette Attic Key handoff (Characters spec §9) — the only way to
+// obtain the Nightcafe Attic Key. Depends on flags set by Maya's Attic hint
+// at the Café (see mayaAtticHintEligible()/afterMayaAtticHint()).
+const JULIETTE_ATTIC_KEY_SCENE = [
+  { who: "YOU", t: "Maya said you had a key for the Café." },
+  { who: "NARRATION", t: "Juliette does not answer." },
+  { who: "YOU", t: "The attic." },
+  { who: "NARRATION", t: "She reaches beneath the edge of her armour and pulls out an old brass key." },
+  { who: "NARRATION", t: "She stares at it for several seconds." },
+  { who: "JULIETTE", t: "I forgot." },
+  { who: "YOU", t: "Forgot what?" },
+  { who: "NARRATION", t: "Juliette puts the key in your hand." },
+  { who: "JULIETTE", t: "Why I had it." },
+  { who: "YOU", t: "You don't want it?" },
+  { who: "JULIETTE", t: "I had it." },
+  { who: "NARRATION", t: "Her attention returns to the street." },
+];
+
+// Cross-doc reactions to the Faded Photograph (Characters spec §10.2–10.3).
+const HELENA_PHOTO_REACTION = [
+  { who: "NARRATION", t: "Helena looks at the photograph." },
+  { who: "HELENA", t: "Where did you get this?" },
+  { who: "YOU", t: "Café attic." },
+  { who: "NARRATION", t: "She gives it back." },
+  { who: "HELENA", t: "Don't bring everything you find to Juliette." },
+  { who: "YOU", t: "Why?" },
+  { who: "HELENA", t: "Because I asked you not to." },
+];
+const JULIETTE_PHOTO_REACTION = [
+  { who: "YOU", t: "Do you recognize this?" },
+  { who: "NARRATION", t: "Juliette looks at the photograph." },
+  { who: "NARRATION", t: "A long pause." },
+  { who: "JULIETTE", t: "I don't like that dress." },
+  { who: "YOU", t: "That's what you noticed?" },
+  { who: "NARRATION", t: "Juliette gives the photograph back." },
+];
+
+function julietteAtticKeyEligible() {
+  return currentYear >= 2 && julietteCafeKeyHintAvailable && mayaAtticHintGiven
+    && !julietteGaveAtticKey && !cafeAtticUnlocked;
+}
+function afterJulietteAtticKey() {
+  julietteGaveAtticKey = true;
+  awardKeyCard("key_cafeattic");
+  renderMap();
+}
+function afterHelenaPhotoReaction() { helenaPhotoReactionSeen = true; renderMap(); }
+function afterJuliettePhotoReaction() { juliettePhotoReactionSeen = true; renderMap(); }
+
+// --- Valery (Castle exterior) --------------------------------------------
+
+const VALERY_FIRST_EXIT_SCENE = [
+  { who: "HELENA", t: "No." },
+  { who: "VALERY", t: "That wasn't a question." },
+  { who: "HELENA", t: "It was an attempted exit." },
+  { who: "VALERY", t: "Exactly." },
+  { who: "NARRATION", t: "Valery notices you." },
+  { who: "VALERY", t: "Oh. Stylist." },
+  { who: "YOU", t: "Are you escaping?" },
+  { who: "VALERY", t: "Don't make it sound cheap." },
+  { who: "HELENA", t: "She's escaping." },
+  { who: "VALERY", t: "Helena has no respect for presentation." },
+];
+const VALERY_AMBIENT = [
+  [{ who: "VALERY", t: "Do you know what the worst thing about a gate is?" }, { who: "YOU", t: "That it's closed?" }, { who: "VALERY", t: "That someone always thinks they're in charge of it." }, { who: "HELENA", t: "I am in charge of it." }],
+  [{ who: "VALERY", t: "You should come to the Royal Quarter sometime." }, { who: "HELENA", t: "She shouldn't." }, { who: "VALERY", t: "See? This is why invitations are so exhausting." }],
+  [{ who: "YOU", t: "Do you ever walk anywhere without making it an event?" }, { who: "VALERY", t: "Why would I waste the walk?" }],
+];
+function valeryEligible() { return currentYear >= 2 || currentMonthIndex() >= 4; } // May Y1 onward
+function afterValeryFirstExit() { metValery = true; renderMap(); }
+
+// --- Guard Ceremony special job (Characters spec §8) ----------------------
+
+const HELENA_VIRTUAL = {
+  name: "Helena", color: "#8ea9c1",
+  preferences: [pref("color", "Silver"), pref("style", "Armour"), pref("style", "Classic"), pref("style", "Minimal"), pref("fit", "Regular")],
+};
+const JULIETTE_VIRTUAL = {
+  name: "Juliette", color: "#5a5a66",
+  preferences: [pref("color", "Silver"), pref("style", "Armour")], // ONLY these two count for Juliette
+};
+const GUARD_BRIEF = { want: [req("color", "Silver"), req("style", "Armour")] };
+const GUARD_STYLE_REQUEST_SCENE = [
+  { who: "HELENA", t: "We need a stylist." },
+  { who: "YOU", t: "That sounded dangerously close to asking for my help." },
+  { who: "HELENA", t: "Don't make me regret it." },
+  { who: "YOU", t: "What's the occasion?" },
+  { who: "HELENA", t: "Ceremony." },
+  { who: "YOU", t: "For what?" },
+  { who: "HELENA", t: "The kind you're not invited to." },
+  { who: "NARRATION", t: "Juliette continues staring past the gate." },
+  { who: "HELENA", t: "Silver. Armour. For both of us." },
+  { who: "YOU", t: "Anything else?" },
+  { who: "HELENA", t: "For me? Make it look intentional." },
+  { who: "YOU", t: "And Juliette?" },
+  { who: "NARRATION", t: "Juliette's gaze does not move." },
+  { who: "JULIETTE", t: "Silver. Armour." },
+];
+const JUL_THORN_REACTION_LINES = [
+  { who: "NARRATION", t: "Juliette's hand stops on the Thorn Veil." },
+  { who: "NARRATION", t: "For the first time, she looks directly at you." },
+  { who: "JULIETTE", t: "Where did you find this?" },
+  { who: "YOU", t: "The Glass House." },
+  { who: "NARRATION", t: "Her fingers close around one of the metal thorns." },
+  { who: "JULIETTE", t: "It's still there." },
+  { who: "HELENA", t: "Juliette." },
+  { who: "NARRATION", t: "Juliette looks away. The moment is gone." },
+];
+
+function guardCeremonyEligible() {
+  return currentYear >= 2 && currentMonthIndex() >= 3 // April Y2 onward
+    && metHelena && metJuliette && !guardCeremonyCompleted;
+}
+function julThornRetryEligible() {
+  return guardCeremonyCompleted && !julietteRemembersGlasshouse && thornVeilOwned
+    && !julietteThornRetrySeen && currentYear === 2 && currentMonthIndex() >= 6; // July Y2 onward
+}
+
+function startGuardCeremony() {
+  renderCastleScene(GUARD_STYLE_REQUEST_SCENE, "Continue", "beginGuardRoundHelena()");
+}
+function beginGuardRoundHelena() {
+  startSpecialRound(HELENA_VIRTUAL, GUARD_BRIEF, { type: "guard", guard: "helena" });
+  renderStyle();
+}
+function beginGuardRoundJuliette() {
+  startSpecialRound(JULIETTE_VIRTUAL, GUARD_BRIEF, { type: "guard", guard: "juliette" });
+  renderStyle();
+}
+function closeGuardCeremony() {
+  guardCeremonyCompleted = true;
+  renderCastleScene([
+    { who: "HELENA", t: "That will do." },
+    { who: "YOU", t: "High praise." },
+    { who: "HELENA", t: "Don't get used to it." },
+    { who: "NARRATION", t: "Juliette is already looking toward the gate again." },
+  ], "Leave", "renderMap()");
+}
+
+// The one-time retry (§8.1): a smaller Juliette-only single-card fitting,
+// offered once if the ceremony completed without triggering the Thorn Veil
+// memory reaction.
+function startJulThornRetry() {
+  julietteThornRetrySeen = true; // marked immediately -- this offer never repeats, win or lose
+  renderCastleScene([
+    { who: "HELENA", t: "The clasp on Juliette's ceremonial piece is wrong." },
+    { who: "YOU", t: "And somehow that's my problem." },
+    { who: "HELENA", t: "You made the last one work." },
+    { who: "NARRATION", t: "Juliette says nothing." },
+    { who: "HELENA", t: "One piece. Silver." },
+  ], "Choose a piece", "renderJulThornRetryPicker()");
+}
+function renderJulThornRetryPicker() {
+  const jokerIds = new Set(JOKER_CARDS.map((c) => c.id));
+  const eligible = liveDeck.filter((c) => c.type !== "KEY" && !jokerIds.has(c.id) && c.color === "Silver");
+  const itemsHTML = eligible.map((c) => `
+    <div class="deck-item status-pool" onclick="chooseJulThornRetry(${c.id})">${gcardHTML(c)}</div>
+  `).join("");
+  stage.innerHTML = `
+    <div class="center-col screen-pad">
+      <div class="portrait no-image" style="background:#33323c;">🏰</div>
+      <div class="soul-name">Night Castle</div>
+      <p style="color:var(--muted); font-size:12.5px;">Choose one Silver piece.</p>
+      <div class="deck-grid">${itemsHTML}</div>
+      <button class="ghost" style="margin-top:14px;" onclick="renderMap()">Not now</button>
+    </div>
+  `;
+  updateTopBar("", true);
+}
+function chooseJulThornRetry(cardId) {
+  if (cardId === THORN_VEIL.id) {
+    thornVeilUsedOnJuliette = true;
+    julietteRemembersGlasshouse = true;
+    renderCastleScene(JUL_THORN_REACTION_LINES, "Leave", "renderMap()");
+    return;
+  }
+  renderCastleScene([{ who: "HELENA", t: "Fine." }], "Leave", "renderMap()");
+}
+
+// --- Royal Garden Key: guaranteed fallback (Characters spec §7.4) --------
+
+const VALERY_KEY_FALLBACK_SCENE = [
+  { who: "NARRATION", t: "Valery is waiting on the wrong side of the gate, which appears to be causing Helena personal offense." },
+  { who: "VALERY", t: "You." },
+  { who: "YOU", t: "Me." },
+  { who: "VALERY", t: "I decided you need another chance to impress me." },
+  { who: "YOU", t: "That's very noble of you." },
+  { who: "VALERY", t: "It isn't." },
+  { who: "NARRATION", t: "She drops a delicate gold key into your hand." },
+  { who: "VALERY", t: "The Royal Garden. Don't embarrass me." },
+  { who: "HELENA", t: "You are not supposed to give those away." },
+  { who: "VALERY", t: "Then it's fortunate I only gave away one." },
+];
+function valeryKeyFallbackEligible() {
+  return currentYear === 2 && currentMonthIndex() >= 5 && currentMonthIndex() <= 7 // Summer
+    && valerySolsticeCompleted && royalGardenKeyFallbackNeeded
+    && !hasRoyalGardenKey && !royalGardenUnlocked;
+}
+function afterValeryKeyFallback() {
+  awardKeyCard("key_royalgarden");
+  royalGardenKeyFallbackNeeded = false;
+  renderMap();
+}
+
+// --- Seasonal festival reactions (Characters spec §12) --------------------
+// currentMonthEvent() already only returns a value during a festival's own
+// peak month, which IS the exact trigger window the spec calls for ("from
+// the moment the story screen has shown until the end of that month") -- no
+// extra date-window bookkeeping needed on top of the existing event schedule.
+const FESTIVAL_REACTIONS = {
+  flowerFest: {
+    helena: [{ who: "NARRATION", t: "Fresh ribbons have been tied through the Night Castle gate. Helena is cutting one loose with a small knife." }, { who: "HELENA", t: "If one more person ties flowers to government property, I'm arresting the flowers." }],
+    juliette: [{ who: "NARRATION", t: "A pink ribbon has caught on Juliette's shoulder plate." }, { who: "YOU", t: "You have something on you." }, { who: "JULIETTE", t: "I know." }, { who: "NARRATION", t: "She does not remove it." }],
+    maya: [{ who: "MAYA", t: "Flower Fest makes everyone briefly convinced they're interesting." }, { who: "YOU", t: "And you don't like it?" }, { who: "MAYA", t: "I like the flowers." }],
+    octavia: [{ who: "OCTAVIA", t: "They cut too many this year." }, { who: "YOU", t: "The flowers?" }, { who: "OCTAVIA", t: "They notice." }],
+    valery: [{ who: "VALERY", t: "Flower Fest is charming from a balcony." }, { who: "YOU", t: "And from the street?" }, { who: "VALERY", t: "Sticky." }],
+  },
+  summerSolstice: {
+    helena: [{ who: "HELENA", t: "Solstice means twice the guests and half the common sense." }, { who: "YOU", t: "You love it." }, { who: "HELENA", t: "Immensely." }],
+    juliette: [{ who: "YOU", t: "Do you like Solstice?" }, { who: "JULIETTE", t: "It happens every year." }, { who: "YOU", t: "That's not what I asked." }, { who: "JULIETTE", t: "I know." }],
+    maya: [{ who: "MAYA", t: "The Royal Quarter has been polishing itself for a week." }, { who: "YOU", t: "Are you going?" }, { who: "MAYA", t: "I prefer parties I can leave." }],
+    octavia: [{ who: "OCTAVIA", t: "Longest day." }, { who: "YOU", t: "You sound unhappy about it." }, { who: "OCTAVIA", t: "The garden prefers the dark." }],
+    valery: [{ who: "VALERY", t: "Solstice is the one night everyone tries terribly hard to look effortless." }, { who: "YOU", t: "Including you?" }, { who: "VALERY", t: "Especially me." }],
+  },
+  moonFest: {
+    helena: [{ who: "NARRATION", t: "Someone has placed a black mask over one of the Castle statues." }, { who: "HELENA", t: "I'm leaving it there." }, { who: "YOU", t: "You approve?" }, { who: "HELENA", t: "I'm tired." }],
+    juliette: [{ who: "YOU", t: "Everyone's wearing masks tonight." }, { who: "JULIETTE", t: "They do every year." }, { who: "YOU", t: "Do you?" }, { who: "JULIETTE", t: "No." }],
+    maya: [{ who: "MAYA", t: "Moon Fest is useful." }, { who: "YOU", t: "For what?" }, { who: "MAYA", t: "People tell the truth when they think a mask makes them someone else." }],
+    valery: [{ who: "VALERY", t: "Moon Fest used to have better masks." }, { who: "YOU", t: "How can a mask be better?" }, { who: "VALERY", t: "If you have to ask, yours isn't." }],
+  },
+  winterSolstice: {
+    helena: [{ who: "HELENA", t: "Quiet night." }, { who: "YOU", t: "Is that good?" }, { who: "HELENA", t: "Ask me after midnight." }],
+    juliette: [{ who: "YOU", t: "Everyone seems different during Winter Solstice." }, { who: "JULIETTE", t: "They're colder." }, { who: "YOU", t: "That's all?" }, { who: "JULIETTE", t: "Mostly." }],
+    maya: [{ who: "MAYA", t: "Winter Solstice is the only time this Café pretends to close early." }, { who: "YOU", t: "Does it?" }, { who: "MAYA", t: "No." }],
+    valery: [{ who: "VALERY", t: "Winter Solstice is better indoors." }, { who: "YOU", t: "Because it's warmer?" }, { who: "VALERY", t: "Because everyone looks expensive in candlelight." }],
+  },
+};
+function markSeasonalReactionSeen(characterId, eventId) {
+  if (!seasonalReactionSeen[characterId]) seasonalReactionSeen[characterId] = {};
+  if (!seasonalReactionSeen[characterId][currentYear]) seasonalReactionSeen[characterId][currentYear] = {};
+  seasonalReactionSeen[characterId][currentYear][eventId] = true;
+}
+function seasonalReactionAlreadySeen(characterId, eventId) {
+  return !!(seasonalReactionSeen[characterId] && seasonalReactionSeen[characterId][currentYear] && seasonalReactionSeen[characterId][currentYear][eventId]);
+}
+function getFestivalReactionFor(characterId, metFlag) {
+  const eventId = currentMonthEvent();
+  if (!eventId || !FESTIVAL_REACTIONS[eventId]) return null;
+  if (!metFlag) return null;
+  if (seasonalReactionAlreadySeen(characterId, eventId)) return null;
+  const lines = FESTIVAL_REACTIONS[eventId][characterId];
+  if (!lines) return null;
+  return { eventId, lines };
+}
+
+function renderCastle() {
+  if (!castleGateCharactersUnlocked) {
+    renderCastleScene(CASTLE_GUARDS_FIRST_SCENE, "Back to After City", "afterCastleGuardsFirst()");
+    return;
+  }
+
+  castleVisitsAfterMeeting += 1;
+
+  if (!julietteShiftEventSeen && castleVisitsAfterMeeting >= 2) {
+    julietteShiftEventSeen = true;
+    renderCastleScene(JUL_SHIFT_END_SCENE, "Continue", "renderMap()");
+    return;
+  }
+
+  if (guardCeremonyEligible()) { startGuardCeremony(); return; }
+  if (julThornRetryEligible()) { startJulThornRetry(); return; }
+  if (valeryKeyFallbackEligible()) {
+    renderCastleScene(VALERY_KEY_FALLBACK_SCENE, "Leave", "afterValeryKeyFallback()");
+    return;
+  }
+
+  if (julietteAtticKeyEligible()) {
+    renderCastleScene(JULIETTE_ATTIC_KEY_SCENE, "Leave", "afterJulietteAtticKey()");
+    return;
+  }
+
+  if (hasFadedPhotograph && !helenaPhotoReactionSeen) {
+    renderCastleScene(HELENA_PHOTO_REACTION, "Leave", "afterHelenaPhotoReaction()");
+    return;
+  }
+  if (hasFadedPhotograph && !juliettePhotoReactionSeen) {
+    renderCastleScene(JULIETTE_PHOTO_REACTION, "Leave", "afterJuliettePhotoReaction()");
+    return;
+  }
+
+  if (metHelena && !metValery && valeryEligible()) {
+    renderCastleScene(VALERY_FIRST_EXIT_SCENE, "Leave", "afterValeryFirstExit()");
+    return;
+  }
+
+  const helenaFestival = getFestivalReactionFor("helena", metHelena);
+  if (helenaFestival) {
+    markSeasonalReactionSeen("helena", helenaFestival.eventId);
+    renderCastleScene(helenaFestival.lines, "Leave", "renderMap()");
+    return;
+  }
+  const julietteFestival = getFestivalReactionFor("juliette", metJuliette);
+  if (julietteFestival) {
+    markSeasonalReactionSeen("juliette", julietteFestival.eventId);
+    renderCastleScene(julietteFestival.lines, "Leave", "renderMap()");
+    return;
+  }
+  const valeryFestival = getFestivalReactionFor("valery", metValery);
+  if (valeryFestival) {
+    markSeasonalReactionSeen("valery", valeryFestival.eventId);
+    renderCastleScene(valeryFestival.lines, "Leave", "renderMap()");
+    return;
+  }
+
+  if (helenaJulietteQAStage === 0) {
+    renderCastleScene([{ who: "NARRATION", t: "The two guards, same as always." }], "Does Juliette ever talk?", "askHelenaAboutJuliette(1)");
+    return;
+  }
+  if (helenaJulietteQAStage === 1) {
+    renderCastleScene([{ who: "NARRATION", t: "The two guards, same as always." }], "Is Juliette okay?", "askHelenaAboutJuliette(2)");
+    return;
+  }
+
+  const ym = yearMonthKey();
+  if (helenaLastAmbientYearMonth !== ym) {
+    const unseen = HELENA_AMBIENT.map((_, i) => i).filter((i) => !helenaAmbientSeen.includes(i));
+    const pool = unseen.length > 0 ? unseen : HELENA_AMBIENT.map((_, i) => i);
+    const idx = pool[Math.floor(Math.random() * pool.length)];
+    if (!helenaAmbientSeen.includes(idx)) helenaAmbientSeen.push(idx);
+    helenaLastAmbientYearMonth = ym;
+    renderCastleScene(HELENA_AMBIENT[idx], "Leave", "renderMap()");
+    return;
+  }
+  if (julietteLastAmbientYearMonth !== ym) {
+    const unseen = JULIETTE_AMBIENT.map((_, i) => i).filter((i) => !julietteAmbientSeen.includes(i));
+    const pool = unseen.length > 0 ? unseen : JULIETTE_AMBIENT.map((_, i) => i);
+    const idx = pool[Math.floor(Math.random() * pool.length)];
+    if (!julietteAmbientSeen.includes(idx)) julietteAmbientSeen.push(idx);
+    julietteLastAmbientYearMonth = ym;
+    renderCastleScene(JULIETTE_AMBIENT[idx], "Leave", "renderMap()");
+    return;
+  }
+  if (metValery) {
+    const unseen = VALERY_AMBIENT.map((_, i) => i).filter((i) => !valeryAmbientSeen.includes(i));
+    const pool = unseen.length > 0 ? unseen : VALERY_AMBIENT.map((_, i) => i);
+    const idx = pool[Math.floor(Math.random() * pool.length)];
+    if (!valeryAmbientSeen.includes(idx)) valeryAmbientSeen.push(idx);
+    renderCastleScene(VALERY_AMBIENT[idx], "Leave", "renderMap()");
+    return;
+  }
+
+  renderCastleScene(
+    [{ who: "NARRATION", t: "The two guards stand exactly where they always do." }],
+    "Leave",
+    "renderMap()"
+  );
+}
+
+function finishSpecialStyling() {
+  const pieces = outfit.filter(Boolean);
+  const job = specialJob;
+
+  discardPile.push(...pieces.map((p) => p.id));
+  deckPile.push(...hand);
+  hand = [];
+
+  if (job.type === "guard") {
+    if (job.guard === "helena") {
+      specialJob = null;
+      beginGuardRoundJuliette();
+      return;
+    }
+    const woreThornVeil = pieces.some((p) => p.id === THORN_VEIL.id);
+    specialJob = null;
+    if (woreThornVeil) {
+      thornVeilUsedOnJuliette = true;
+      julietteRemembersGlasshouse = true;
+      renderCastleScene(JUL_THORN_REACTION_LINES, "Continue", "closeGuardCeremony()");
+      return;
+    }
+    closeGuardCeremony();
+    return;
+  }
+
+  if (job.type === "valery_solstice") {
+    const score = scoreSpecialOutfit(pieces, VALERY_VIRTUAL, VALERY_SOLSTICE_BRIEF);
+    specialJob = null;
+    resolveValerySolstice(score);
+    return;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// ROYAL GARDEN — unlocked via the Royal Garden Key (Valery's Solstice job or
+// its fallback). Items/Keys spec §7 for the location, Characters spec §11
+// for the character encounters that live inside it.
+// ---------------------------------------------------------------------------
+
+function renderRoyalGardenGate() {
+  stage.innerHTML = `
+    <div class="center-col screen-pad">
+      <div class="portrait no-image" style="background:#33323c;">🏰</div>
+      <div class="soul-name">Night Castle</div>
+      ${sceneHTML([
+        { who: "NARRATION", t: "A narrow gold gate is set into the wall beside the Castle." },
+        { who: "NARRATION", t: "The crest on your key matches the lock." },
+      ], null)}
+      <button class="primary" onclick="useRoyalGardenKey()">Use Royal Garden Key</button>
+      <button class="ghost" style="margin-top:10px;" onclick="renderMap()">Leave</button>
+    </div>
+  `;
+  updateTopBar("", true);
+}
+function useRoyalGardenKey() {
+  consumeKeyCard("key_royalgarden");
+  royalGardenUnlocked = true;
+  stage.innerHTML = `
+    <div class="center-col screen-pad">
+      <div class="portrait no-image" style="background:#33323c;">🏰</div>
+      <div class="soul-name">Night Castle</div>
+      ${sceneHTML([
+        { who: "NARRATION", t: "The key turns almost silently." },
+        { who: "NARRATION", t: "The gate opens onto white flowers and silver water." },
+      ], null)}
+      <button class="primary" onclick="renderRoyalGarden()">Go in</button>
+    </div>
+  `;
+  updateTopBar("", true);
+}
+
+function renderRoyalGardenScene(lines) {
+  stage.innerHTML = `
+    <div class="center-col screen-pad">
+      <div class="portrait no-image" style="background:#e8e2d0; color:#333;">🌹</div>
+      <div class="soul-name">Royal Garden</div>
+      ${sceneHTML(lines, null)}
+      <div class="subloc-row"><button class="ghost" onclick="renderCastleWallDoor()">Castle Wall</button></div>
+      <button class="primary" onclick="renderMap()">Leave</button>
+    </div>
+  `;
+  updateTopBar("", true);
+}
+
+function renderCastleWallDoor() {
+  const alreadySeen = royalGardenSealedDoorSeen;
+  royalGardenSealedDoorSeen = true;
+  const lines = alreadySeen
+    ? [{ who: "NARRATION", t: "Whatever opens this is not something you have." }]
+    : [
+        { who: "NARRATION", t: "A narrow iron door is built directly into the Castle wall." },
+        { who: "NARRATION", t: "There is no visible keyhole." },
+      ];
+  stage.innerHTML = `
+    <div class="center-col screen-pad">
+      <div class="portrait no-image" style="background:#e8e2d0; color:#333;">🌹</div>
+      <div class="soul-name">Castle Wall</div>
+      ${sceneHTML(lines, null)}
+      <p style="color:var(--muted); font-size:12.5px;">SEALED</p>
+      <button class="primary" onclick="renderMap()">Leave</button>
+    </div>
+  `;
+  updateTopBar("", true);
+}
+
+function renderRoyalGarden() {
+  if (!royalGardenFirstVisitSeen) {
+    royalGardenFirstVisitSeen = true;
+    stage.innerHTML = `
+      <div class="center-col screen-pad">
+        <div class="portrait no-image" style="background:#e8e2d0; color:#333;">🌹</div>
+        <div class="soul-name">Royal Garden</div>
+        ${sceneHTML([
+          { who: "NARRATION", t: "The Royal Garden is too perfect." },
+          { who: "NARRATION", t: "White flowers repeat in exact rows. Silver fountains run without splashing. Gold railings show no weather." },
+          { who: "NARRATION", t: "There is not a single dead leaf." },
+          { who: "NARRATION", t: "Three paths lead away from the gate." },
+        ], null)}
+        <button class="primary" onclick="renderMap()">Continue</button>
+      </div>
+    `;
+    updateTopBar("", true);
+    return;
+  }
+  renderRoyalGardenHub();
+}
+
+function currentSeasonName() {
+  const m = currentMonthIndex();
+  if (m >= 2 && m <= 4) return "spring";
+  if (m >= 5 && m <= 7) return "summer";
+  if (m >= 8 && m <= 10) return "autumn";
+  return "winter";
+}
+
+function renderRoyalGardenHub() {
+  if (!valeryRoyalGardenWelcomeSeen) {
+    valeryRoyalGardenWelcomeSeen = true;
+    renderRoyalGardenScene([
+      { who: "VALERY", t: "You actually used it." },
+      { who: "YOU", t: "You gave me the key." },
+      { who: "VALERY", t: "People receive invitations all the time. Very few have the confidence to arrive." },
+      { who: "YOU", t: "Was that an invitation?" },
+      { who: "VALERY", t: "You're here, aren't you?" },
+    ]);
+    return;
+  }
+  if (!helenaRoyalGardenEncounterSeen) {
+    helenaRoyalGardenEncounterSeen = true;
+    renderRoyalGardenScene([
+      { who: "NARRATION", t: "Helena is sitting beside the fountain without her guard armour." },
+      { who: "YOU", t: "I almost didn't recognize you." },
+      { who: "HELENA", t: "That's concerning." },
+      { who: "YOU", t: "I've never seen you without armour." },
+      { who: "HELENA", t: "That's less concerning." },
+      { who: "YOU", t: "Are you allowed to be here?" },
+      { who: "HELENA", t: "I work here." },
+      { who: "YOU", t: "You work at the gate." },
+      { who: "HELENA", t: "You ask too many location-based questions." },
+    ]);
+    return;
+  }
+  if (!julietteRoyalGardenFountainSeen) {
+    julietteRoyalGardenFountainSeen = true;
+    renderRoyalGardenScene([
+      { who: "NARRATION", t: "Juliette is standing beside the fountain, staring into the water." },
+      { who: "YOU", t: "What are you doing here?" },
+      { who: "JULIETTE", t: "Standing." },
+      { who: "YOU", t: "I can see that." },
+      { who: "NARRATION", t: "Pause." },
+      { who: "JULIETTE", t: "Good." },
+    ]);
+    return;
+  }
+  if (!julietteRoyalGardenFlowerSeen) {
+    julietteRoyalGardenFlowerSeen = true;
+    renderRoyalGardenScene([
+      { who: "NARRATION", t: "Juliette is touching one of the white flowers with two fingers." },
+      { who: "NARRATION", t: "She notices you." },
+      { who: "NARRATION", t: "Her hand drops immediately." },
+    ]);
+    return;
+  }
+  if (!helenaCaughtPlayerSeen) {
+    helenaCaughtPlayerSeen = true;
+    renderRoyalGardenScene([
+      { who: "HELENA", t: "I didn't see you." },
+      { who: "YOU", t: "You're looking directly at me." },
+      { who: "HELENA", t: "Don't make this difficult." },
+      { who: "NARRATION", t: "Helena walks away." },
+    ]);
+    return;
+  }
+
+  const rgScenesSeenCount = [valeryRoyalGardenWelcomeSeen, helenaRoyalGardenEncounterSeen, julietteRoyalGardenFountainSeen, helenaCaughtPlayerSeen].filter(Boolean).length;
+  if (metOctavia && nightgardenOpen() && !octaviaRoyalGardenSeen && rgScenesSeenCount >= 2) {
+    octaviaRoyalGardenSeen = true;
+    renderRoyalGardenScene([
+      { who: "NARRATION", t: "Octavia is standing at the end of the Rose Walk. Valery is already there." },
+      { who: "VALERY", t: "She's not supposed to be here." },
+      { who: "YOU", t: "Octavia?" },
+      { who: "VALERY", t: "Don't say her name like you're inviting her." },
+      { who: "NARRATION", t: "Octavia touches one of the pale roses." },
+      { who: "OCTAVIA", t: "It doesn't like this place." },
+      { who: "VALERY", t: "The rose?" },
+      { who: "OCTAVIA", t: "The garden." },
+      { who: "NARRATION", t: "Octavia walks away." },
+      { who: "VALERY", t: "I preferred her when she wasn't talking." },
+    ]);
+    return;
+  }
+
+  if (valeryRoyalGardenWelcomeSeen && valeryMicroRequestSeason !== `${currentYear}-${currentSeasonName()}`) {
+    renderValeryMicroRequestIntro();
+    return;
+  }
+
+  royalGardenAmbientVisit();
+}
+
+const RG_REPEAT_POOL = [
+  { id: "empty", t: "The Garden is empty. Somewhere beyond the wall, a door closes." },
+  { id: "delivery", t: "A sealed garment box has been left beside the fountain." },
+  { id: "roses", t: "You find a fallen petal. It is the first imperfect thing you have seen here." },
+  { id: "lostaccessory", t: "Something silver is caught beneath the hedge." },
+];
+function royalGardenAmbientVisit() {
+  const canOfferLostAccessory = royalGardenLostAccessoryLastYear !== currentYear;
+  const pool = canOfferLostAccessory ? RG_REPEAT_POOL : RG_REPEAT_POOL.filter((e) => e.id !== "lostaccessory");
+  const chosen = pool[Math.floor(Math.random() * pool.length)];
+
+  if (chosen.id === "delivery") {
+    renderRoyalGardenScene([{ who: "NARRATION", t: chosen.t }, { who: "NARRATION", t: "Empty." }]);
+    return;
+  }
+  if (chosen.id === "lostaccessory") {
+    // Set eagerly (see the identical fix on atticLostPropertyLastYear /
+    // glassHouseRareFindLastYear) so this can't keep re-rolling forever once
+    // every eligible Rare Accessory is already owned.
+    royalGardenLostAccessoryLastYear = currentYear;
+    const owned = new Set(unlockedCardIds);
+    const eligible = DECK.filter((c) => c.category === "Accessory" && c.rarity === "Rare" && !owned.has(c.id));
+    if (eligible.length > 0) {
+      const awarded = eligible[Math.floor(Math.random() * eligible.length)];
+      unlockedCardIds.add(awarded.id);
+      rebuildLiveDeckFromUnlocked();
+      stage.innerHTML = `
+        <div class="center-col screen-pad result">
+          <div class="speech narration-line">${chosen.t}</div>
+          <div class="shop-mystery-card" style="margin-top:10px;">${gcardHTML(awarded)}</div>
+          <button class="primary" style="margin-top:18px;" onclick="renderMap()">Continue</button>
+        </div>
+      `;
+      updateTopBar("", true);
+      return;
+    }
+  }
+  renderRoyalGardenScene([{ who: "NARRATION", t: chosen.t }]);
+}
+
+const VALERY_MICRO_MATCH = { colors: ["Gold", "Pink"], styles: ["Elegant", "Romantic", "Bold"] };
+function renderValeryMicroRequestIntro() {
+  stage.innerHTML = `
+    <div class="center-col screen-pad">
+      <div class="portrait no-image" style="background:#e8e2d0; color:#333;">🌹</div>
+      <div class="soul-name">Royal Garden</div>
+      ${sceneHTML([
+        { who: "VALERY", t: "Dinner changed rooms." },
+        { who: "YOU", t: "And?" },
+        { who: "VALERY", t: "And now I need one thing that makes the rest look intentional." },
+      ], null)}
+      <button class="primary" onclick="renderValeryMicroRequestPicker()">Choose a piece</button>
+      <button class="ghost" style="margin-top:10px;" onclick="renderMap()">Not now</button>
+    </div>
+  `;
+  updateTopBar("", true);
+}
+function renderValeryMicroRequestPicker() {
+  const jokerIds = new Set(JOKER_CARDS.map((c) => c.id));
+  const eligible = liveDeck.filter((c) => c.type !== "KEY" && !jokerIds.has(c.id));
+  const itemsHTML = eligible.map((c) => `
+    <div class="deck-item status-pool" onclick="chooseValeryMicroRequest(${c.id})">${gcardHTML(c)}</div>
+  `).join("");
+  stage.innerHTML = `
+    <div class="center-col screen-pad">
+      <div class="portrait no-image" style="background:#e8e2d0; color:#333;">🌹</div>
+      <div class="soul-name">Royal Garden</div>
+      <p style="color:var(--muted); font-size:12.5px;">Choose one piece.</p>
+      <div class="deck-grid">${itemsHTML}</div>
+      <button class="ghost" style="margin-top:14px;" onclick="renderMap()">Not now</button>
+    </div>
+  `;
+  updateTopBar("", true);
+}
+function chooseValeryMicroRequest(cardId) {
+  const card = findCard(cardId);
+  valeryMicroRequestSeason = `${currentYear}-${currentSeasonName()}`;
+  const success = card && (VALERY_MICRO_MATCH.colors.includes(card.color) || VALERY_MICRO_MATCH.styles.includes(card.style));
+  if (success) moonCoins += 2;
+  const lines = success
+    ? [{ who: "VALERY", t: "There. Much better. I knew keeping you around would pay off." }]
+    : [{ who: "VALERY", t: "No. That's made it look more intentional in the wrong direction." }];
+  renderRoyalGardenScene(lines);
 }
 
 function renderShuffle() {
@@ -1942,20 +4102,48 @@ function wantTagsHTML(brief) {
   return brief.want.map((r) => `<span class="want-tag">${r.label}</span>`).join("");
 }
 
+// Shared renderer for a single line of dialogue, used by briefs, the
+// CLIENT_STAGES progressive Studio exchanges, and every secondary-character
+// scene (Helena, Juliette, Maya, Octavia, Valery, etc.). "NARRATION" is not
+// a speaker — it renders as unlabeled italic scene text (e.g. "Juniper
+// smiles.") instead of a speech bubble, matching how the source documents
+// distinguish spoken lines from stage direction.
+//
+// speakerName is an override for the label on every non-YOU line (used by
+// single-character screens like the Studio, where every non-YOU line is
+// that one client). Pass null/undefined for multi-speaker scenes (e.g.
+// Night Castle, where a scene mixes HELENA, JULIETTE and NARRATION lines)
+// so each line is labeled from its own `who` instead.
+function dialogueLineHTML(line, speakerName) {
+  if (line.who === "NARRATION") {
+    return `<div class="speech narration-line">${line.t}</div>`;
+  }
+  const isYou = line.who === "YOU";
+  const speakerLabel = isYou ? "You" : (speakerName || properCase(line.who));
+  return `
+    <div class="speech" style="${isYou ? "background:rgba(255,255,255,0.06);" : ""}">
+      <b style="display:block; font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:0.04em; margin-bottom:4px;">${speakerLabel}</b>
+      ${line.t}
+    </div>
+  `;
+}
+
+function properCase(s) {
+  return s.charAt(0) + s.slice(1).toLowerCase();
+}
+
 // Renders a brief's dialogue array as a stack of speech bubbles, reusing the
 // exact look of the CLIENT_STAGES exchange above (speaker label + line) so
 // a multi-line brief reads the same as any other back-and-forth in the game.
 function briefDialogueHTML(brief, speakerName) {
-  return brief.dialogue.map((line) => {
-    const isYou = line.who === "YOU";
-    const speakerLabel = isYou ? "You" : speakerName;
-    return `
-      <div class="speech" style="${isYou ? "background:rgba(255,255,255,0.06);" : ""}">
-        <b style="display:block; font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:0.04em; margin-bottom:4px;">${speakerLabel}</b>
-        ${line.t}
-      </div>
-    `;
-  }).join("");
+  return brief.dialogue.map((line) => dialogueLineHTML(line, speakerName)).join("");
+}
+
+// Renders a whole scene (array of {who,t} lines, NARRATION included) as a
+// static stack — used for secondary-character one-shot scenes that don't
+// need the one-line-at-a-time stepping that CLIENT_STAGES uses.
+function sceneHTML(lines, speakerName) {
+  return lines.map((line) => dialogueLineHTML(line, speakerName)).join("");
 }
 
 function renderSoul() {
@@ -1976,13 +4164,8 @@ function renderSoul() {
     const stageIndex = Math.min(profile.visits - 1, stageSet.length - 1);
     const stage = stageSet[stageIndex] || FALLBACK_STAGE;
     const line = stage[dialogueLineIndex];
-    const isYou = line.who === "YOU";
-    const speakerLabel = isYou ? "You" : client.name.split(",")[0];
     body = `
-      <div class="speech" style="${isYou ? "background:rgba(255,255,255,0.06);" : ""}">
-        <b style="display:block; font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:0.04em; margin-bottom:4px;">${speakerLabel}</b>
-        ${line.t}
-      </div>
+      ${dialogueLineHTML(line, client.name.split(",")[0])}
       <button class="primary" onclick="advanceDialogueLine()">…</button>
     `;
   } else if (soulStep === 0) {
@@ -2085,6 +4268,20 @@ function ensureSvgArtLoaded(url) {
 }
 
 function gcardHTML(card) {
+  if (card.type === "KEY") {
+    // No real key art yet — plain glyph per Items/Keys spec §19.2. Swap in a
+    // fullArt SVG later; nothing else about this branch needs to change.
+    return `
+      <div class="gcard">
+        <div class="gcard-inner">
+          <div class="gpill">KEY</div>
+          <div class="gname">${card.name}</div>
+          <div class="gart"><div class="key-card-glyph">🗝</div></div>
+          <div class="gattrs"><span>QUEST ITEM</span><span>CANNOT WEAR</span></div>
+        </div>
+      </div>
+    `;
+  }
   if (card.fullArt) {
     const cached = svgArtCache[card.fullArt] || "";
     ensureSvgArtLoaded(card.fullArt);
@@ -2118,29 +4315,37 @@ function fanTransform(i, n) {
 // than you started with, once per client visit, never touches placed cards.
 function redrawHand() {
   if (!redrawAvailable || hand.length === 0) return;
-  const maxRarityIdx = Math.max(...hand.map((id) => RARITY_ORDER[findCard(id).rarity] ?? 0));
+
+  // Key Cards stay stuck in hand through a redraw (Items/Keys spec §2.3) --
+  // only the wearable portion of the hand is eligible to be discarded/redrawn,
+  // and keys never factor into the rarity cap below.
+  const keyIdSet = new Set(KEY_CARDS.map((k) => k.id));
+  const keysInHand = hand.filter((id) => keyIdSet.has(id));
+  const oldWearableHand = hand.filter((id) => !keyIdSet.has(id));
+  if (oldWearableHand.length === 0) { redrawAvailable = false; renderStyle(); return; }
+
+  const maxRarityIdx = Math.max(...oldWearableHand.map((id) => RARITY_ORDER[findCard(id).rarity] ?? 0));
   const allowedRarities = Object.keys(RARITY_ORDER).filter((r) => RARITY_ORDER[r] <= maxRarityIdx);
 
-  const oldHand = [...hand];
-  const newCount = Math.max(0, oldHand.length - 1);
+  const newCount = Math.max(0, oldWearableHand.length - 1);
 
   // Cards already placed in an outfit slot must be excluded too, not just
   // the current hand -- otherwise a redraw can hand you a second copy of
   // whatever you already committed to a slot, which is exactly how a
   // placed Denim Jacket or Cropped Pullover could turn up duplicated.
   const placedIds = outfit.filter(Boolean).map((c) => c.id);
-  const unavailable = new Set([...oldHand, ...placedIds]);
+  const unavailable = new Set([...hand, ...placedIds]);
 
   const jokerIds = new Set(JOKER_CARDS.map((c) => c.id));
-  const pool = liveDeck.filter((c) => !jokerIds.has(c.id) && !unavailable.has(c.id) && allowedRarities.includes(c.rarity)).map((c) => c.id);
-  const newHand = drawBalancedHand(pool).slice(0, newCount);
+  const pool = liveDeck.filter((c) => !jokerIds.has(c.id) && !keyIdSet.has(c.id) && !unavailable.has(c.id) && allowedRarities.includes(c.rarity)).map((c) => c.id);
+  const newWearables = drawBalancedHand(pool, newCount);
 
   // deckPile and hand must stay mutually exclusive at all times -- the newly
   // drawn cards have to come OUT of deckPile, or a later Joker draw could
   // pull one of these same cards straight back out as a second copy.
-  deckPile = deckPile.filter((id) => !newHand.includes(id));
-  discardPile.push(...oldHand);
-  hand = newHand;
+  deckPile = deckPile.filter((id) => !newWearables.includes(id));
+  discardPile.push(...oldWearableHand);
+  hand = [...keysInHand, ...newWearables];
   redrawAvailable = false;
   renderStyle();
 }
@@ -2189,7 +4394,7 @@ function renderStyle() {
 
     <div class="corner-action corner-left ${jokerAvailable && deckPile.length > 0 ? "" : "used"}" onclick="drawJoker()" title="Joker: draw 2 extra cards, once per client">🃏</div>
     <div class="corner-action corner-left corner-left-2 ${redrawAvailable && hand.length > 0 ? "" : "used"}" onclick="redrawHand()" title="Redraw: swap your hand for new cards of the same rarity or lower, once per client">🔄</div>
-    <button class="corner-action corner-right" id="continueBtn" onclick="finishStyling()" title="See their reaction">✓</button>
+    <button class="corner-action corner-right" id="continueBtn" onclick="${specialJob ? "finishSpecialStyling()" : "finishStyling()"}" title="See their reaction">✓</button>
   `;
   updateTopBar(`<span class="icon soul-swatch" style="background:${client.color};"></span> Wants: <b>${wantSummary}</b>`, true);
   document.body.classList.add("no-scroll"); // drag-and-drop during styling needs a fixed viewport
@@ -2517,7 +4722,7 @@ let jokerPicking = null; // id of the joker card currently being used, or null
 let deckSortMode = "category"; // always group by kind — simplest useful default, no separate UI needed
 const RARITY_ORDER = { Basic: 0, Uncommon: 1, Rare: 2, Iconic: 3, Legendary: 4 };
 let deckFilters = { category: new Set(), rarity: new Set(), style: new Set() };
-const FILTER_CATEGORIES = ["Top", "Bottom", "Dress", "Shoes", "Jacket", "Accessory", "Bag"];
+const FILTER_CATEGORIES = ["Top", "Bottom", "Dress", "Shoes", "Jacket", "Accessory", "Bag", "KEY"];
 const FILTER_RARITIES = ["Basic", "Uncommon", "Rare", "Iconic", "Legendary"];
 const FILTER_STYLES = ["Cool", "Sweet", "Cute", "Elegant", "Daring", "Romantic", "Cozy", "Bold", "Classic", "Minimal"];
 
@@ -2661,13 +4866,33 @@ function renderDeckOverlay() {
       <h3>${picking ? "Choose a card to draw" : "Your deck"}</h3>
       <button class="deck-close" onclick="closeDeck()">✕</button>
     </div>
-    ${picking ? "" : `<p style="text-align:center; color:var(--muted); font-size:12.5px; margin-top:-8px;">${unlockedCardIds.size} of ${DECK.length} cards collected</p>`}
+    ${picking ? "" : `<p style="text-align:center; color:var(--muted); font-size:12.5px; margin-top:-8px;">${unlockedCardIds.size + (thornVeilOwned ? 1 : 0)} of ${DECK.length + STORY_WEARABLE_TOTAL} cards collected</p>`}
     ${filterPanel}
     ${picking ? `<p style="text-align:center; color:var(--muted); font-size:12.5px; margin:-10px 0 16px;">Only cards still in your deck pool can be picked.</p>` : ""}
     ${picking ? "" : discoveredSetsHTML()}
     <div class="deck-grid">${items}</div>
+    ${picking ? "" : foundObjectsHTML()}
   `;
   overlay.classList.add("open");
+}
+
+// FOUND OBJECTS: non-deck story items (Silver Bell, Faded Photograph) — not
+// wearable cards, not counted in the collected-card total, no action button.
+// Renders nothing until the first one is actually owned (Items/Keys §18).
+function foundObjectsHTML() {
+  const items = [];
+  if (hasSilverBell) items.push({ name: "SILVER BELL", desc: "It doesn't make a sound." });
+  if (hasFadedPhotograph) items.push({ name: "FADED PHOTOGRAPH", desc: "Two familiar faces outside a version of the Night Café you've never seen." });
+  if (items.length === 0) return "";
+  return `
+    <h3 style="margin:22px 0 8px; text-align:center;">Found Objects</h3>
+    ${items.map((o) => `
+      <div class="found-object-card">
+        <b>${o.name}</b>
+        <div>${o.desc}</div>
+      </div>
+    `).join("")}
+  `;
 }
 
 function pickJokerCard(cardId) {
@@ -3143,9 +5368,12 @@ function renderStoryScreen(key, onContinue) {
   updateTopBar("", true);
 }
 
+let lastEventKey = null; // which EVENT_SCHEDULE key (if any) just resolved -- read once by afterEventContinue()
+
 function advanceMonth() {
   const completedJob = clientRoundIndex;
   const eventKey = completedJob === 0 ? "firstDay" : EVENT_SCHEDULE[`${currentMonthIndex()}-${positionInMonth()}`];
+  lastEventKey = eventKey;
   clientRoundIndex += 1;
   pendingSeasonEnd = SEASON_END_JOBS.includes(completedJob);
   if (eventKey) {
@@ -3155,7 +5383,89 @@ function advanceMonth() {
   }
 }
 
+// --- Valery's Year 2 Summer Solstice special job (Characters spec §7.3) ---
+// Hooked in right here per spec: "immediately after the existing Summer
+// Solstice story screen has been shown for June and before returning to
+// the map" -- this is exactly that point in the flow, before any of
+// afterEventContinue()'s normal season-end/map logic runs.
+const VALERY_VIRTUAL = {
+  name: "Valery", color: "#c9a15a",
+  preferences: [pref("color", "Gold"), pref("color", "Pink"), pref("style", "Elegant"), pref("style", "Romantic"), pref("style", "Bold"), pref("fit", "Fitted")],
+};
+const VALERY_SOLSTICE_BRIEF = { want: [req("style", "Elegant"), req("style", "Classic")] };
+
+function renderValerySolsticeInvitation() {
+  stage.innerHTML = `
+    <div class="center-col screen-pad result">
+      <div class="line" style="max-width:340px;">
+        <p>A black envelope is waiting outside the Studio. Your name is written across it in gold ink.</p>
+        <p>Inside: "Valery requests your services for the Summer Solstice. Tonight. Naturally."</p>
+      </div>
+      <button class="primary" style="margin-top:22px;" onclick="renderValerySolsticeGate()">Go to the Castle</button>
+    </div>
+  `;
+  updateTopBar("", true);
+}
+function renderValerySolsticeGate() {
+  markSeasonalReactionSeen("valery", "summerSolstice"); // per §12.5: folded in below, not played standalone this visit
+  renderCastleScene([
+    { who: "HELENA", t: "You're expected." },
+    { who: "YOU", t: "That sounded painful." },
+    { who: "HELENA", t: "It was unfamiliar." },
+    { who: "VALERY", t: "There you are." },
+    { who: "VALERY", t: "Solstice is the one night everyone tries terribly hard to look effortless." },
+    { who: "YOU", t: "Including you?" },
+    { who: "VALERY", t: "Especially me." },
+    { who: "YOU", t: "Your letter made it sound like an emergency." },
+    { who: "VALERY", t: "It is. Everyone in that Castle has already seen me looking beautiful." },
+    { who: "YOU", t: "Tragic." },
+    { who: "VALERY", t: "I'd like them to see something new." },
+    { who: "YOU", t: "What do you want?" },
+    { who: "VALERY", t: "Elegant. Classic enough for Solstice. Not obedient." },
+  ], "Continue", "beginValerySolsticeRound()");
+}
+function beginValerySolsticeRound() {
+  startSpecialRound(VALERY_VIRTUAL, VALERY_SOLSTICE_BRIEF, { type: "valery_solstice" });
+  renderStyle();
+}
+function resolveValerySolstice(score) {
+  valerySolsticeCompleted = true;
+  let lines;
+  if (score >= 90) {
+    royalGardenKeyFallbackNeeded = false;
+    awardKeyCard("key_royalgarden");
+    lines = [
+      { who: "VALERY", t: "Oh." }, { who: "YOU", t: "That good?" },
+      { who: "VALERY", t: "That's irritating." }, { who: "YOU", t: "What is?" },
+      { who: "VALERY", t: "You're good." },
+    ];
+  } else if (score >= 70) {
+    royalGardenKeyFallbackNeeded = true;
+    lines = [
+      { who: "VALERY", t: "Good. Almost annoyingly good." }, { who: "YOU", t: "Almost?" },
+      { who: "VALERY", t: "Don't fish." },
+    ];
+  } else {
+    royalGardenKeyFallbackNeeded = true;
+    lines = [
+      { who: "NARRATION", t: "Valery studies the outfit." },
+      { who: "VALERY", t: "We'll call this rehearsal." }, { who: "YOU", t: "That's generous." },
+      { who: "VALERY", t: "I know." },
+    ];
+  }
+  renderCastleScene(lines, "Leave", "renderMap()");
+}
+
 function afterEventContinue() {
+  const justFinishedEvent = lastEventKey;
+  lastEventKey = null;
+
+  if (justFinishedEvent === "summerSolstice" && currentYear === 2 && !valerySolsticeCompleted) {
+    if (!metValery) metValery = true; // VALERY_FIRST_EXIT runs implicitly if somehow not yet met, per spec
+    renderValerySolsticeInvitation();
+    return;
+  }
+
   if (pendingSeasonEnd) {
     pendingSeasonEnd = false;
     const newCards = unlockRandomCards(CARDS_PER_SEASON_UNLOCK);
@@ -3214,26 +5524,72 @@ function renderEnd() {
     ? `<p style="color:var(--gold);">Word got around about your work — ${earned.length} new piece${earned.length > 1 ? "s" : ""} joined your closet for next time: ${earned.map((c) => c.name).join(", ")}.</p>`
     : `<p style="color:var(--muted);">No new pieces earned this year — delight more clients (3 "Delighted" outfits earns one) to grow your closet.</p>`;
 
+  const isYearOne = currentYear === 1;
+  const heading = isYearOne ? "One year in After City." : "Two years in After City.";
+  const narrativeLines = isYearOne
+    ? [
+        "One year.",
+        "Thirty-six jobs.",
+        "More cards than you started with.",
+        "More questions too.",
+        "After City feels less unfamiliar now.",
+        "That may not be the same thing as understanding it.",
+      ]
+    : [
+        "Two years.",
+        "Seventy-two jobs.",
+        "Faces you now recognize on sight.",
+        "Doors that used to be walls.",
+        "After City still isn't explaining itself.",
+        "You've stopped expecting it to.",
+      ];
+  const narrativeHTML = narrativeLines.map((l) => `<p style="margin:4px 0;">${l}</p>`).join("");
+
+  const closingLine = isYearOne
+    ? "A real version would keep going indefinitely and let relationships unlock new kinds of requests."
+    : "Year Three and beyond — Armor, Angels and Devils, the Knighting — is its own future chapter.";
+
+  // Year 1 offers a real choice (continue the same run into Year 2, or start
+  // over). Year 2 is the end of this content pass, so only Restart remains —
+  // per spec, do NOT start Year 3 here.
+  const buttonsHTML = isYearOne
+    ? `
+      <button class="primary" onclick="enterYearTwo()">Enter Year Two</button>
+      <button class="ghost" style="margin-top:10px;" onclick="renderIntro()">Restart prototype</button>
+    `
+    : `<button class="ghost" onclick="renderIntro()">Restart prototype</button>`;
+
   stage.innerHTML = `
     <div class="center-col screen-pad result">
       <div class="reaction">🕯️</div>
-      <h2>One year in After City.</h2>
-      <div class="line" style="max-width:320px; margin-bottom:18px;">
-        <p style="margin:4px 0;">One year.</p>
-        <p style="margin:4px 0;">Thirty-six jobs.</p>
-        <p style="margin:4px 0;">More cards than you started with.</p>
-        <p style="margin:4px 0;">More questions too.</p>
-        <p style="margin:4px 0;">After City feels less unfamiliar now.</p>
-        <p style="margin:4px 0;">That may not be the same thing as understanding it.</p>
-      </div>
+      <h2>${heading}</h2>
+      <div class="line" style="max-width:320px; margin-bottom:18px;">${narrativeHTML}</div>
       <div class="score">Total score across 36 jobs this year: ${totalScore}</div>
       <div class="score" style="margin-bottom:18px;">${delightedCount} client${delightedCount === 1 ? "" : "s"} were delighted with your work.</div>
       <div class="year-list">${rows}</div>
       ${rewardLine}
-      <div class="line">A real version would keep going indefinitely and let relationships unlock new kinds of requests.</div>
-      <button class="ghost" onclick="renderIntro()">Restart prototype</button>
+      <div class="line">${closingLine}</div>
+      ${buttonsHTML}
     </div>
   `;
+}
+
+// Year 1→2 transition (Characters spec §17). This is a CONTINUATION of the
+// same run, not a call into beginGame() — collection, Moon Coins,
+// relationships, discovered facts, keys, unlocked locations and
+// secondary-character flags all survive. Only the yearly counters reset.
+function enterYearTwo() {
+  currentYear = 2;
+  clientRoundIndex = 0;
+  totalScore = 0;
+  delightedCount = 0;
+  pendingSeasonEnd = false;
+  currentShopItem = null;
+  Object.keys(soulProfiles).forEach((key) => { soulProfiles[key].yearVisits = 0; });
+  // Pick up any cards earned as the Year 1 reward (see renderEnd()) so they're
+  // actually drawable from the very first Year 2 Studio visit.
+  rebuildLiveDeckFromUnlocked();
+  renderMap();
 }
 
 renderIntro();
