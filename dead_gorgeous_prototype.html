@@ -20,7 +20,7 @@
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
   html, body { overflow-x: hidden; }
-  html { height: 100%; }
+  html { height: 100%; background: radial-gradient(circle at 20% 10%, #4a3a5c, #211a2c 70%); }
   body {
     margin: 0;
     min-height: 100vh;
@@ -321,6 +321,11 @@
   }
   .corner-action.corner-left.corner-left-2 { left: 72px; }
   .corner-action.corner-left.used { opacity: 0.3; pointer-events: none; }
+  .joker-count {
+    position: absolute; top: -4px; right: -4px; background: var(--gold); color: #1a1428;
+    font-size: 10px; font-weight: 700; border-radius: 999px; width: 16px; height: 16px;
+    display: flex; align-items: center; justify-content: center;
+  }
   .corner-action.corner-right {
     right: 18px; background: linear-gradient(135deg, var(--pink), var(--lilac));
     color: #1a1428; font-weight: 700; font-size: 20px; box-shadow: 0 6px 16px rgba(0,0,0,0.4);
@@ -1654,7 +1659,11 @@ let deckPile = [];
 let liveDeck = [];
 let unlockedCardIds = new Set();
 let pendingSeasonEnd = false;
-let jokerAvailable = true;
+// A purchased Joker card grants one permanent extra joker-ability use, every
+// round, from then on -- ownedJokerCount never resets. jokerUsesRemaining is
+// the actual per-round counter (replaces the old jokerAvailable boolean).
+let ownedJokerCount = 0;
+let jokerUsesRemaining = 1;
 let redrawAvailable = true;
 let selectedHandId = null; // hand card lifted (tapped) but not yet dropped
 let discardPile = [];
@@ -1703,7 +1712,10 @@ let currentYear = 1;
 // uses for seasonal events, instead of letting those locations be revisited
 // freely for unlimited story content between jobs. See visitCastle()/
 // visitCafe()/visitGarden() near renderMap() for where this is spent.
-let storyBeatAvailable = true;
+// Spendable on any of the three locations in any combination (not per-
+// location) -- tune this one number to change the pacing feel.
+const STORY_BEATS_PER_JOB = 3;
+let storyBeatsRemaining = STORY_BEATS_PER_JOB;
 let activeKeyIds = new Set();
 
 // Shared
@@ -1846,10 +1858,10 @@ function heartsHTML(n) {
 function startRound() {
   outfit = [null, null, null, null];
   pendingQuestion = null;
-  jokerAvailable = true;
+  jokerUsesRemaining = 1 + ownedJokerCount;
   redrawAvailable = true;
   selectedHandId = null;
-  storyBeatAvailable = true; // starting any job re-earns the next secondary-location story beat
+  storyBeatsRemaining = STORY_BEATS_PER_JOB; // starting any job re-fills the story-beat pool
 
   const key = currentClientKey();
   const profile = soulProfiles[key];
@@ -1942,12 +1954,12 @@ function drawInitialHand(pool) {
 // or any lifetime/per-year counters -- see the comment on `let specialJob`.
 function startSpecialRound(virtualClient, brief, jobMeta) {
   outfit = [null, null, null, null];
-  jokerAvailable = true;
+  jokerUsesRemaining = 1 + ownedJokerCount;
   redrawAvailable = true;
   selectedHandId = null;
   currentBrief = brief;
   specialJob = { ...jobMeta, virtualClient };
-  storyBeatAvailable = true; // same rule as a normal job -- see startRound()
+  storyBeatsRemaining = STORY_BEATS_PER_JOB; // same rule as a normal job -- see startRound()
 
   const jokerIds = new Set(JOKER_CARDS.map((c) => c.id));
   deckPile = liveDeck.filter((c) => !jokerIds.has(c.id)).map((c) => c.id);
@@ -2114,7 +2126,7 @@ function beginGame() {
   CLIENTS.forEach((_, i) => { soulProfiles[i] = { visits: 0, yearVisits: 0, answered: [], facts: [], discovered: [], bestScore: null, bestPieces: [] }; });
   clientRoundIndex = 0;
   currentYear = 1;
-  storyBeatAvailable = true;
+  storyBeatsRemaining = STORY_BEATS_PER_JOB;
   totalScore = 0;
   delightedCount = 0;
   restrictedPhase = { castle: 0, garden: 0 };
@@ -2240,24 +2252,27 @@ const RESTRICTED_PHASES = {
 
 // ---------------------------------------------------------------------------
 // Story-beat pacing gate. Keeps Castle/Café/Nightgarden on the same rhythm
-// the bible already uses for seasonal events: one earned story beat per job,
-// not free unlimited re-clicking. See the comment on `let storyBeatAvailable`.
+// the bible already uses for seasonal events, without letting them be
+// revisited for unlimited story content between jobs. Shared pool (see
+// STORY_BEATS_PER_JOB) rather than one-per-location, so a single job can
+// still yield a few different moments across the three spots, spent however
+// the player chooses to explore -- just not infinitely on the same spot.
 // Each wrapper still lets through content that was never meant to be gated
 // in the first place (Castle's pre-unlock flavor cycle, Nightgarden's
 // seasonal closed message) -- only the actual character content is paced.
 // ---------------------------------------------------------------------------
 function visitCastle() {
   if (!castleGateCharactersUnlocked) { renderCastle(); return; }
-  if (!storyBeatAvailable) {
+  if (storyBeatsRemaining <= 0) {
     renderCastleScene([{ who: "NARRATION", t: "The two guards stand exactly where they always do." }], "Back to the map", "renderMap()");
     return;
   }
-  storyBeatAvailable = false;
+  storyBeatsRemaining -= 1;
   renderCastle();
 }
 
 function visitCafe() {
-  if (!storyBeatAvailable) {
+  if (storyBeatsRemaining <= 0) {
     // Café already always had a harmless flavor-only fallback before Maya
     // existed -- reuse it here instead of a blocking message, so a quick
     // visit still feels like the café rather than a locked door.
@@ -2265,17 +2280,17 @@ function visitCafe() {
     renderCafeScreen([{ who: "NARRATION", t: snippet }], "Leave", "renderMap()");
     return;
   }
-  storyBeatAvailable = false;
+  storyBeatsRemaining -= 1;
   renderCafe();
 }
 
 function visitGarden() {
   if (!nightgardenOpen()) { renderGarden(); return; }
-  if (!storyBeatAvailable) {
+  if (storyBeatsRemaining <= 0) {
     renderGardenScene([{ who: "NARRATION", t: "The garden is quiet. Whatever's out there isn't showing itself right now." }], "Back to the map", "renderMap()");
     return;
   }
-  storyBeatAvailable = false;
+  storyBeatsRemaining -= 1;
   renderGarden();
 }
 
@@ -2418,7 +2433,7 @@ function buyMysteryCard() {
 function buyJoker() {
   if (moonCoins < JOKER_PRICE) return;
   moonCoins -= JOKER_PRICE;
-  deckPile.push(JOKER_CARDS[0].id);
+  ownedJokerCount += 1;
   renderCardAcquiredScreen("Sold.", JOKER_CARDS[0], "Back to the map", false);
 }
 
@@ -3194,7 +3209,30 @@ function takeThornVeil() {
   thornVeilOwned = true;
   glassHouseFirstVisitSeen = true;
   rebuildLiveDeckFromUnlocked();
-  renderMap();
+  renderThornVeilReveal();
+}
+
+// Reuses the exact flip-card reveal already built for seasonal new-card
+// drops (see renderNewCardsScreen()/flipNewCard()) for a proper one-card
+// "turn it over" moment instead of the Thorn Veil just silently appearing.
+function renderThornVeilReveal() {
+  stage.innerHTML = `
+    <div class="center-col screen-pad result">
+      <h2>Something silver.</h2>
+      <p class="line" style="margin-bottom:18px;">Something silver has been left across the back of the chair.</p>
+      <p class="breakdown-hint" style="margin-bottom:14px;">Tap the card to turn it over.</p>
+      <div class="new-cards-grid">
+        <div class="flip-card" id="flip-thornveil" onclick="flipNewCard('thornveil')">
+          <div class="flip-card-inner">
+            <div class="flip-card-face flip-card-front"><div class="back-card-face"></div></div>
+            <div class="flip-card-face flip-card-back">${gcardHTML(THORN_VEIL)}</div>
+          </div>
+        </div>
+      </div>
+      <button class="primary" style="margin-top:22px;" onclick="renderMap()">Continue</button>
+    </div>
+  `;
+  updateTopBar("", true);
 }
 
 function glassHouseCultivateUnlockEligible() {
@@ -4581,11 +4619,11 @@ function redrawHand() {
 }
 
 function drawJoker() {
-  if (!jokerAvailable || deckPile.length === 0) return;
+  if (jokerUsesRemaining <= 0 || deckPile.length === 0) return;
   const extra = shuffle(deckPile).slice(0, Math.min(2, deckPile.length));
   deckPile = deckPile.filter((id) => !extra.includes(id));
   hand = hand.concat(extra);
-  jokerAvailable = false;
+  jokerUsesRemaining -= 1;
   renderStyle();
 }
 
@@ -4622,7 +4660,7 @@ function renderStyle() {
     <div class="hand-hint"></div>
     <div class="hand-fan" id="handFan">${fanHTML}</div>
 
-    <div class="corner-action corner-left ${jokerAvailable && deckPile.length > 0 ? "" : "used"}" onclick="drawJoker()" title="Joker: draw 2 extra cards, once per client">🃏</div>
+    <div class="corner-action corner-left ${jokerUsesRemaining > 0 && deckPile.length > 0 ? "" : "used"}" onclick="drawJoker()" title="Joker: draw 2 extra cards, once per client${ownedJokerCount > 0 ? ` (uses left this visit: ${jokerUsesRemaining})` : ""}">🃏${ownedJokerCount > 0 ? `<span class="joker-count">${jokerUsesRemaining}</span>` : ""}</div>
     <div class="corner-action corner-left corner-left-2 ${redrawAvailable && hand.length > 0 ? "" : "used"}" onclick="redrawHand()" title="Redraw: swap your hand for new cards of the same rarity or lower, once per client">🔄</div>
     <button class="corner-action corner-right" id="continueBtn" onclick="${specialJob ? "finishSpecialStyling()" : "finishStyling()"}" title="See their reaction">✓</button>
   `;
