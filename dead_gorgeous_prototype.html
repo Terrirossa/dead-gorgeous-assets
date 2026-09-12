@@ -514,6 +514,16 @@
   .mannequin-grid-solo {
     grid-template-columns: 1fr; max-width: 170px;
   }
+  .mannequin-turn-icon {
+    font-size: 48px; margin: 4px auto 10px; width: fit-content;
+    animation: mannequinTurnAround 900ms ease-in-out;
+    transform-style: preserve-3d;
+  }
+  @keyframes mannequinTurnAround {
+    0% { transform: rotateY(0deg); }
+    50% { transform: rotateY(90deg); }
+    100% { transform: rotateY(180deg); }
+  }
   .mannequin-slot { position: relative; aspect-ratio: 595.28 / 841.9; }
   .mannequin-slot-locked { opacity: 0.9; }
   .mannequin-lock {
@@ -3053,9 +3063,20 @@ function currentMannequinPuzzle() { return MANNEQUIN_PUZZLES[currentSeasonKey()]
 // DECK never contains Key/Joker/story-wearable cards (those live in separate
 // arrays -- see KEY_CARDS/JOKER_CARDS/THORN_VEIL), so filtering against DECK
 // already satisfies "Key/story cards are not eligible" with no extra check.
+// Used ONLY for the fairness gate (does a valid answer exist at all) --
+// never to decide what the picker itself shows, or every submission would
+// be guaranteed correct and the riddle would solve itself.
 function mannequinEligibleOwnedCards(puzzle) {
   if (!puzzle) return [];
   return DECK.filter((c) => unlockedCardIds.has(c.id) && puzzle.matches(c));
+}
+
+// The picker's actual candidate list: the player's whole eligible
+// collection, unfiltered by correctness. The player has to work out the
+// answer themselves -- from the locked row or the note -- same as picking
+// wrong is a real, reachable outcome.
+function mannequinAllOwnedFashionCards() {
+  return DECK.filter((c) => unlockedCardIds.has(c.id));
 }
 
 function visitOldQuarter() {
@@ -3172,19 +3193,21 @@ function closeMannequinPicker() {
 function renderMannequinPicker() {
   const overlay = document.getElementById("deckOverlay");
   const puzzle = currentMannequinPuzzle();
-  const candidates = mannequinEligibleOwnedCards(puzzle);
+  const candidates = mannequinAllOwnedFashionCards();
   const items = candidates.map((card) => `
     <div class="deck-item status-pool" onclick="submitMannequinCard(${card.id})">
       ${gcardHTML(card)}
     </div>
   `).join("");
 
+  const noteHTML = puzzle.note ? `<div class="mannequin-note" style="margin:0 auto 16px;">\u201c${puzzle.note}\u201d</div>` : "";
+
   overlay.innerHTML = `
     <div class="deck-header">
       <h3>Choose a card to present</h3>
       <button class="deck-close" onclick="closeMannequinPicker()">\u2715</button>
     </div>
-    <p style="text-align:center; color:var(--muted); font-size:12.5px; margin:-10px 0 16px;">Only cards that could answer the window are shown.</p>
+    ${noteHTML}
     ${discoveredSetsHTML()}
     <div class="deck-grid">${items}</div>
   `;
@@ -3196,7 +3219,7 @@ function submitMannequinCard(cardId) {
   closeMannequinPicker();
   const card = DECK.find((c) => c.id === cardId);
   if (!puzzle || !card || !unlockedCardIds.has(card.id) || !puzzle.matches(card)) {
-    renderMannequinWrongAnswer();
+    renderMannequinWrongAnswer(puzzle);
     return;
   }
   windowSolved[key] = true;
@@ -3205,10 +3228,12 @@ function submitMannequinCard(cardId) {
   renderMannequinReward(reward[0] || null, puzzle);
 }
 
-function renderMannequinWrongAnswer() {
+function renderMannequinWrongAnswer(puzzle) {
+  const noteHTML = puzzle && puzzle.note ? `<div class="mannequin-note">\u201c${puzzle.note}\u201d</div>` : "";
   stage.innerHTML = `
     <div class="center-col screen-pad">
-      <p class="line">Nothing happened.</p>
+      <p class="line" style="margin-bottom:14px;">Nothing happened.</p>
+      ${noteHTML}
       <button class="ghost" style="margin-top:22px;" onclick="visitOldQuarter()">Back</button>
     </div>
   `;
@@ -3226,6 +3251,7 @@ function renderMannequinReward(card, puzzle) {
   stage.innerHTML = `
     <div class="center-col screen-pad result">
       <h2>Click.</h2>
+      <div class="mannequin-turn-icon">\ud83e\uddcd</div>
       <div class="line" style="margin-bottom:14px;">
         <p style="margin:4px 0;">Something moves behind the door.</p>
         <p style="margin:4px 0;">A card slips through the gap underneath.</p>
