@@ -511,6 +511,9 @@
     display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;
     max-width: 320px; margin: 0 auto;
   }
+  .mannequin-grid-solo {
+    grid-template-columns: 1fr; max-width: 170px;
+  }
   .mannequin-slot { position: relative; aspect-ratio: 595.28 / 841.9; }
   .mannequin-slot-locked { opacity: 0.9; }
   .mannequin-lock {
@@ -2972,68 +2975,76 @@ let lastOldQuarterObservation = null; // avoids repeating the same line twice in
 
 function currentSeasonKey() { return `${currentYear}-${currentSeasonName()}`; }
 
-// Eight active puzzles (four written riddles, four card-logic/no-note), one
-// per season across Years 1-2. Locked display cards are real DECK cards used
-// purely as boutique props -- never owned/consumed, never leave the display.
-// Each locked trio was deliberately picked so no attribute OTHER than the
-// target one is shared by more than one of the three cards, so a no-note
-// puzzle never accidentally suggests a second, wrong pattern.
+// Eight active puzzles across Years 1-2, split into exactly two modes per
+// the spec: TEXT_RIDDLE (a note, ONE empty slot, no locked cards at all) and
+// COMPLETE_ROW (no note, 3 locked display cards + 1 empty slot, where the
+// answer must match both the shared attribute AND the one category missing
+// from the row). Locked display cards are real DECK cards used purely as
+// boutique props -- never owned/consumed, never leave the display. Each
+// COMPLETE_ROW trio was deliberately picked so no attribute OTHER than the
+// intended one (and, separately, category) is shared by more than one of
+// the three locked cards, so the row never accidentally suggests a second,
+// wrong pattern.
 const MANNEQUIN_PUZZLES = {
   "1-spring": {
-    type: "NOTE",
+    mode: "TEXT_RIDDLE",
     note: "Something old. Something new. Something borrowed. Something ____.",
-    lockedIds: [335, 303, 349], // Chunky Janes / Belted Mini / Paladin Corset
     matches: (c) => c.color === "Blue",
     afterSolving: "\u2019Til death do us part. Or life. One of them.",
   },
   "1-summer": {
-    type: "NOTE",
+    mode: "TEXT_RIDDLE",
     note: "I am not alive, but I grow. I have no lungs, but I need air.",
-    lockedIds: [418, 356, 352], // Moon Earrings / Rose Polka / Pearl Cuirass
     matches: (c) => c.color === "Red",
     afterSolving: "There is a fire burning not far from here.",
   },
   "1-autumn": {
-    type: "NO_NOTE",
-    note: null,
-    lockedIds: [310, 367, 323], // Flower Basket (Iconic) / Ruffle Short / Green Corset
-    matches: (c) => c.style === "Romantic",
+    mode: "COMPLETE_ROW",
+    lockedIds: [316, 434, 310], // Floral Top (Top) / Spring Skirt (Bottom) / Flower Basket Iconic (Bag)
+    requiredCategory: "Dress",
+    matches: (c) => c.style === "Romantic" && c.category === "Dress",
     afterSolving: "The mannequin looks pleased. Somehow.",
   },
   "1-winter": {
-    type: "NO_NOTE",
-    note: null,
-    lockedIds: [373, 306, 332], // Simple Top / Floral Mini / Black Leather
-    matches: (c) => c.fit === "Fitted",
-    afterSolving: "Perfect fit. Terrible timing.",
+    mode: "COMPLETE_ROW",
+    lockedIds: [30, 409, 320], // Vivien Corset (Top) / Green Pouch (Bag) / Fluffy Leather (Jacket)
+    requiredCategory: "Shoes",
+    matches: (c) => c.style === "Cool" && c.category === "Shoes",
+    afterSolving: "Cool. Apparently literally.",
   },
   "2-spring": {
-    type: "NOTE",
+    mode: "TEXT_RIDDLE",
     note: "Everyone wants to become me. Once everybody does, I cease to exist.",
-    lockedIds: [413, 351, 357], // Bracelet Set (Gold) / Paladin Mini / Quilted Blue
     matches: (c) => c.rarity === "Rare",
     afterSolving: "Funny how exclusivity works.",
   },
   "2-summer": {
-    type: "NOTE",
-    note: "Protect my heart from spears and princesses.",
-    lockedIds: [313, 301, 430], // Rose Shorts / Blue Ballets / Teddy Jacket
-    matches: (c) => c.style === "Armour",
+    mode: "COMPLETE_ROW",
+    // Named explicitly in the spec -- Moon Earrings is intentionally
+    // "Elegant" style, not "Armour"; it's here only to fill the Accessory
+    // slot visually. Do not retag it.
+    lockedIds: [338, 341, 418], // Moon Cuirass (Top) / Moon Pants (Bottom) / Moon Earrings (Accessory)
+    requiredCategory: "Shoes",
+    matches: (c) => c.style === "Armour" && c.category === "Shoes",
     afterSolving: "In the end, it didn't protect him from either, did it?",
   },
   "2-autumn": {
-    type: "NO_NOTE",
-    note: null,
+    mode: "COMPLETE_ROW",
+    // Rarity ladder only -- no category requirement, per spec.
     lockedIds: [40, 39, 323], // Slip Dress (Basic) -> Ruffled Maxiskirt (Uncommon) -> Green Corset (Rare)
+    requiredCategory: null,
     matches: (c) => c.rarity === "Iconic",
     afterSolving: "Up you go.",
   },
   "2-winter": {
-    type: "NO_NOTE",
-    note: null,
-    lockedIds: [428, 429, 424], // Spring Blouse / Spring Cardigan / Spring Flats
-    matches: (c) => c.set === "Spring Set" && ![428, 429, 424].includes(c.id),
-    afterSolving: "Some things only make sense together.",
+    mode: "COMPLETE_ROW",
+    // The only COMPLETE_ROW puzzle with accompanying flavor text -- shown as
+    // a caption above the row, not a solvable riddle (mode stays COMPLETE_ROW).
+    flavorCaption: "Everyone's final outfit.",
+    lockedIds: [31, 360, 402], // Corset Top (Top) / Rose Skirt (Bottom) / Croc Bag Black (Bag)
+    requiredCategory: "Shoes",
+    matches: (c) => c.color === "Black" && c.category === "Shoes",
+    afterSolving: "There are no funerals here.",
   },
 };
 
@@ -3092,36 +3103,53 @@ function renderOldQuarterWindow() {
     ? [
         "One window is still dressed.",
         "Behind the dusty glass stands a mannequin.",
-        "Three cards are pinned neatly into place. One space is empty.",
+        "The display is waiting for an answer.",
         "There's no sign on the door. No opening hours either.",
-        "Looks like you're supposed to finish the outfit.",
+        "Looks like you're supposed to give it one.",
       ]
     : ["The mannequin is waiting."];
   windowIntroSeen = true;
-
-  const lockedHTML = puzzle.lockedIds.map((id) => {
-    const card = DECK.find((c) => c.id === id);
-    return `<div class="mannequin-slot mannequin-slot-locked">${gcardHTML(card)}<div class="mannequin-lock">\ud83d\udd12</div></div>`;
-  }).join("");
-
-  const noteHTML = puzzle.type === "NOTE"
-    ? `<div class="mannequin-note">\u201c${puzzle.note}\u201d</div>`
-    : "";
 
   const hasAnswer = mannequinEligibleOwnedCards(puzzle).length > 0;
   const presentButton = hasAnswer
     ? `<button class="primary" style="margin-top:18px;" onclick="openMannequinPicker()">Present a card</button>`
     : `<p class="line" style="margin-top:14px; color:var(--muted);">You don't have what it wants. Yet.</p>`;
 
-  stage.innerHTML = `
-    <div class="center-col screen-pad">
-      <h2>The window</h2>
-      <div class="line" style="max-width:320px; margin-bottom:14px;">${introLines.map((l) => `<p style="margin:4px 0;">${l}</p>`).join("")}</div>
-      ${noteHTML}
+  // TEXT_RIDDLE: the note plus exactly one empty slot -- no locked cards, no
+  // grid, nothing else visible. COMPLETE_ROW: three locked props (never
+  // owned by the player) plus one empty slot, no note (Y2 Winter's
+  // flavorCaption is a mood caption, not a solvable clue, so it's shown the
+  // same way regardless of mode).
+  let displayHTML;
+  if (puzzle.mode === "TEXT_RIDDLE") {
+    displayHTML = `
+      <div class="mannequin-note">\u201c${puzzle.note}\u201d</div>
+      <div class="mannequin-grid mannequin-grid-solo">
+        <div class="mannequin-slot mannequin-slot-empty">?</div>
+      </div>
+    `;
+  } else {
+    const lockedHTML = puzzle.lockedIds.map((id) => {
+      const card = DECK.find((c) => c.id === id);
+      return `<div class="mannequin-slot mannequin-slot-locked">${gcardHTML(card)}<div class="mannequin-lock">\ud83d\udd12</div></div>`;
+    }).join("");
+    const captionHTML = puzzle.flavorCaption
+      ? `<div class="mannequin-note">\u201c${puzzle.flavorCaption}\u201d</div>`
+      : "";
+    displayHTML = `
+      ${captionHTML}
       <div class="mannequin-grid">
         ${lockedHTML}
         <div class="mannequin-slot mannequin-slot-empty">?</div>
       </div>
+    `;
+  }
+
+  stage.innerHTML = `
+    <div class="center-col screen-pad">
+      <h2>The window</h2>
+      <div class="line" style="max-width:320px; margin-bottom:14px;">${introLines.map((l) => `<p style="margin:4px 0;">${l}</p>`).join("")}</div>
+      ${displayHTML}
       ${presentButton}
       <button class="ghost" style="margin-top:18px;" onclick="visitOldQuarter()">Back</button>
     </div>
