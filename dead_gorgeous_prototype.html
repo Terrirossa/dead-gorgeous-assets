@@ -246,6 +246,17 @@
   .found-object-card b { display: block; font-size: 12px; letter-spacing: 0.04em; color: var(--gold); margin-bottom: 4px; }
   .key-card-glyph { font-size: 40px; text-align: center; }
   .subloc-row { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; margin: 10px 0 20px; }
+  .quartett-score { text-align: center; font-weight: 700; letter-spacing: 0.04em; margin: 6px 0 14px; }
+  .quartett-calls { display: flex; flex-direction: column; gap: 6px; margin: 0 0 18px; }
+  .quartett-call { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: 10px; background: rgba(255,255,255,0.04); font-size: 13px; }
+  .quartett-call-current { background: rgba(255,255,255,0.1); box-shadow: 0 0 0 1px var(--pink); }
+  .quartett-call-done { opacity: 0.55; }
+  .quartett-call-num { font-weight: 700; opacity: 0.6; }
+  .quartett-call-label { flex: 1; }
+  .quartett-call-result { font-weight: 700; letter-spacing: 0.04em; }
+  .quartett-reveal-row { display: flex; gap: 18px; justify-content: center; margin: 10px 0 18px; }
+  .quartett-reveal-card { width: 140px; text-align: center; }
+  .quartett-reveal-tag { margin-top: 6px; font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; opacity: 0.7; }
   .hearts { font-size: 12px; letter-spacing: 1px; }
   .half-heart {
     display: inline-block; background: linear-gradient(90deg, #ff6b8a 50%, rgba(255,255,255,0.35) 50%);
@@ -1811,6 +1822,11 @@ let mayaAtticHintGiven = false;
 let mayaPhotoReactionSeen = false;
 let mayaBackRoomReactionSeen = false;
 
+// Quartett (Night Café card game) -- casual mode only, see spec.
+let quartettSessionsUsedYearMonth = null;
+let quartettSessionsUsedCount = 0;
+let quartettMatch = null; // active match state, or null between matches
+
 // Octavia (Nightgarden — not yet built)
 let metOctavia = false;
 let octaviaEncounterCount = 0;
@@ -2514,6 +2530,10 @@ function resetSecondaryContentState() {
   mayaPhotoReactionSeen = false;
   mayaBackRoomReactionSeen = false;
 
+  quartettSessionsUsedYearMonth = null;
+  quartettSessionsUsedCount = 0;
+  quartettMatch = null;
+
   metOctavia = false;
   octaviaEncounterCount = 0;
   octaviaAmbientSeen = [];
@@ -2651,6 +2671,10 @@ function serializeGameState() {
     mayaAtticHintGiven,
     mayaPhotoReactionSeen,
     mayaBackRoomReactionSeen,
+
+    // Quartett
+    quartettSessionsUsedYearMonth,
+    quartettSessionsUsedCount,
 
     // Octavia
     metOctavia,
@@ -2821,6 +2845,10 @@ function loadGame() {
   mayaAtticHintGiven = !!data.mayaAtticHintGiven;
   mayaPhotoReactionSeen = !!data.mayaPhotoReactionSeen;
   mayaBackRoomReactionSeen = !!data.mayaBackRoomReactionSeen;
+
+  quartettSessionsUsedYearMonth = data.quartettSessionsUsedYearMonth ?? null;
+  quartettSessionsUsedCount = data.quartettSessionsUsedCount || 0;
+  quartettMatch = null; // mid-match state is never persisted across save/load
 
   metOctavia = !!data.metOctavia;
   octaviaEncounterCount = data.octaviaEncounterCount || 0;
@@ -4065,6 +4093,7 @@ function mayaAtticHintEligible() {
 // idea as Night Castle's future Royal Garden Gate.
 function cafeSublocButtonsHTML() {
   const buttons = [];
+  buttons.push(`<button class="ghost" onclick="renderQuartettEntry()">Quartett</button>`);
   if (cafeBackRoomUnlocked) buttons.push(`<button class="ghost" onclick="renderCafeBackRoom()">Back Room</button>`);
   else if (cafeBackDoorDiscovered) buttons.push(`<button class="ghost" onclick="renderCafeBackDoorReveal()">Back Door</button>`);
   if (mayaAtticHintGiven) buttons.push(`<button class="ghost" onclick="renderCafeAtticEntry()">Attic</button>`);
@@ -4356,6 +4385,483 @@ function takeAtticPhotograph() {
 }
 function afterAtticMenus() { atticMenusSeen = true; renderMap(); }
 function afterAtticCoat() { cafeAtticStaffCoatSeen = true; renderMap(); }
+
+/* ===========================================================================
+   NIGHT CAFÉ — QUARTETT
+   Per DEAD_GORGEOUS_QUARTETT_IMPLEMENTATION_SPEC_FOR_CLAUDE. Casual mode
+   only: no card loss, no Moon Coin wager -- winning awards one random card
+   the player doesn't already own. Reachable straight from the already-
+   rendered Café screen (cafeSublocButtonsHTML), so it never calls visitCafe()
+   again and never touches storyBeatsRemaining or Studio progression.
+   Capped at 5 sessions per in-game month, tracked against yearMonthKey()
+   the same way Maya's ambient-line cooldown is; the cap silently resets the
+   moment the key changes. Maya is the only opponent for now (spec §20) --
+   her Quartett hand is drawn from a themed subset of the global DECK, not
+   from the player's own collection.
+   =========================================================================== */
+
+const QUARTETT_MAX_SESSIONS_PER_MONTH = 5;
+const QUARTETT_ROUNDS = 5;
+const QUARTETT_WIN_TARGET = 3;
+
+// A handful of authored lines in Maya's established voice (dry, deadpan,
+// withholding -- see MAYA_FIRST_SCENE etc. above). Deliberately sparse per
+// spec §19: flavor only, not new biography/lore.
+const QUARTETT_MAYA_LINES = {
+  intro: [
+    [{ who: "MAYA", t: "Cards. Sit." }],
+    [{ who: "YOU", t: "Best of five?" }, { who: "MAYA", t: "If you last that long." }],
+  ],
+  roundOpponentWins: ["Mm.", "Predictable.", "As expected."],
+  roundPlayerWins: ["Lucky.", "Fine.", "Noted."],
+  roundDraw: ["Boring.", "That helped no one."],
+  matchPlayerWin: [[
+    { who: "MAYA", t: "Take it." },
+    { who: "NARRATION", t: "She slides a card across the table without looking up." },
+    { who: "MAYA", t: "I wasn't using it." },
+  ]],
+  matchPlayerLoss: [[
+    { who: "MAYA", t: "Again?" }, { who: "YOU", t: "No." }, { who: "MAYA", t: "Smart." },
+  ]],
+  matchDraw: [[
+    { who: "MAYA", t: "A draw." }, { who: "MAYA", t: "How diplomatic of us." },
+  ]],
+  locked: [[
+    { who: "MAYA", t: "You've used your hands for the month." }, { who: "YOU", t: "That's it?" }, { who: "MAYA", t: "Come back when it isn't." },
+  ]],
+};
+
+function quartettPickLine(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+
+// -- Session cap -------------------------------------------------------------
+
+function quartettRefreshSessionWindow() {
+  const ym = yearMonthKey();
+  if (quartettSessionsUsedYearMonth !== ym) {
+    quartettSessionsUsedYearMonth = ym;
+    quartettSessionsUsedCount = 0;
+  }
+}
+function quartettSessionsRemaining() {
+  quartettRefreshSessionWindow();
+  return Math.max(0, QUARTETT_MAX_SESSIONS_PER_MONTH - quartettSessionsUsedCount);
+}
+
+// -- Card pools ---------------------------------------------------------------
+
+// Any card by id, owned or not -- Maya's hand is never part of the player's
+// liveDeck, so the global findCard() (which only searches liveDeck) can't
+// be used for opponent cards.
+function quartettFindCard(id) { return DECK.find((c) => c.id === id); }
+
+// Maya's themed Quartett pool: a fixed subset of the global card list that
+// fits her (dry, restrained, monochrome), independent of what the player
+// has unlocked -- per spec, "just a themed subset of the global card list."
+function mayaQuartettPool() {
+  return DECK.filter((c) => ["Cool", "Minimal", "Classic"].includes(c.style));
+}
+
+function quartettPlayerEligibleCards() {
+  return DECK.filter((c) => unlockedCardIds.has(c.id));
+}
+
+// -- Rarity / call evaluation --------------------------------------------------
+
+function quartettRarityIdx(card) { return RARITY_ORDER[card.rarity] ?? 0; }
+
+function quartettCardSatisfies(card, call) {
+  switch (call.primaryType) {
+    case "color": return card.color === call.primaryValue;
+    case "style": return card.style === call.primaryValue; // style1 only, by design
+    case "fit": return card.fit === call.primaryValue;
+    case "category": return card.category === call.primaryValue;
+    default: return false;
+  }
+}
+
+// Returns "A" (player), "B" (opponent) or "draw" for one round, per spec §5
+// steps 6-10.
+function quartettEvaluateRound(call, cardA, cardB) {
+  if (call.primaryType === "rarityHigh" || call.primaryType === "rarityLow") {
+    const ra = quartettRarityIdx(cardA), rb = quartettRarityIdx(cardB);
+    if (ra === rb) return "draw";
+    const aWins = call.primaryType === "rarityHigh" ? ra > rb : ra < rb;
+    return aWins ? "A" : "B";
+  }
+  if (call.primaryType === "exactRarity") {
+    const aSat = cardA.rarity === call.primaryValue;
+    const bSat = cardB.rarity === call.primaryValue;
+    if (aSat && !bSat) return "A";
+    if (bSat && !aSat) return "B";
+    return "draw"; // both match, or neither -- table only defines the "both" case
+  }
+
+  const aSat = quartettCardSatisfies(cardA, call);
+  const bSat = quartettCardSatisfies(cardB, call);
+  if (aSat && !bSat) return "A";
+  if (bSat && !aSat) return "B";
+
+  // Both satisfy, or neither does -- apply the visible tie-breaker directly
+  // to the two cards' rarity either way (spec §5 step 9: apply the
+  // tie-breaker "where meaningful").
+  const ra = quartettRarityIdx(cardA), rb = quartettRarityIdx(cardB);
+  if (ra === rb) return "draw";
+  const aWins = call.tieBreaker === "rarityHigh" ? ra > rb : ra < rb;
+  return aWins ? "A" : "B";
+}
+
+// -- Call generation ------------------------------------------------------------
+
+const QUARTETT_ATTR_TYPES = ["color", "style", "fit"];
+
+function quartettValuesInHands(type, hands) {
+  const set = new Set();
+  hands.forEach((h) => h.forEach((c) => set.add(c[type])));
+  return Array.from(set);
+}
+
+function quartettMakeAttrCall(type, hands, forceLowTieBreak) {
+  const values = quartettValuesInHands(type, hands);
+  if (values.length === 0) return null;
+  const value = values[Math.floor(Math.random() * values.length)];
+  // Style calls can go either direction "as authored" per the call-library
+  // table; color/fit default to higher-rarity-wins.
+  const lowTie = forceLowTieBreak || (type === "style" && Math.random() < 0.3);
+  return {
+    id: `${type}:${value}:${lowTie ? "lo" : "hi"}`,
+    primaryType: type,
+    primaryValue: value,
+    tieBreaker: lowTie ? "rarityLow" : "rarityHigh",
+    label: `${value.toUpperCase()} — ${lowTie ? "Lower" : "Higher"} rarity wins ties`,
+  };
+}
+
+function quartettMakeCategoryCall(hands) {
+  const values = quartettValuesInHands("category", hands);
+  if (values.length === 0) return null;
+  const value = values[Math.floor(Math.random() * values.length)];
+  return {
+    id: `category:${value}`, primaryType: "category", primaryValue: value, tieBreaker: "rarityHigh",
+    label: `${value.toUpperCase()} — Higher rarity wins ties`,
+  };
+}
+
+function quartettMakeRarityCall(hands) {
+  const roll = Math.random();
+  if (roll < 0.4) return { id: "rarityHigh", primaryType: "rarityHigh", primaryValue: null, tieBreaker: null, label: "HIGHEST RARITY — same rarity is a Draw" };
+  if (roll < 0.8) return { id: "rarityLow", primaryType: "rarityLow", primaryValue: null, tieBreaker: null, label: "LOWEST RARITY — same rarity is a Draw" };
+  const values = quartettValuesInHands("rarity", hands);
+  const value = values.length > 0 ? values[Math.floor(Math.random() * values.length)] : "Basic";
+  return { id: `exactRarity:${value}`, primaryType: "exactRarity", primaryValue: value, tieBreaker: null, label: `EXACTLY ${value.toUpperCase()} — matching either or neither is a Draw` };
+}
+
+// Whether a hand has at least one card that's "in play" for a call -- used
+// only by the fairness pass below, never by the match engine itself.
+function quartettHandHasCompetitor(hand, call) {
+  if (["rarityHigh", "rarityLow", "exactRarity"].includes(call.primaryType)) return true;
+  return hand.some((c) => quartettCardSatisfies(c, call));
+}
+
+// Generates the fixed 5-call sequence for a match. Not an exhaustive solver
+// -- a bounded number of reroll attempts biased toward spec §10's fairness
+// guidance (both sides get at least 2 plausible calls somewhere in the
+// five), then it accepts the best candidate seen rather than looping
+// forever chasing a perfect sequence. The sequence never changes once a
+// match starts.
+function quartettGenerateCalls(playerHand, opponentHand) {
+  const hands = [playerHand, opponentHand];
+  let best = null, bestScore = -1;
+
+  for (let attempt = 0; attempt < 12; attempt++) {
+    const usedKeys = new Set();
+    const calls = [];
+    const attrTypesShuffled = shuffle(QUARTETT_ATTR_TYPES.slice());
+    for (let i = 0; i < 2 && calls.length < 2; i++) {
+      const call = quartettMakeAttrCall(attrTypesShuffled[i % attrTypesShuffled.length], hands);
+      if (call && !usedKeys.has(call.id)) { calls.push(call); usedKeys.add(call.id); }
+    }
+    const catCall = quartettMakeCategoryCall(hands);
+    if (catCall && !usedKeys.has(catCall.id)) { calls.push(catCall); usedKeys.add(catCall.id); }
+    const rarCall = quartettMakeRarityCall(hands);
+    calls.push(rarCall);
+    // Wildcard: one more attribute/category call, biased toward an inverted
+    // tie-breaker so it reads as the match's one deliberate twist.
+    const wildType = shuffle(["color", "style", "fit", "category"])[0];
+    const wild = wildType === "category" ? quartettMakeCategoryCall(hands) : quartettMakeAttrCall(wildType, hands, true);
+    if (wild && !usedKeys.has(wild.id)) { calls.push(wild); usedKeys.add(wild.id); }
+    while (calls.length < QUARTETT_ROUNDS) {
+      const filler = quartettMakeAttrCall(shuffle(QUARTETT_ATTR_TYPES.slice())[0], hands);
+      if (filler) calls.push(filler); else break;
+    }
+    const finalCalls = calls.slice(0, QUARTETT_ROUNDS);
+
+    const playerMatches = finalCalls.filter((c) => quartettHandHasCompetitor(playerHand, c)).length;
+    const oppMatches = finalCalls.filter((c) => quartettHandHasCompetitor(opponentHand, c)).length;
+    const score = Math.min(playerMatches, oppMatches) * 10 + playerMatches + oppMatches;
+    if (score > bestScore) { bestScore = score; best = finalCalls; }
+    if (playerMatches >= 2 && oppMatches >= 2) break;
+  }
+  return best;
+}
+
+// -- Opponent decision logic (NORMAL heuristic, spec §12) ------------------------
+
+function quartettFutureValue(card, remainingCalls) {
+  let value = 0;
+  remainingCalls.forEach((call) => {
+    if (call.primaryType === "rarityHigh") value += quartettRarityIdx(card);
+    else if (call.primaryType === "rarityLow") value += (4 - quartettRarityIdx(card));
+    else if (call.primaryType === "exactRarity") { if (card.rarity === call.primaryValue) value += 2; }
+    else if (quartettCardSatisfies(card, call)) value += 2;
+  });
+  return value;
+}
+
+function quartettCurrentWinPotential(card, call) {
+  if (call.primaryType === "rarityHigh") return quartettRarityIdx(card);
+  if (call.primaryType === "rarityLow") return 4 - quartettRarityIdx(card);
+  if (call.primaryType === "exactRarity") return card.rarity === call.primaryValue ? 1 : 0;
+  return quartettCardSatisfies(card, call) ? 1 : 0;
+}
+
+// Never inspects the player's hidden selection -- only the current call,
+// its own unplayed hand, and the visible remaining calls.
+function quartettOpponentChooseCard(match) {
+  const call = match.calls[match.currentRound];
+  const remaining = match.calls.slice(match.currentRound + 1);
+  const unplayedIds = match.opponentHand.filter((id) => !match.opponentPlayed.includes(id));
+  const cards = unplayedIds.map(quartettFindCard);
+
+  const isRarityCall = ["rarityHigh", "rarityLow", "exactRarity"].includes(call.primaryType);
+  const matching = isRarityCall ? cards : cards.filter((c) => quartettCardSatisfies(c, call));
+
+  if (matching.length > 0) {
+    const scored = matching.map((card) => ({
+      card,
+      score: quartettFutureValue(card, remaining) - quartettCurrentWinPotential(card, call) * 1.5,
+    }));
+    scored.sort((a, b) => a.score - b.score);
+    return scored[0].card.id;
+  }
+  // No good current answer -- sacrifice the weakest (lowest future value).
+  const sacrifice = cards.map((card) => ({ card, future: quartettFutureValue(card, remaining) }));
+  sacrifice.sort((a, b) => a.future - b.future);
+  return sacrifice[0].card.id;
+}
+
+// -- Match lifecycle ------------------------------------------------------------
+
+function startQuartettMatch() {
+  quartettRefreshSessionWindow();
+  if (quartettSessionsRemaining() <= 0) { renderQuartettEntry(); return; }
+  const eligible = quartettPlayerEligibleCards();
+  if (eligible.length < 5) { renderQuartettEntry(); return; }
+
+  quartettSessionsUsedCount += 1; // a session is spent as soon as the match starts
+
+  const playerHandCards = shuffle(eligible.slice()).slice(0, 5);
+  const opponentPool = mayaQuartettPool();
+  const opponentHandCards = shuffle(opponentPool.slice()).slice(0, Math.min(5, opponentPool.length));
+  const calls = quartettGenerateCalls(playerHandCards, opponentHandCards);
+
+  quartettMatch = {
+    opponentId: "maya",
+    opponentName: "Maya",
+    matchMode: "casual",
+    playerHand: playerHandCards.map((c) => c.id),
+    opponentHand: opponentHandCards.map((c) => c.id),
+    calls,
+    currentRound: 0,
+    playerPlayed: [],
+    opponentPlayed: [],
+    playerRoundWins: 0,
+    opponentRoundWins: 0,
+    roundHistory: [],
+    selectedCardId: null,
+    reveal: null,
+    rewardCard: null,
+    status: "active",
+  };
+  renderQuartettMatch();
+}
+
+function quartettSelectCard(id) {
+  if (!quartettMatch) return;
+  quartettMatch.selectedCardId = quartettMatch.selectedCardId === id ? null : id;
+  renderQuartettMatch();
+}
+
+function quartettPlaySelectedCard() {
+  const match = quartettMatch;
+  if (!match || !match.selectedCardId) return;
+  const playerCardId = match.selectedCardId;
+  const opponentCardId = quartettOpponentChooseCard(match);
+  const call = match.calls[match.currentRound];
+  const result = quartettEvaluateRound(call, quartettFindCard(playerCardId), quartettFindCard(opponentCardId));
+
+  match.playerPlayed.push(playerCardId);
+  match.opponentPlayed.push(opponentCardId);
+  match.selectedCardId = null;
+  if (result === "A") match.playerRoundWins += 1;
+  else if (result === "B") match.opponentRoundWins += 1;
+
+  match.roundHistory[match.currentRound] = { call, playerCardId, opponentCardId, result };
+  match.reveal = { playerCardId, opponentCardId, result };
+  renderQuartettReveal();
+}
+
+function quartettAdvanceRound() {
+  const match = quartettMatch;
+  match.reveal = null;
+  match.currentRound += 1;
+  const done = match.playerRoundWins >= QUARTETT_WIN_TARGET || match.opponentRoundWins >= QUARTETT_WIN_TARGET || match.currentRound >= QUARTETT_ROUNDS;
+  if (done) { quartettFinishMatch(); return; }
+  renderQuartettMatch();
+}
+
+function quartettFinishMatch() {
+  const match = quartettMatch;
+  if (match.playerRoundWins > match.opponentRoundWins) match.status = "playerWin";
+  else if (match.opponentRoundWins > match.playerRoundWins) match.status = "opponentWin";
+  else match.status = "draw";
+
+  match.rewardCard = null;
+  if (match.status === "playerWin") {
+    const unowned = DECK.filter((c) => !unlockedCardIds.has(c.id));
+    if (unowned.length > 0) {
+      const awarded = unowned[Math.floor(Math.random() * unowned.length)];
+      unlockedCardIds.add(awarded.id);
+      rebuildLiveDeckFromUnlocked();
+      match.rewardCard = awarded;
+    }
+  }
+  renderQuartettResult();
+}
+
+function quartettReturnToCafe() { quartettMatch = null; renderCafe(); }
+
+// -- Rendering ------------------------------------------------------------------
+
+function quartettCallStatusClass(match, idx) {
+  if (idx < match.currentRound) return "done";
+  if (idx === match.currentRound) return "current";
+  return "upcoming";
+}
+
+function renderQuartettCallsHTML(match) {
+  return match.calls.map((call, i) => {
+    const status = quartettCallStatusClass(match, i);
+    const resolved = match.roundHistory[i];
+    const resultTag = resolved ? (resolved.result === "A" ? "YOU" : resolved.result === "B" ? "MAYA" : "DRAW") : "";
+    return `
+      <div class="quartett-call quartett-call-${status}">
+        <span class="quartett-call-num">${i + 1}</span>
+        <span class="quartett-call-label">${call.label}</span>
+        ${resolved ? `<span class="quartett-call-result">${resultTag}</span>` : ""}
+      </div>
+    `;
+  }).join("");
+}
+
+function renderQuartettEntry() {
+  quartettRefreshSessionWindow();
+  const remaining = quartettSessionsRemaining();
+  const eligible = quartettPlayerEligibleCards();
+  const lines = remaining > 0 ? quartettPickLine(QUARTETT_MAYA_LINES.intro) : QUARTETT_MAYA_LINES.locked[0];
+  const canPlay = remaining > 0 && eligible.length >= 5;
+  const statusLine = eligible.length < 5
+    ? "You don't have enough cards in your collection yet."
+    : `${remaining} of ${QUARTETT_MAX_SESSIONS_PER_MONTH} hands left this month.`;
+
+  stage.innerHTML = `
+    <div class="center-col screen-pad">
+      ${portraitHTML(lines, "🃏", "#2c2432")}
+      <div class="soul-name">Quartett — Night Café</div>
+      ${sceneHTML(lines, null)}
+      <div class="speech narration-line">${statusLine}</div>
+      ${canPlay ? `<button class="primary" onclick="startQuartettMatch()">Start Match</button>` : ``}
+      <button class="ghost" style="margin-top:10px;" onclick="renderCafe()">Leave</button>
+    </div>
+  `;
+  updateTopBar("", true);
+}
+
+function renderQuartettMatch() {
+  const match = quartettMatch;
+  if (!match) { renderQuartettEntry(); return; }
+  if (match.reveal) { renderQuartettReveal(); return; }
+
+  const unplayedHand = match.playerHand.filter((id) => !match.playerPlayed.includes(id));
+  const handHTML = unplayedHand.map((id) => {
+    const card = quartettFindCard(id);
+    const selected = match.selectedCardId === id;
+    return `<div class="fan-card-wrap ${selected ? "selected" : ""}" onclick="quartettSelectCard(${id})">${gcardHTML(card)}</div>`;
+  }).join("");
+
+  stage.innerHTML = `
+    <div class="center-col screen-pad">
+      <div class="soul-name">Quartett vs. Maya</div>
+      <div class="quartett-score">YOU ${match.playerRoundWins} — ${match.opponentRoundWins} MAYA</div>
+      <div class="quartett-calls">${renderQuartettCallsHTML(match)}</div>
+      <div class="speech narration-line">Maya's hand: ${match.opponentHand.length - match.opponentPlayed.length} cards left, face down.</div>
+      <div class="hand-fan">${handHTML}</div>
+      <button class="primary" ${match.selectedCardId ? "" : "disabled"} onclick="quartettPlaySelectedCard()">Play Card</button>
+    </div>
+  `;
+  updateTopBar("", true);
+}
+
+function renderQuartettReveal() {
+  const match = quartettMatch;
+  const reveal = match.reveal;
+  const call = match.calls[match.currentRound];
+  const resultText = reveal.result === "A" ? "YOU WIN THE ROUND" : reveal.result === "B" ? "MAYA WINS THE ROUND" : "DRAW";
+  const reactionLine = reveal.result === "A" ? quartettPickLine(QUARTETT_MAYA_LINES.roundPlayerWins)
+    : reveal.result === "B" ? quartettPickLine(QUARTETT_MAYA_LINES.roundOpponentWins)
+    : quartettPickLine(QUARTETT_MAYA_LINES.roundDraw);
+  const matchOver = match.playerRoundWins >= QUARTETT_WIN_TARGET || match.opponentRoundWins >= QUARTETT_WIN_TARGET || match.currentRound >= QUARTETT_ROUNDS - 1;
+
+  stage.innerHTML = `
+    <div class="center-col screen-pad">
+      <div class="soul-name">Round ${match.currentRound + 1}: ${call.label}</div>
+      <div class="quartett-reveal-row">
+        <div class="quartett-reveal-card">${gcardHTML(quartettFindCard(reveal.playerCardId))}<div class="quartett-reveal-tag">YOU</div></div>
+        <div class="quartett-reveal-card">${gcardHTML(quartettFindCard(reveal.opponentCardId))}<div class="quartett-reveal-tag">MAYA</div></div>
+      </div>
+      <div class="speech" style="text-align:center; font-weight:600;">${resultText}</div>
+      <div class="speech narration-line">MAYA: "${reactionLine}"</div>
+      <div class="quartett-score">YOU ${match.playerRoundWins} — ${match.opponentRoundWins} MAYA</div>
+      <button class="primary" onclick="quartettAdvanceRound()">${matchOver ? "See Result" : "Next Round"}</button>
+    </div>
+  `;
+  updateTopBar("", true);
+}
+
+function renderQuartettResult() {
+  const match = quartettMatch;
+  const remaining = quartettSessionsRemaining();
+  let headline, lines;
+  if (match.status === "playerWin") { headline = "YOU WIN"; lines = quartettPickLine(QUARTETT_MAYA_LINES.matchPlayerWin); }
+  else if (match.status === "opponentWin") { headline = "MAYA WINS"; lines = quartettPickLine(QUARTETT_MAYA_LINES.matchPlayerLoss); }
+  else { headline = "DRAW"; lines = quartettPickLine(QUARTETT_MAYA_LINES.matchDraw); }
+
+  const rewardHTML = match.rewardCard
+    ? `<div class="speech narration-line">New card: <b>${match.rewardCard.name}</b></div><div class="shop-mystery-card">${gcardHTML(match.rewardCard)}</div>`
+    : (match.status === "playerWin" ? `<div class="speech narration-line">She has nothing left you don't already own.</div>` : "");
+
+  stage.innerHTML = `
+    <div class="center-col screen-pad">
+      <div class="soul-name">${headline}</div>
+      ${sceneHTML(lines, null)}
+      <div class="quartett-score">YOU ${match.playerRoundWins} — ${match.opponentRoundWins} MAYA</div>
+      ${rewardHTML}
+      <div class="speech narration-line">${remaining} of ${QUARTETT_MAX_SESSIONS_PER_MONTH} hands left this month.</div>
+      ${remaining > 0 ? `<button class="primary" onclick="startQuartettMatch()">Play Again</button>` : ``}
+      <button class="ghost" style="margin-top:10px;" onclick="quartettReturnToCafe()">Return to Café</button>
+    </div>
+  `;
+  updateTopBar("", true);
+}
 
 // Shared "repeat pool with an occasional once-per-year rare bonus" mechanic,
 // used by the Café Attic, Glass House, and Royal Garden repeat events. This
