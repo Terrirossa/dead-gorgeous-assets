@@ -271,6 +271,12 @@
   .quartett-pick-tile.disabled { opacity: 0.35; cursor: not-allowed; }
   .quartett-hand-row { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin: 14px 0; }
   .quartett-hand-tile { width: 92px; }
+  .quartett-opponent-grid { display: flex; flex-wrap: wrap; gap: 14px; justify-content: center; margin: 10px 0 18px; }
+  .quartett-opponent-tile { width: 92px; cursor: pointer; text-align: center; transition: transform 0.15s ease; }
+  .quartett-opponent-tile:hover { transform: translateY(-3px); }
+  .quartett-opponent-portrait { width: 84px; height: 84px; border-radius: 50%; overflow: hidden; margin: 0 auto 6px; border: 2px solid rgba(255,255,255,0.18); }
+  .quartett-opponent-portrait img { width: 100%; height: 100%; object-fit: cover; }
+  .quartett-opponent-name { font-size: 12.5px; font-weight: 600; color: #ece7f4; }
   .hearts { font-size: 12px; letter-spacing: 1px; }
   .half-heart {
     display: inline-block; background: linear-gradient(90deg, #ff6b8a 50%, rgba(255,255,255,0.35) 50%);
@@ -1840,6 +1846,7 @@ let mayaBackRoomReactionSeen = false;
 let quartettSessionsUsedYearMonth = null;
 let quartettSessionsUsedCount = 0;
 let quartettMatch = null; // active match state, or null between matches
+let quartettSelectedOpponentId = null; // set when the player picks an opponent, before the hand-picker
 
 // Octavia (Nightgarden — not yet built)
 let metOctavia = false;
@@ -2548,6 +2555,7 @@ function resetSecondaryContentState() {
   quartettSessionsUsedCount = 0;
   quartettMatch = null;
   quartettDraftSelection = [];
+  quartettSelectedOpponentId = null;
 
   metOctavia = false;
   octaviaEncounterCount = 0;
@@ -4410,9 +4418,9 @@ function afterAtticCoat() { cafeAtticStaffCoatSeen = true; renderMap(); }
    again and never touches storyBeatsRemaining or Studio progression.
    Capped at 5 sessions per in-game month, tracked against yearMonthKey()
    the same way Maya's ambient-line cooldown is; the cap silently resets the
-   moment the key changes. Maya is the only opponent for now (spec §20) --
-   her Quartett hand is drawn from a themed subset of the global DECK, not
-   from the player's own collection.
+   moment the key changes. Maya plus the Core Four are the opponent roster;
+   each opponent's Quartett hand is drawn from her own themed subset of the
+   global DECK (see QUARTETT_OPPONENTS), not from the player's collection.
    =========================================================================== */
 
 const QUARTETT_MAX_SESSIONS_PER_MONTH = 5;
@@ -4424,32 +4432,155 @@ const QUARTETT_WIN_TARGET = 3;
 // outside quartettMatch since no match exists yet while picking.
 let quartettDraftSelection = [];
 
-// A handful of authored lines in Maya's established voice (dry, deadpan,
-// withholding -- see MAYA_FIRST_SCENE etc. above). Deliberately sparse per
-// spec §19: flavor only, not new biography/lore.
-const QUARTETT_MAYA_LINES = {
-  intro: [
-    [{ who: "MAYA", t: "Cards. Sit." }],
-    [{ who: "YOU", t: "Best of five?" }, { who: "MAYA", t: "If you last that long." }],
-  ],
-  roundOpponentWins: ["Mm.", "Predictable.", "As expected."],
-  roundPlayerWins: ["Lucky.", "Fine.", "Noted."],
-  roundDraw: ["Boring.", "That helped no one."],
-  matchPlayerWin: [[
-    { who: "MAYA", t: "Take it." },
-    { who: "NARRATION", t: "She slides a card across the table without looking up." },
-    { who: "MAYA", t: "I wasn't using it." },
-  ]],
-  matchPlayerLoss: [[
-    { who: "MAYA", t: "Again?" }, { who: "YOU", t: "No." }, { who: "MAYA", t: "Smart." },
-  ]],
-  matchDraw: [[
-    { who: "MAYA", t: "A draw." }, { who: "MAYA", t: "How diplomatic of us." },
-  ]],
-  locked: [[
-    { who: "MAYA", t: "You've used your hands for the month." }, { who: "YOU", t: "That's it?" }, { who: "MAYA", t: "Come back when it isn't." },
-  ]],
+// Per-opponent config: portrait, a themed Quartett card pool (a subset of
+// the global DECK reflecting that character's taste, per the styling-brief
+// hidden-preference tables -- NOT the player's own collection), and a
+// handful of authored lines in her established voice. Deliberately sparse
+// per spec §19: flavor only, not new biography/lore. Maya plus the Core
+// Four are all reachable from the Café without any unlock gate, same as
+// they already are as normal styling clients.
+const QUARTETT_OPPONENTS = {
+  maya: {
+    name: "Maya",
+    portrait: "https://terrirossa.github.io/dead-gorgeous-assets/portraits/portrait_maya.png",
+    fallbackBg: "#2c2432",
+    pool: () => DECK.filter((c) => ["Cool", "Minimal", "Classic"].includes(c.style)),
+    lines: {
+      intro: [
+        [{ who: "MAYA", t: "Cards. Sit." }],
+        [{ who: "YOU", t: "Best of five?" }, { who: "MAYA", t: "If you last that long." }],
+      ],
+      roundOpponentWins: ["Mm.", "Predictable.", "As expected."],
+      roundPlayerWins: ["Lucky.", "Fine.", "Noted."],
+      roundDraw: ["Boring.", "That helped no one."],
+      matchPlayerWin: [[
+        { who: "MAYA", t: "Take it." },
+        { who: "NARRATION", t: "She slides a card across the table without looking up." },
+        { who: "MAYA", t: "I wasn't using it." },
+      ]],
+      matchPlayerLoss: [[
+        { who: "MAYA", t: "Again?" }, { who: "YOU", t: "No." }, { who: "MAYA", t: "Smart." },
+      ]],
+      matchDraw: [[
+        { who: "MAYA", t: "A draw." }, { who: "MAYA", t: "How diplomatic of us." },
+      ]],
+    },
+  },
+  margo: {
+    name: "Margo",
+    portrait: "https://terrirossa.github.io/dead-gorgeous-assets/portraits/portrait_margo.png",
+    fallbackBg: "#2a2a2a",
+    // Hidden preferences: Black, Red, Elegant, Classic, Fitted, Bold.
+    pool: () => DECK.filter((c) => ["Elegant", "Classic", "Bold"].includes(c.style) || ["Black", "Red"].includes(c.color)),
+    lines: {
+      intro: [
+        [{ who: "MARGO", t: "You want to play cards with me." }, { who: "YOU", t: "Is that a problem?" }, { who: "MARGO", t: "Only for you." }],
+        [{ who: "MARGO", t: "Sit. Lose gracefully." }],
+      ],
+      roundOpponentWins: ["Obviously.", "Predictable.", "I taught you nothing, apparently."],
+      roundPlayerWins: ["Fine.", "Don't gloat.", "Acceptable."],
+      roundDraw: ["How dull.", "Nobody wins that. Ever."],
+      matchPlayerWin: [[
+        { who: "MARGO", t: "Take it." },
+        { who: "NARRATION", t: "She pushes a card across the table like it's beneath her." },
+        { who: "MARGO", t: "Don't get used to that." },
+      ]],
+      matchPlayerLoss: [[
+        { who: "MARGO", t: "Again?" }, { who: "YOU", t: "Maybe later." }, { who: "MARGO", t: "Wise, for once." },
+      ]],
+      matchDraw: [[
+        { who: "MARGO", t: "A draw." }, { who: "MARGO", t: "Unsatisfying. Like beige." },
+      ]],
+    },
+  },
+  juniper: {
+    name: "Juniper",
+    portrait: "https://terrirossa.github.io/dead-gorgeous-assets/portraits/portrait_juniper.png",
+    fallbackBg: "#3a4433",
+    // Hidden preferences: Green, Romantic, Cozy, Sweet, Relaxed.
+    pool: () => DECK.filter((c) => ["Romantic", "Cozy", "Sweet"].includes(c.style) || c.color === "Green"),
+    lines: {
+      intro: [
+        [{ who: "JUNIPER", t: "Cards? Sure." }, { who: "YOU", t: "You know the rules?" }, { who: "JUNIPER", t: "I know plants better." }],
+        [{ who: "JUNIPER", t: "Okay. Be gentle with me." }],
+      ],
+      roundOpponentWins: ["Oh. That one was mine.", "Lucky soil.", "Hm. Good."],
+      roundPlayerWins: ["Oh well.", "That's alright.", "You got that one."],
+      roundDraw: ["Neither of us, then.", "Like we split a pot."],
+      matchPlayerWin: [[
+        { who: "JUNIPER", t: "Here." },
+        { who: "NARRATION", t: "She slides a card over, a little pleased despite losing." },
+        { who: "JUNIPER", t: "It suits you more than me anyway." },
+      ]],
+      matchPlayerLoss: [[
+        { who: "JUNIPER", t: "Sorry." }, { who: "YOU", t: "You don't sound sorry." }, { who: "JUNIPER", t: "I'm working on it." },
+      ]],
+      matchDraw: [[
+        { who: "JUNIPER", t: "A tie." }, { who: "JUNIPER", t: "Very balanced. Very boring." },
+      ]],
+    },
+  },
+  ivy: {
+    name: "Ivy",
+    portrait: "https://terrirossa.github.io/dead-gorgeous-assets/portraits/portrait_ivy.png",
+    fallbackBg: "#4a2530",
+    // Hidden preferences: Black, Cool, Daring, Bold, Relaxed.
+    pool: () => DECK.filter((c) => ["Cool", "Daring", "Bold"].includes(c.style) || c.color === "Black"),
+    lines: {
+      intro: [
+        [{ who: "IVY", t: "Cards. Finally, something I'm good at." }, { who: "YOU", t: "Confident." }, { who: "IVY", t: "Always." }],
+        [{ who: "IVY", t: "Don't cry when you lose." }],
+      ],
+      roundOpponentWins: ["Told you.", "Easy.", "Was that supposed to be hard?"],
+      roundPlayerWins: ["Huh. Fine.", "Beginner's luck.", "Don't let it go to your head."],
+      roundDraw: ["Boring. Rematch that one.", "That doesn't count."],
+      matchPlayerWin: [[
+        { who: "IVY", t: "Ugh. Fine." },
+        { who: "NARRATION", t: "She flicks a card across the table." },
+        { who: "IVY", t: "Don't tell anyone I lost." },
+      ]],
+      matchPlayerLoss: [[
+        { who: "IVY", t: "Good game." }, { who: "YOU", t: "You didn't even look at your cards." }, { who: "IVY", t: "Didn't need to." },
+      ]],
+      matchDraw: [[
+        { who: "IVY", t: "A draw?" }, { who: "IVY", t: "That's the least satisfying thing that's ever happened to me." },
+      ]],
+    },
+  },
+  holly: {
+    name: "Holly",
+    portrait: "https://terrirossa.github.io/dead-gorgeous-assets/portraits/portrait_holly.png",
+    fallbackBg: "#33404a",
+    // Hidden preferences: Silver, White, Blue, Classic, Minimal, Regular, Armour.
+    pool: () => DECK.filter((c) => ["Classic", "Minimal", "Armour"].includes(c.style) || ["Silver", "White", "Blue"].includes(c.color)),
+    lines: {
+      intro: [
+        [{ who: "HOLLY", t: "A game of cards." }, { who: "YOU", t: "Yes." }, { who: "HOLLY", t: "Very well. I do not lose often." }],
+        [{ who: "HOLLY", t: "State the rules. I will not ask twice." }],
+      ],
+      roundOpponentWins: ["As expected.", "Discipline.", "Correct."],
+      roundPlayerWins: ["Noted.", "Adequate.", "Hm."],
+      roundDraw: ["A stalemate. Acceptable."],
+      matchPlayerWin: [[
+        { who: "HOLLY", t: "Take it." },
+        { who: "NARRATION", t: "She sets the card down with exact, unnecessary precision." },
+        { who: "HOLLY", t: "You earned it. Barely." },
+      ]],
+      matchPlayerLoss: [[
+        { who: "HOLLY", t: "You fought well." }, { who: "YOU", t: "I lost." }, { who: "HOLLY", t: "That is not the same thing." },
+      ]],
+      matchDraw: [[
+        { who: "HOLLY", t: "Neither of us yielded." }, { who: "HOLLY", t: "I respect that." },
+      ]],
+    },
+  },
 };
+
+// Shared across every opponent -- not authored per-character since it's
+// shown before an opponent is even chosen.
+const QUARTETT_LOCKED_LINE = [
+  { who: "NARRATION", t: "You've used your hands for the month." }, { who: "NARRATION", t: "Come back when the month turns." },
+];
 
 function quartettPickLine(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
 
@@ -4469,17 +4600,10 @@ function quartettSessionsRemaining() {
 
 // -- Card pools ---------------------------------------------------------------
 
-// Any card by id, owned or not -- Maya's hand is never part of the player's
-// liveDeck, so the global findCard() (which only searches liveDeck) can't
-// be used for opponent cards.
+// Any card by id, owned or not -- an opponent's hand is never part of the
+// player's liveDeck, so the global findCard() (which only searches
+// liveDeck) can't be used for opponent cards.
 function quartettFindCard(id) { return DECK.find((c) => c.id === id); }
-
-// Maya's themed Quartett pool: a fixed subset of the global card list that
-// fits her (dry, restrained, monochrome), independent of what the player
-// has unlocked -- per spec, "just a themed subset of the global card list."
-function mayaQuartettPool() {
-  return DECK.filter((c) => ["Cool", "Minimal", "Classic"].includes(c.style));
-}
 
 function quartettPlayerEligibleCards() {
   return DECK.filter((c) => unlockedCardIds.has(c.id));
@@ -4671,11 +4795,12 @@ function quartettOpponentChooseCard(match) {
 
 // -- Match lifecycle ------------------------------------------------------------
 
-function startQuartettMatch() {
+function startQuartettMatch(opponentId) {
   quartettRefreshSessionWindow();
   if (quartettSessionsRemaining() <= 0) { renderQuartettEntry(); return; }
   const eligible = quartettPlayerEligibleCards();
   if (eligible.length < QUARTETT_HAND_SIZE) { renderQuartettEntry(); return; }
+  quartettSelectedOpponentId = opponentId;
   quartettDraftSelection = [];
   renderQuartettPickScreen();
 }
@@ -4698,17 +4823,20 @@ function quartettConfirmHand() {
   quartettRefreshSessionWindow();
   if (quartettSessionsRemaining() <= 0) { renderQuartettEntry(); return; }
 
+  const opponent = QUARTETT_OPPONENTS[quartettSelectedOpponentId];
+  if (!opponent) { renderQuartettEntry(); return; }
+
   quartettSessionsUsedCount += 1; // a session is spent as soon as the match starts
 
   const playerHandCards = quartettDraftSelection.map(quartettFindCard);
   quartettDraftSelection = [];
-  const opponentPool = mayaQuartettPool();
+  const opponentPool = opponent.pool();
   const opponentHandCards = shuffle(opponentPool.slice()).slice(0, Math.min(5, opponentPool.length));
   const calls = quartettGenerateCalls(playerHandCards, opponentHandCards);
 
   quartettMatch = {
-    opponentId: "maya",
-    opponentName: "Maya",
+    opponentId: quartettSelectedOpponentId,
+    opponentName: opponent.name,
     matchMode: "casual",
     playerHand: playerHandCards.map((c) => c.id),
     opponentHand: opponentHandCards.map((c) => c.id),
@@ -4836,19 +4964,27 @@ function renderQuartettEntry() {
   quartettRefreshSessionWindow();
   const remaining = quartettSessionsRemaining();
   const eligible = quartettPlayerEligibleCards();
-  const lines = remaining > 0 ? quartettPickLine(QUARTETT_MAYA_LINES.intro) : QUARTETT_MAYA_LINES.locked[0];
   const canPlay = remaining > 0 && eligible.length >= QUARTETT_HAND_SIZE;
   const statusLine = eligible.length < QUARTETT_HAND_SIZE
     ? "You don't have enough cards in your collection yet."
     : `${remaining} of ${QUARTETT_MAX_SESSIONS_PER_MONTH} hands left this month.`;
 
+  const opponentTilesHTML = Object.keys(QUARTETT_OPPONENTS).map((id) => {
+    const opp = QUARTETT_OPPONENTS[id];
+    return `
+      <div class="quartett-opponent-tile" onclick="startQuartettMatch('${id}')">
+        <div class="quartett-opponent-portrait"><img src="${opp.portrait}" alt="${opp.name}"></div>
+        <div class="quartett-opponent-name">${opp.name}</div>
+      </div>
+    `;
+  }).join("");
+
   stage.innerHTML = `
     <div class="center-col screen-pad">
-      ${portraitHTML(lines, "🃏", "#2c2432")}
       <div class="soul-name">Quartett — Night Café</div>
-      ${sceneHTML(lines, null)}
       <div class="speech narration-line">${statusLine}</div>
-      ${canPlay ? `<button class="primary" onclick="startQuartettMatch()">Start Match</button>` : ``}
+      ${!canPlay && remaining <= 0 ? sceneHTML(QUARTETT_LOCKED_LINE, null) : ""}
+      ${canPlay ? `<div class="speech narration-line">Who's at the table tonight?</div><div class="quartett-opponent-grid">${opponentTilesHTML}</div>` : ``}
       <button class="ghost" style="margin-top:10px;" onclick="renderCafe()">Leave</button>
     </div>
   `;
@@ -4869,10 +5005,10 @@ function renderQuartettMatch() {
 
   stage.innerHTML = `
     <div class="center-col screen-pad">
-      <div class="soul-name">Quartett vs. Maya</div>
-      <div class="quartett-score">YOU ${match.playerRoundWins} — ${match.opponentRoundWins} MAYA</div>
+      <div class="soul-name">Quartett vs. ${match.opponentName}</div>
+      <div class="quartett-score">YOU ${match.playerRoundWins} — ${match.opponentRoundWins} ${match.opponentName.toUpperCase()}</div>
       <div class="quartett-calls">${renderQuartettCallsHTML(match)}</div>
-      <div class="speech narration-line">Maya's hand: ${match.opponentHand.length - match.opponentPlayed.length} cards left, face down.</div>
+      <div class="speech narration-line">${match.opponentName}'s hand: ${match.opponentHand.length - match.opponentPlayed.length} cards left, face down.</div>
       <div class="quartett-hand-row">${handHTML}</div>
       <button class="primary" ${match.selectedCardId ? "" : "disabled"} onclick="quartettPlaySelectedCard()">Play Card</button>
     </div>
@@ -4882,12 +5018,13 @@ function renderQuartettMatch() {
 
 function renderQuartettReveal() {
   const match = quartettMatch;
+  const opponentLines = QUARTETT_OPPONENTS[match.opponentId].lines;
   const reveal = match.reveal;
   const call = match.calls[match.currentRound];
-  const resultText = reveal.result === "A" ? "YOU WIN THE ROUND" : reveal.result === "B" ? "MAYA WINS THE ROUND" : "DRAW";
-  const reactionLine = reveal.result === "A" ? quartettPickLine(QUARTETT_MAYA_LINES.roundPlayerWins)
-    : reveal.result === "B" ? quartettPickLine(QUARTETT_MAYA_LINES.roundOpponentWins)
-    : quartettPickLine(QUARTETT_MAYA_LINES.roundDraw);
+  const resultText = reveal.result === "A" ? "YOU WIN THE ROUND" : reveal.result === "B" ? `${match.opponentName.toUpperCase()} WINS THE ROUND` : "DRAW";
+  const reactionLine = reveal.result === "A" ? quartettPickLine(opponentLines.roundPlayerWins)
+    : reveal.result === "B" ? quartettPickLine(opponentLines.roundOpponentWins)
+    : quartettPickLine(opponentLines.roundDraw);
   const matchOver = match.playerRoundWins >= QUARTETT_WIN_TARGET || match.opponentRoundWins >= QUARTETT_WIN_TARGET || match.currentRound >= QUARTETT_ROUNDS - 1;
 
   stage.innerHTML = `
@@ -4895,11 +5032,11 @@ function renderQuartettReveal() {
       <div class="soul-name">Round ${match.currentRound + 1}: ${call.label}</div>
       <div class="quartett-reveal-row">
         <div class="quartett-reveal-card">${gcardHTML(quartettFindCard(reveal.playerCardId))}<div class="quartett-reveal-tag">YOU</div></div>
-        <div class="quartett-reveal-card">${gcardHTML(quartettFindCard(reveal.opponentCardId))}<div class="quartett-reveal-tag">MAYA</div></div>
+        <div class="quartett-reveal-card">${gcardHTML(quartettFindCard(reveal.opponentCardId))}<div class="quartett-reveal-tag">${match.opponentName.toUpperCase()}</div></div>
       </div>
       <div class="speech" style="text-align:center; font-weight:600;">${resultText}</div>
-      <div class="speech narration-line">MAYA: "${reactionLine}"</div>
-      <div class="quartett-score">YOU ${match.playerRoundWins} — ${match.opponentRoundWins} MAYA</div>
+      <div class="speech narration-line">${match.opponentName.toUpperCase()}: "${reactionLine}"</div>
+      <div class="quartett-score">YOU ${match.playerRoundWins} — ${match.opponentRoundWins} ${match.opponentName.toUpperCase()}</div>
       <button class="primary" onclick="quartettAdvanceRound()">${matchOver ? "See Result" : "Next Round"}</button>
     </div>
   `;
@@ -4908,11 +5045,12 @@ function renderQuartettReveal() {
 
 function renderQuartettResult() {
   const match = quartettMatch;
+  const opponentLines = QUARTETT_OPPONENTS[match.opponentId].lines;
   const remaining = quartettSessionsRemaining();
   let headline, lines;
-  if (match.status === "playerWin") { headline = "YOU WIN"; lines = quartettPickLine(QUARTETT_MAYA_LINES.matchPlayerWin); }
-  else if (match.status === "opponentWin") { headline = "MAYA WINS"; lines = quartettPickLine(QUARTETT_MAYA_LINES.matchPlayerLoss); }
-  else { headline = "DRAW"; lines = quartettPickLine(QUARTETT_MAYA_LINES.matchDraw); }
+  if (match.status === "playerWin") { headline = "YOU WIN"; lines = quartettPickLine(opponentLines.matchPlayerWin); }
+  else if (match.status === "opponentWin") { headline = `${match.opponentName.toUpperCase()} WINS`; lines = quartettPickLine(opponentLines.matchPlayerLoss); }
+  else { headline = "DRAW"; lines = quartettPickLine(opponentLines.matchDraw); }
 
   const rewardHTML = match.rewardCard
     ? `<div class="speech narration-line">New card: <b>${match.rewardCard.name}</b></div><div class="shop-mystery-card">${gcardHTML(match.rewardCard)}</div>`
@@ -4922,10 +5060,10 @@ function renderQuartettResult() {
     <div class="center-col screen-pad">
       <div class="soul-name">${headline}</div>
       ${sceneHTML(lines, null)}
-      <div class="quartett-score">YOU ${match.playerRoundWins} — ${match.opponentRoundWins} MAYA</div>
+      <div class="quartett-score">YOU ${match.playerRoundWins} — ${match.opponentRoundWins} ${match.opponentName.toUpperCase()}</div>
       ${rewardHTML}
       <div class="speech narration-line">${remaining} of ${QUARTETT_MAX_SESSIONS_PER_MONTH} hands left this month.</div>
-      ${remaining > 0 ? `<button class="primary" onclick="startQuartettMatch()">Play Again</button>` : ``}
+      ${remaining > 0 ? `<button class="primary" onclick="startQuartettMatch('${match.opponentId}')">Play Again</button>` : ``}
       <button class="ghost" style="margin-top:10px;" onclick="quartettReturnToCafe()">Return to Café</button>
     </div>
   `;
