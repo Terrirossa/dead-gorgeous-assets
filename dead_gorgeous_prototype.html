@@ -257,6 +257,20 @@
   .quartett-reveal-row { display: flex; gap: 18px; justify-content: center; margin: 10px 0 18px; }
   .quartett-reveal-card { width: 140px; text-align: center; }
   .quartett-reveal-tag { margin-top: 6px; font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; opacity: 0.7; }
+  .quartett-pick-grid { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin: 14px 0 18px; max-width: 520px; margin-left: auto; margin-right: auto; }
+  .quartett-pick-count { text-align: center; font-weight: 600; margin: 4px 0 2px; }
+  .quartett-pick-tile, .quartett-hand-tile {
+    position: relative; width: 84px; cursor: pointer;
+  }
+  .quartett-pick-tile .gcard, .quartett-hand-tile .gcard {
+    aspect-ratio: 595.28 / 841.9; transition: transform 0.15s ease, box-shadow 0.15s ease;
+  }
+  .quartett-pick-tile.selected .gcard, .quartett-hand-tile.selected .gcard {
+    box-shadow: 0 0 0 3px var(--pink); border-radius: 18px; transform: translateY(-8px);
+  }
+  .quartett-pick-tile.disabled { opacity: 0.35; cursor: not-allowed; }
+  .quartett-hand-row { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin: 14px 0; }
+  .quartett-hand-tile { width: 92px; }
   .hearts { font-size: 12px; letter-spacing: 1px; }
   .half-heart {
     display: inline-block; background: linear-gradient(90deg, #ff6b8a 50%, rgba(255,255,255,0.35) 50%);
@@ -2533,6 +2547,7 @@ function resetSecondaryContentState() {
   quartettSessionsUsedYearMonth = null;
   quartettSessionsUsedCount = 0;
   quartettMatch = null;
+  quartettDraftSelection = [];
 
   metOctavia = false;
   octaviaEncounterCount = 0;
@@ -4401,8 +4416,13 @@ function afterAtticCoat() { cafeAtticStaffCoatSeen = true; renderMap(); }
    =========================================================================== */
 
 const QUARTETT_MAX_SESSIONS_PER_MONTH = 5;
+const QUARTETT_HAND_SIZE = 6;
 const QUARTETT_ROUNDS = 5;
 const QUARTETT_WIN_TARGET = 3;
+
+// Cards the player has tapped on the pre-match picker screen -- lives
+// outside quartettMatch since no match exists yet while picking.
+let quartettDraftSelection = [];
 
 // A handful of authored lines in Maya's established voice (dry, deadpan,
 // withholding -- see MAYA_FIRST_SCENE etc. above). Deliberately sparse per
@@ -4655,11 +4675,33 @@ function startQuartettMatch() {
   quartettRefreshSessionWindow();
   if (quartettSessionsRemaining() <= 0) { renderQuartettEntry(); return; }
   const eligible = quartettPlayerEligibleCards();
-  if (eligible.length < 5) { renderQuartettEntry(); return; }
+  if (eligible.length < QUARTETT_HAND_SIZE) { renderQuartettEntry(); return; }
+  quartettDraftSelection = [];
+  renderQuartettPickScreen();
+}
+
+function quartettToggleDraftCard(id) {
+  const idx = quartettDraftSelection.indexOf(id);
+  if (idx >= 0) {
+    quartettDraftSelection.splice(idx, 1);
+  } else if (quartettDraftSelection.length < QUARTETT_HAND_SIZE) {
+    quartettDraftSelection.push(id);
+  }
+  renderQuartettPickScreen();
+}
+
+// Called once the player has tapped exactly QUARTETT_HAND_SIZE cards on the
+// picker screen -- this is the actual moment a match (and a monthly
+// session) begins.
+function quartettConfirmHand() {
+  if (quartettDraftSelection.length !== QUARTETT_HAND_SIZE) return;
+  quartettRefreshSessionWindow();
+  if (quartettSessionsRemaining() <= 0) { renderQuartettEntry(); return; }
 
   quartettSessionsUsedCount += 1; // a session is spent as soon as the match starts
 
-  const playerHandCards = shuffle(eligible.slice()).slice(0, 5);
+  const playerHandCards = quartettDraftSelection.map(quartettFindCard);
+  quartettDraftSelection = [];
   const opponentPool = mayaQuartettPool();
   const opponentHandCards = shuffle(opponentPool.slice()).slice(0, Math.min(5, opponentPool.length));
   const calls = quartettGenerateCalls(playerHandCards, opponentHandCards);
@@ -4683,6 +4725,33 @@ function startQuartettMatch() {
     status: "active",
   };
   renderQuartettMatch();
+}
+
+function renderQuartettPickScreen() {
+  const eligible = quartettPlayerEligibleCards();
+  const count = quartettDraftSelection.length;
+  const tilesHTML = eligible.map((card) => {
+    const selected = quartettDraftSelection.includes(card.id);
+    const disabled = !selected && count >= QUARTETT_HAND_SIZE;
+    return `
+      <div class="quartett-pick-tile ${selected ? "selected" : ""} ${disabled ? "disabled" : ""}"
+           onclick="quartettToggleDraftCard(${card.id})">
+        ${gcardHTML(card)}
+      </div>
+    `;
+  }).join("");
+
+  stage.innerHTML = `
+    <div class="center-col screen-pad">
+      <div class="soul-name">Choose Your Hand</div>
+      <div class="speech narration-line">Pick ${QUARTETT_HAND_SIZE} cards to bring to the table.</div>
+      <div class="quartett-pick-count">${count} / ${QUARTETT_HAND_SIZE} selected</div>
+      <div class="quartett-pick-grid">${tilesHTML}</div>
+      <button class="primary" ${count === QUARTETT_HAND_SIZE ? "" : "disabled"} onclick="quartettConfirmHand()">Confirm Hand</button>
+      <button class="ghost" style="margin-top:10px;" onclick="quartettDraftSelection = []; renderCafe();">Leave</button>
+    </div>
+  `;
+  updateTopBar("", true);
 }
 
 function quartettSelectCard(id) {
@@ -4768,8 +4837,8 @@ function renderQuartettEntry() {
   const remaining = quartettSessionsRemaining();
   const eligible = quartettPlayerEligibleCards();
   const lines = remaining > 0 ? quartettPickLine(QUARTETT_MAYA_LINES.intro) : QUARTETT_MAYA_LINES.locked[0];
-  const canPlay = remaining > 0 && eligible.length >= 5;
-  const statusLine = eligible.length < 5
+  const canPlay = remaining > 0 && eligible.length >= QUARTETT_HAND_SIZE;
+  const statusLine = eligible.length < QUARTETT_HAND_SIZE
     ? "You don't have enough cards in your collection yet."
     : `${remaining} of ${QUARTETT_MAX_SESSIONS_PER_MONTH} hands left this month.`;
 
@@ -4795,7 +4864,7 @@ function renderQuartettMatch() {
   const handHTML = unplayedHand.map((id) => {
     const card = quartettFindCard(id);
     const selected = match.selectedCardId === id;
-    return `<div class="fan-card-wrap ${selected ? "selected" : ""}" onclick="quartettSelectCard(${id})">${gcardHTML(card)}</div>`;
+    return `<div class="quartett-hand-tile ${selected ? "selected" : ""}" onclick="quartettSelectCard(${id})">${gcardHTML(card)}</div>`;
   }).join("");
 
   stage.innerHTML = `
@@ -4804,7 +4873,7 @@ function renderQuartettMatch() {
       <div class="quartett-score">YOU ${match.playerRoundWins} — ${match.opponentRoundWins} MAYA</div>
       <div class="quartett-calls">${renderQuartettCallsHTML(match)}</div>
       <div class="speech narration-line">Maya's hand: ${match.opponentHand.length - match.opponentPlayed.length} cards left, face down.</div>
-      <div class="hand-fan">${handHTML}</div>
+      <div class="quartett-hand-row">${handHTML}</div>
       <button class="primary" ${match.selectedCardId ? "" : "disabled"} onclick="quartettPlaySelectedCard()">Play Card</button>
     </div>
   `;
