@@ -1,0 +1,4372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>Roomstories</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,450;0,9..144,560;0,9..144,650;1,9..144,500&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#F6F1E4;
+    --paper-light:#FCFAF3;
+    --ink:#362B22;
+    --ink-70:rgba(54,43,34,.72);
+    --ink-55:rgba(54,43,34,.55);
+    --ink-35:rgba(54,43,34,.35);
+    --sage:#77896B;
+    --sage-dark:#5C6E55;
+    --clay:#BD7B52;
+    --gold:#D9A344;
+    --line:#E7DDC7;
+    --line-strong:#D8CBAC;
+    --overlay-dim:rgba(28,21,14,.58);
+    --glass-bg:rgba(252,248,238,.40);
+    --glass-bg-strong:rgba(252,249,240,.62);
+    --glass-border:rgba(255,255,255,.55);
+    --shadow-soft:0 1px 2px rgba(54,43,34,.06), 0 6px 18px rgba(54,43,34,.08);
+    --shadow-card:0 1px 1px rgba(54,43,34,.05), 0 3px 10px rgba(54,43,34,.10);
+  }
+  *{box-sizing:border-box;}
+  html,body{height:100%;}
+  body{
+    margin:0;
+    font-family:'Karla',-apple-system,BlinkMacSystemFont,sans-serif;
+    color:var(--ink);
+    background:linear-gradient(180deg,#FBF8F0 0%, #F2EBD8 100%);
+    -webkit-font-smoothing:antialiased;
+    overflow-x:hidden;
+  }
+  button{ font-family:inherit; }
+
+  .screen{ display:none; width:100%; }
+  .screen.active{ display:block; }
+  .screen.active.flex{ display:flex; }
+
+  @keyframes fadeUp{ from{opacity:0; transform:translateY(8px);} to{opacity:1; transform:translateY(0);} }
+  @keyframes fadeIn{ from{opacity:0;} to{opacity:1;} }
+  @keyframes popIn{
+    0%{ transform:scale(.55); opacity:0; }
+    65%{ transform:scale(1.08); opacity:1; }
+    100%{ transform:scale(1); opacity:1; }
+  }
+  @keyframes nudgeShake{
+    0%,100%{ transform:translateX(0); }
+    20%{ transform:translateX(-5px); }
+    40%{ transform:translateX(5px); }
+    60%{ transform:translateX(-3px); }
+    80%{ transform:translateX(3px); }
+  }
+
+  /* =========================================================
+     shared buttons
+  ==========================================================*/
+  .btn-primary, .btn-ghost{
+    font-size:13.5px;
+    font-weight:600;
+    border-radius:999px;
+    padding:10px 18px;
+    cursor:pointer;
+    transition:background .15s ease, color .15s ease, border-color .15s ease, transform .1s ease;
+    white-space:nowrap;
+  }
+  .btn-primary{
+    background:var(--sage);
+    color:#fff;
+    border:1px solid var(--sage);
+    box-shadow:0 6px 16px rgba(92,110,85,.35);
+  }
+  .btn-primary:hover{ background:var(--sage-dark); border-color:var(--sage-dark); }
+  .btn-primary.nudge{ animation:nudgeShake .4s ease; }
+  .btn-ghost{
+    background:var(--paper-light);
+    color:var(--ink-70);
+    border:1px solid var(--line-strong);
+  }
+  .btn-ghost:hover{ border-color:var(--sage); color:var(--sage-dark); }
+  .btn-on-glass{
+    background:rgba(255,255,255,.30);
+    color:var(--ink);
+    border:1px solid rgba(255,255,255,.5);
+    backdrop-filter:blur(6px);
+    -webkit-backdrop-filter:blur(6px);
+  }
+  .btn-on-glass:hover{ background:rgba(255,255,255,.48); }
+
+  /* =========================================================
+     TITLE SCREEN
+  ==========================================================*/
+  .screen-title{
+    position:relative;
+    min-height:100vh;
+    min-height:100dvh;
+    align-items:center;
+    justify-content:center;
+    overflow:hidden;
+    padding:24px;
+  }
+  .title-bg{
+    position:absolute;
+    inset:-24px;
+    background-size:cover;
+    background-position:center;
+    filter:blur(18px) brightness(.62) saturate(1.05);
+    transform:scale(1.06);
+  }
+  .title-scrim{
+    position:absolute; inset:0;
+    background:linear-gradient(180deg, rgba(40,30,20,.30), rgba(30,22,15,.55));
+  }
+  .title-card{
+    position:relative;
+    z-index:1;
+    text-align:center;
+    max-width:420px;
+    background:var(--paper-light);
+    border-radius:28px;
+    padding:46px 38px 38px;
+    box-shadow:0 24px 60px rgba(0,0,0,.35);
+    animation:fadeUp .5s ease;
+  }
+  .title-mark{
+    font-family:'Fraunces',serif;
+    font-style:italic;
+    font-weight:650;
+    font-size:42px;
+    color:var(--ink);
+    margin:0 0 10px;
+  }
+  .title-tag{
+    font-size:14.5px;
+    color:var(--ink-55);
+    margin:0 0 30px;
+    line-height:1.5;
+  }
+  .title-fresh-link{
+    display:block;
+    margin:14px auto 0;
+    background:none;
+    border:none;
+    font-size:12.5px;
+    color:var(--ink-55);
+    text-decoration:underline;
+    cursor:pointer;
+  }
+  .title-fresh-link:hover{ color:var(--ink); }
+
+  /* =========================================================
+     ROOM PICKER SCREEN
+  ==========================================================*/
+  .screen-picker{ min-height:100vh; min-height:100dvh; padding:26px 24px 60px; }
+  .picker-header{
+    display:flex;
+    align-items:center;
+    gap:14px;
+    max-width:920px;
+    margin:0 auto 28px;
+  }
+  .picker-back{
+    display:flex; align-items:center; gap:6px;
+    background:none; border:none; cursor:pointer;
+    color:var(--ink-55); font-size:13.5px; font-weight:600;
+    padding:6px 4px;
+  }
+  .picker-back:hover{ color:var(--ink); }
+  .picker-back svg{ width:16px; height:16px; }
+  .picker-heading{ max-width:920px; margin:0 auto 22px; }
+  .picker-title{
+    font-family:'Fraunces',serif;
+    font-style:italic;
+    font-weight:560;
+    font-size:28px;
+    margin:0 0 6px;
+  }
+  .picker-sub{ font-size:14px; color:var(--ink-55); margin:0; }
+  .room-grid{
+    max-width:920px;
+    margin:0 auto;
+    display:grid;
+    grid-template-columns:repeat(auto-fill, minmax(230px, 1fr));
+    gap:18px;
+  }
+  .room-card{
+    position:relative;
+    width:100%;
+    aspect-ratio:16/9;
+    border-radius:16px;
+    overflow:hidden;
+    cursor:pointer;
+    border:2.5px solid transparent;
+    box-shadow:var(--shadow-card);
+    background:var(--paper-light);
+    padding:0;
+    transition:transform .15s ease, border-color .15s ease;
+  }
+  .room-card:hover{ transform:translateY(-3px); }
+  .room-card.active{ border-color:var(--gold); }
+  .room-card img{ width:100%; height:100%; object-fit:cover; display:block; }
+  .room-card.img-error{ background:var(--paper); }
+  .room-card.img-error img{ opacity:0; }
+  .room-card.img-error::after{
+    content:'Image unavailable';
+    position:absolute; inset:0;
+    display:flex; align-items:center; justify-content:center;
+    text-align:center; padding:0 10px;
+    font-size:11.5px; color:var(--ink-35);
+  }
+  .room-card-label{
+    position:absolute; left:10px; bottom:10px;
+    background:rgba(40,30,20,.55);
+    color:#fff;
+    font-size:12px; font-weight:600;
+    padding:5px 11px;
+    border-radius:999px;
+    backdrop-filter:blur(4px);
+  }
+  .room-card-check{
+    position:absolute; top:8px; right:8px;
+    width:22px; height:22px;
+    border-radius:50%;
+    background:var(--gold);
+    display:flex; align-items:center; justify-content:center;
+  }
+  .room-card-check svg{ width:12px; height:12px; }
+  .room-card-soon{
+    width:100%;
+    aspect-ratio:16/9;
+    border-radius:16px;
+    border:1.5px dashed var(--line-strong);
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    gap:6px;
+    color:var(--ink-35);
+    font-size:12.5px;
+    cursor:default;
+  }
+  .room-card-soon svg{ width:18px; height:18px; opacity:.6; }
+
+  /* =========================================================
+     BUILDER SCREEN
+  ==========================================================*/
+  .screen-builder{
+    position:relative;
+    height:100vh;
+    height:100dvh;
+    overflow:hidden;
+  }
+  .rooms-viewport{
+    position:absolute;
+    inset:0;
+    display:flex;
+    align-items:stretch;
+    overflow-x:auto;
+    overflow-y:hidden;
+    scroll-snap-type:x mandatory;
+    scrollbar-width:thin;
+  }
+  .stage{
+    position:relative;
+    flex:0 0 100%;
+    height:100%;
+    scroll-snap-align:center;
+    touch-action:pan-x;
+    user-select:none;
+    cursor:grab;
+  }
+  .stage.panning{ cursor:grabbing; }
+  .add-room-btn{
+    position:absolute;
+    top:50%;
+    transform:translateY(-50%);
+    width:36px; height:36px;
+    border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    background:var(--glass-bg-strong);
+    backdrop-filter:blur(10px) saturate(160%);
+    -webkit-backdrop-filter:blur(10px) saturate(160%);
+    border:1px solid var(--glass-border);
+    box-shadow:0 6px 16px rgba(20,15,10,.22);
+    color:var(--ink-70);
+    cursor:pointer;
+    z-index:200;
+  }
+  .add-room-btn:hover{ color:var(--ink); background:var(--paper-light); }
+  .add-room-btn svg{ width:15px; height:15px; }
+  .add-room-btn-left{ left:14px; }
+  .add-room-btn-right{ right:14px; }
+  .room-nav-btn{
+    position:fixed;
+    top:50%;
+    transform:translateY(-50%);
+    width:40px; height:40px;
+    border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    background:var(--glass-bg-strong);
+    backdrop-filter:blur(10px) saturate(160%);
+    -webkit-backdrop-filter:blur(10px) saturate(160%);
+    border:1px solid var(--glass-border);
+    box-shadow:0 6px 16px rgba(20,15,10,.22);
+    color:var(--ink-70);
+    cursor:pointer;
+    z-index:6000;
+  }
+  .room-nav-btn:hover{ color:var(--ink); background:var(--paper-light); }
+  .room-nav-btn svg{ width:16px; height:16px; }
+  .room-nav-left{ left:16px; }
+  .room-nav-right{ right:16px; }
+  .room-nav-right.tray-open{ right:240px; }
+  .stage-bg-layer{
+    position:absolute; inset:0;
+    z-index:-1000;
+    background-size:cover;
+    background-position:center;
+    opacity:0;
+    transition:opacity 1s ease;
+    pointer-events:none;
+  }
+  .stage-bg-layer.active{ opacity:1; }
+  .stage.drop-active::after{
+    content:'';
+    position:absolute; inset:10px;
+    border-radius:14px;
+    box-shadow:inset 0 0 0 3px var(--sage);
+    pointer-events:none;
+  }
+  .stage-hint{
+    position:absolute;
+    inset:0;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+    padding:0 30px;
+    margin:0;
+    font-family:'Fraunces', serif;
+    font-style:italic;
+    font-size:20px;
+    color:rgba(255,252,244,.85);
+    text-shadow:0 2px 14px rgba(0,0,0,.4);
+    pointer-events:none;
+    transition:opacity .25s ease;
+  }
+  .stage-hint.hidden{ opacity:0; }
+
+  /* ambient dust motes — purely decorative, drift slowly through the room */
+  .dust-mote{
+    position:absolute;
+    border-radius:50%;
+    background:radial-gradient(circle, rgba(255,240,210,.95), rgba(255,240,210,0) 72%);
+    pointer-events:none;
+    z-index:400;
+    opacity:0;
+    animation-name:motesDrift;
+    animation-timing-function:linear;
+    animation-iteration-count:infinite;
+  }
+  @keyframes motesDrift{
+    0%   { transform:translate(0,0); opacity:0; }
+    12%  { opacity:.82; }
+    88%  { opacity:.82; }
+    100% { transform:translate(var(--drift-x,18px), var(--drift-y,-160px)); opacity:0; }
+  }
+  /* at night the same motes become slow-blinking fireflies instead of a
+     steady fade — same drift path, no JS changes needed */
+  .stage.lamps-lit .dust-mote{
+    background:radial-gradient(circle, rgba(214,255,150,.95), rgba(214,255,150,0) 70%);
+    animation-name:fireflyDrift;
+  }
+  @keyframes fireflyDrift{
+    0%   { transform:translate(0,0); opacity:0; }
+    8%   { opacity:.75; }
+    20%  { opacity:.12; }
+    32%  { opacity:.8; }
+    46%  { opacity:.1; }
+    60%  { opacity:.7; }
+    74%  { opacity:.15; }
+    88%  { opacity:.6; }
+    100% { transform:translate(var(--drift-x,18px), var(--drift-y,-160px)); opacity:0; }
+  }
+
+  /* a very soft, slow cloud-shadow sweeping the room — deliberately
+     imprecise, sits behind the furniture with the background */
+  .cloud-shadow{
+    position:absolute;
+    top:-30%; left:-45%;
+    width:95%; height:160%;
+    border-radius:50%;
+    background:radial-gradient(ellipse, rgba(35,30,45,.32), rgba(35,30,45,0) 70%);
+    filter:blur(40px);
+    pointer-events:none;
+    z-index:-500;
+    animation:cloudDrift 75s ease-in-out infinite alternate;
+  }
+  @keyframes cloudDrift{
+    0%   { transform:translateX(0); }
+    100% { transform:translateX(160%); }
+  }
+
+  /* the faintest suggestion of shifting daylight — kept deliberately
+     subtle (alpha only ever moves between ~.02 and ~.05) after the plant
+     sway feedback; this should be felt more than seen */
+  .breathing-light{
+    position:absolute; inset:0;
+    pointer-events:none;
+    z-index:450;
+    background:radial-gradient(circle at 50% 35%, rgba(255,250,235,.18), rgba(255,250,235,0) 65%);
+    animation:breathe 12s ease-in-out infinite;
+  }
+  @keyframes breathe{
+    0%, 100% { opacity:.4; }
+    50%      { opacity:1; }
+  }
+
+  .stage-vignette-top{
+    position:absolute; left:0; right:0;
+    pointer-events:none;
+    z-index:-999;
+    top:0; height:130px;
+    background:linear-gradient(180deg, rgba(20,15,10,.35), rgba(20,15,10,0));
+  }
+
+  /* day/night lighting overlay — sits above the background and every placed
+     piece, below all floating UI, so the whole room dims and tints together */
+  .night-overlay{
+    position:absolute; inset:0;
+    pointer-events:none;
+    z-index:500;
+    opacity:0;
+    transition:opacity 1.1s ease, background 1.1s ease;
+  }
+  .night-overlay.tint-dawn{ opacity:1; background:linear-gradient(200deg, rgba(110,52,54,.34), rgba(168,96,58,.24)); }
+  .night-overlay.tint-dusk{ opacity:1; background:linear-gradient(200deg, rgba(90,40,70,.42), rgba(190,100,50,.30)); }
+  .night-overlay.tint-night{ opacity:1; background:linear-gradient(200deg, rgba(23,20,52,.55), rgba(41,28,58,.40)); }
+
+  /* a warm wash spreading from each lit lamp, sitting above the dark tint
+     with a blend mode so it visually breaks through the darkness rather
+     than just getting dimmed by it like everything else */
+  .lamp-light-pools{
+    position:absolute; inset:0;
+    z-index:520;
+    pointer-events:none;
+    mix-blend-mode:screen;
+    opacity:0;
+    transition:opacity .6s ease, background .3s ease;
+  }
+  .stage.lamps-lit .lamp-light-pools{ opacity:1; }
+
+  /* top bar */
+  .builder-topbar{
+    position:absolute;
+    top:16px; left:16px; right:16px;
+    z-index:3000;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+  }
+  .builder-brand{
+    font-family:'Fraunces',serif;
+    font-style:italic;
+    font-weight:560;
+    font-size:18px;
+    color:#fff;
+    text-shadow:0 2px 10px rgba(0,0,0,.35);
+  }
+  .builder-actions{ display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end; align-items:center; }
+  .time-controls{ display:flex; gap:6px; align-items:center; }
+  .time-btn{
+    width:36px; height:36px;
+    border-radius:50%;
+    padding:0;
+    display:flex; align-items:center; justify-content:center;
+    flex-shrink:0;
+    background:rgba(255,255,255,.30);
+    color:var(--ink);
+    border:1px solid rgba(255,255,255,.5);
+    backdrop-filter:blur(6px);
+    -webkit-backdrop-filter:blur(6px);
+    cursor:pointer;
+    transition:background .15s ease, box-shadow .15s ease;
+  }
+  .time-btn:hover{ background:rgba(255,255,255,.48); }
+  .time-btn.active{ background:var(--ink); color:#fff; box-shadow:0 0 0 2px var(--gold); }
+
+  .arch-picker{ position:relative; }
+  #archPickerBtn{
+    width:38px; height:38px;
+    padding:0;
+    display:flex; align-items:center; justify-content:center;
+  }
+  #archPickerBtn svg{ width:16px; height:16px; }
+  .arch-popover{
+    display:none;
+    position:absolute;
+    top:calc(100% + 8px);
+    right:0;
+    background:var(--glass-bg-strong);
+    backdrop-filter:blur(14px) saturate(160%);
+    -webkit-backdrop-filter:blur(14px) saturate(160%);
+    border:1px solid var(--glass-border);
+    border-radius:14px;
+    box-shadow:0 12px 30px rgba(20,15,10,.3);
+    padding:10px;
+    grid-template-columns:repeat(3, 72px);
+    gap:8px;
+    z-index:8000;
+  }
+  .arch-popover.open{ display:grid; }
+  .arch-card{
+    cursor:pointer;
+    border-radius:8px;
+    background:none;
+    padding:3px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:3px;
+    border:2px solid transparent;
+  }
+  .arch-card:hover{ background:rgba(255,255,255,.35); }
+  .arch-card.active{ border-color:var(--gold); }
+  .arch-card img{
+    width:72px; height:46px;
+    object-fit:cover;
+    border-radius:6px;
+    display:block;
+  }
+  .arch-card span{
+    font-size:8px;
+    font-weight:600;
+    color:var(--ink-70);
+    text-align:center;
+    line-height:1.15;
+  }
+  .time-btn svg{ width:17px; height:17px; }
+
+  .motion-toggle{
+    width:36px; height:36px;
+    border-radius:50%;
+    padding:0;
+    display:flex; align-items:center; justify-content:center;
+    flex-shrink:0;
+  }
+  .motion-toggle svg{ width:17px; height:17px; }
+  .motion-toggle .icon-off{ display:none; }
+  .motion-toggle.off .icon-on{ display:none; }
+  .motion-toggle.off .icon-off{ display:block; }
+
+  .item-toolbar .bar{ opacity:.3; transition:opacity .15s ease; }
+  #swayToolbarBtn[data-level="1"] .bar-1{ opacity:1; }
+  #swayToolbarBtn[data-level="2"] .bar-1,
+  #swayToolbarBtn[data-level="2"] .bar-2{ opacity:1; }
+  #swayToolbarBtn[data-level="3"] .bar{ opacity:1; }
+  #lightToolbarBtn[data-level="1"] .bar-1{ opacity:1; }
+  #lightToolbarBtn[data-level="2"] .bar-1,
+  #lightToolbarBtn[data-level="2"] .bar-2{ opacity:1; }
+  #lightToolbarBtn[data-level="3"] .bar{ opacity:1; }
+
+  /* the global switch now only covers room-wide effects — sway is per item */
+  .stage.motion-off .lamp-glow{ animation:none !important; }
+  .stage.motion-off .dust-mote{ animation:none !important; opacity:0 !important; }
+  .stage.motion-off .cloud-shadow{ animation:none !important; opacity:0 !important; }
+  .stage.motion-off .breathing-light{ animation:none !important; opacity:0 !important; }
+  .stage.motion-off{ animation:none !important; }
+  /* camera breathing — a barely-perceptible, irregular scale drift so a
+     still room doesn't feel like a static photo. Kept to a fraction of a
+     percent and paused the moment the player actually touches anything,
+     so it never fights with precise dragging. */
+  @keyframes roomBreathe{
+    0%   { transform:scale(1); }
+    23%  { transform:scale(1.0021); }
+    44%  { transform:scale(0.9982); }
+    68%  { transform:scale(1.0035); }
+    85%  { transform:scale(0.9975); }
+    100% { transform:scale(1); }
+  }
+  .stage{ animation:roomBreathe 46s ease-in-out infinite; will-change:transform; }
+  .stage.breathing-paused{ animation-play-state:paused; }
+
+  /* =========================================================
+     placed pieces
+  ==========================================================*/
+  .piece{
+    position:absolute;
+    top:0; left:0;
+    transform-origin:center center;
+    will-change:transform, width;
+  }
+  .piece-inner{ position:relative; width:100%; }
+  .lamp-glow{
+    position:absolute;
+    top:50%; left:50%;
+    width:240%; height:240%;
+    transform:translate(-50%,-50%);
+    border-radius:50%;
+    background:radial-gradient(circle, rgba(255,206,130,.85) 0%, rgba(255,196,110,.32) 38%, rgba(255,196,110,0) 72%);
+    opacity:.16;
+    pointer-events:none;
+    transition:opacity 1.1s ease;
+  }
+  .stage.lamps-lit .lamp-glow{ opacity:calc(.85 * var(--lamp-intensity, 1)); }
+  .stage.lamps-lit .piece.lamp-off .lamp-glow{ opacity:.16; }
+  @keyframes lampBreathe{ 0%,100%{ opacity:calc(.78 * var(--lamp-intensity, 1)); } 50%{ opacity:calc(.92 * var(--lamp-intensity, 1)); } }
+  .stage.lamps-lit .piece:not(.lamp-off) .lamp-glow{ animation:lampBreathe 3.4s ease-in-out infinite; }
+
+  /* candles and similar small "flame" toggles (autoLightAtNight +
+     flickerWhenOn items) — a small circular glow sitting at the flame
+     itself (top of the piece), not an outline traced around the whole
+     item the way a filter on piece-visual would produce. Quicker and
+     less even than the steady lamp breathe above so it reads as a live
+     flame rather than an electric light. */
+  .flame-glow{
+    position:absolute;
+    top:8%; left:50%;
+    width:62%; aspect-ratio:1;
+    transform:translate(-50%,-50%);
+    border-radius:50%;
+    background:radial-gradient(circle, rgba(255,200,120,.7) 0%, rgba(255,190,110,.38) 32%, rgba(255,185,105,.16) 58%, rgba(255,185,105,0) 100%);
+    opacity:0;
+    pointer-events:none;
+  }
+  @keyframes candleFlicker{
+    0%,100%{ opacity:.8; transform:translate(-50%,-50%) scale(1); }
+    22%{ opacity:.88; transform:translate(-50%,-50%) scale(1.03); }
+    41%{ opacity:.76; transform:translate(-50%,-50%) scale(.98); }
+    63%{ opacity:.92; transform:translate(-50%,-50%) scale(1.05); }
+    79%{ opacity:.82; transform:translate(-50%,-50%) scale(1); }
+  }
+  .piece.flicker-on .flame-glow{ animation:candleFlicker 3.2s ease-in-out infinite; }
+  .stage.motion-off .piece.flicker-on .flame-glow{ animation:none !important; opacity:.85; }
+
+  /* plant sway — pivots from the base, like it's rooted in a pot. Amplitude
+     and speed come from --sway-amp/--sway-duration, set in JS per strength
+     level, so one keyframe rule covers all three. */
+  @keyframes plantSway{
+    0%   { transform:rotate(calc(var(--sway-amp, 1.6deg) * -1)); }
+    50%  { transform:rotate(var(--sway-amp, 1.6deg)); }
+    100% { transform:rotate(calc(var(--sway-amp, 1.6deg) * -1)); }
+  }
+  .piece.sway-eligible .piece-inner{
+    transform-origin:50% 100%;
+    animation:plantSway var(--sway-duration, 7.5s) ease-in-out infinite;
+    animation-delay:var(--sway-delay, 0s);
+  }
+  /* curtains hang from the rod, so they pivot from the top instead —
+     the hem sways, the header stays put */
+  .piece.sway-eligible.sway-top .piece-inner{ transform-origin:50% 0%; }
+  /* a freshly placed piece holds still for a moment before it starts
+     swaying, rather than snapping into motion the instant it lands */
+  .piece.settling .piece-inner{ animation:none !important; }
+  .piece-inner img{
+    position:relative;
+    width:100%; height:auto;
+    display:block;
+    object-fit:contain;
+    pointer-events:none;
+    filter:drop-shadow(0 10px 14px rgba(30,22,14,.30));
+    transition:transform .2s ease;
+  }
+  /* stretchable items (curtains, rods) render as a background-image div
+     instead of an <img> — background-size:100% 100% is an unambiguous way
+     to force a non-uniform stretch, sidestepping the inconsistent way
+     browsers apply object-fit to SVGs specifically loaded via <img> */
+  .piece-inner .piece-visual{
+    position:relative;
+    width:100%; height:100%;
+    display:block;
+    overflow:hidden;
+    pointer-events:none;
+    filter:drop-shadow(0 10px 14px rgba(30,22,14,.30));
+    transition:transform .2s ease;
+  }
+  .piece.flipped .piece-inner img,
+  .piece.flipped .piece-inner .piece-visual{ transform:scaleX(-1); }
+  .piece-outline{
+    position:absolute; inset:0;
+    border-radius:6px;
+    box-shadow:0 0 0 1.6px #fff, 0 0 0 3px rgba(20,15,10,.22);
+    opacity:0;
+    pointer-events:none;
+    transition:opacity .12s ease;
+  }
+  .piece.selected .piece-outline{ opacity:1; }
+
+  .handle{
+    position:absolute;
+    width:16px; height:16px;
+    border-radius:50%;
+    background:var(--paper-light);
+    border:1.5px solid var(--gold);
+    box-shadow:0 1px 3px rgba(0,0,0,.25);
+    display:none;
+    align-items:center;
+    justify-content:center;
+  }
+  .piece.selected .handle{ display:flex; }
+  .handle-resize{ right:-8px; top:-8px; cursor:nesw-resize; }
+  .handle-rotate{ top:-30px; left:50%; transform:translateX(-50%); cursor:grab; }
+  .handle-rotate::before{
+    content:'';
+    position:absolute; top:16px; left:50%;
+    width:1px; height:14px;
+    background:var(--gold);
+    transform:translateX(-50%);
+    opacity:.85;
+  }
+  .handle svg{ width:9px; height:9px; }
+  .piece.dragging, .piece.dragging *{ cursor:grabbing !important; }
+  .piece-inner.pop{ animation:popIn .32s cubic-bezier(.2,.9,.3,1.2); }
+
+  /* stretch handles are wide grab-strips along most of an edge, not a
+     small dot — deliberately a different shape from the round corner
+     handle so the two are never confused for one another. Each leaves
+     the bottom-right corner clear for the resize handle. */
+  .handle-edge{
+    position:absolute;
+    display:none;
+    align-items:center;
+    justify-content:center;
+    width:16px; height:16px;
+    border-radius:50%;
+    background:var(--paper-light);
+    border:1.5px solid var(--gold);
+    box-shadow:0 1px 3px rgba(0,0,0,.25);
+    color:var(--gold);
+  }
+  .piece.selected .handle-edge{ display:flex; }
+  .handle-edge-h{ right:-8px; top:50%; transform:translateY(-50%); cursor:ew-resize; }
+  .handle-edge-v{ bottom:-8px; left:50%; transform:translateX(-50%); cursor:ns-resize; }
+  .handle-edge svg{ width:9px; height:9px; }
+
+  /* touch devices get noticeably bigger grab targets on the resize/rotate
+     handles — keyed off input precision, not screen size, so a touchscreen
+     laptop still gets this and a mouse on a small window doesn't */
+  @media (pointer: coarse){
+    .handle{ width:26px; height:26px; }
+    .handle-resize{ right:-13px; top:-13px; }
+    .handle-rotate{ top:-42px; }
+    .handle-rotate::before{ top:26px; height:16px; }
+    .handle-edge{ width:26px; height:26px; }
+    .handle-edge-h{ right:-13px; }
+    .handle-edge-v{ bottom:-13px; }
+    .handle svg{ width:14px; height:14px; }
+    .handle-edge svg{ width:13px; height:13px; }
+  }
+
+  /* floating selection toolbar */
+  .item-toolbar{
+    position:fixed;
+    display:none;
+    gap:4px;
+    background:var(--ink);
+    padding:6px;
+    border-radius:12px;
+    box-shadow:0 8px 20px rgba(0,0,0,.28);
+    z-index:4000;
+    transform:translate(-50%,-100%);
+  }
+  .item-toolbar.visible{ display:flex; }
+  .item-toolbar button{
+    width:30px; height:30px;
+    border:none; background:transparent;
+    border-radius:8px;
+    color:#F6F1E4;
+    display:flex; align-items:center; justify-content:center;
+    cursor:pointer;
+    transition:background .12s ease;
+  }
+  .item-toolbar button:hover{ background:rgba(255,255,255,.14); }
+  .item-toolbar button.danger:hover{ background:var(--clay); }
+  .item-toolbar svg{ width:16px; height:16px; }
+  .item-toolbar .divider{ width:1px; background:rgba(255,255,255,.18); margin:4px 2px; }
+
+  /* =========================================================
+     GLASS TRAY (compact, right-side, toggleable)
+  ==========================================================*/
+  .tray-toggle{
+    position:fixed;
+    right:18px; bottom:18px;
+    width:50px; height:50px;
+    border-radius:50%;
+    background:var(--glass-bg-strong);
+    backdrop-filter:blur(16px) saturate(160%);
+    -webkit-backdrop-filter:blur(16px) saturate(160%);
+    border:1px solid var(--glass-border);
+    box-shadow:0 10px 26px rgba(20,15,10,.30);
+    display:flex; align-items:center; justify-content:center;
+    cursor:pointer;
+    z-index:3100;
+    color:var(--ink);
+    padding:0;
+    transition:transform .15s ease, background .15s ease, color .15s ease;
+  }
+  .tray-toggle:hover{ transform:translateY(-2px); }
+  .tray-toggle.open{ background:var(--ink); color:#fff; }
+  .tray-toggle svg{ width:19px; height:19px; }
+  .tray-toggle .icon-close{ display:none; }
+  .tray-toggle.open .icon-open{ display:none; }
+  .tray-toggle.open .icon-close{ display:block; }
+
+  .tray-panel{
+    position:fixed;
+    right:18px; bottom:80px;
+    width:210px;
+    max-height:min(74vh, 620px);
+    z-index:3000;
+    background:var(--glass-bg);
+    backdrop-filter:blur(20px) saturate(160%);
+    -webkit-backdrop-filter:blur(20px) saturate(160%);
+    border:1px solid var(--glass-border);
+    border-radius:20px;
+    box-shadow:0 14px 40px rgba(20,15,10,.32), inset 0 1px 0 rgba(255,255,255,.35);
+    padding:10px 10px 10px;
+    display:flex;
+    flex-direction:column;
+    transform-origin:bottom right;
+    transition:opacity .16s ease, transform .16s ease;
+  }
+  .tray-panel.hidden{
+    opacity:0;
+    transform:scale(.9) translateY(8px);
+    pointer-events:none;
+  }
+  .tray-drag-handle{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    height:16px;
+    margin:-2px 0 4px;
+    cursor:grab;
+    touch-action:none;
+    flex-shrink:0;
+  }
+  .tray-drag-handle span{
+    width:30px; height:4px;
+    border-radius:2px;
+    background:var(--ink-35);
+  }
+  .tray-drag-handle:hover span{ background:var(--ink-55); }
+  .tray-panel.dragging{ transition:none; }
+  .tray-panel.dragging .tray-drag-handle{ cursor:grabbing; }
+  .tray-tabs{
+    display:flex;
+    flex-wrap:wrap;
+    gap:4px;
+    margin-bottom:8px;
+  }
+  .tray-filter-row{
+    display:flex;
+    gap:6px;
+    margin-bottom:8px;
+  }
+  .tray-filter-select{
+    flex:1;
+    font-family:inherit;
+    font-size:11px;
+    font-weight:600;
+    color:var(--ink-70);
+    background:var(--glass-bg-strong);
+    border:1px solid var(--glass-border);
+    border-radius:99px;
+    padding:5px 10px;
+    cursor:pointer;
+    min-width:0;
+  }
+  .tray-filter-select.active{
+    background:var(--sage);
+    color:#fff;
+    border-color:var(--sage);
+  }
+  .tray-empty-note{
+    grid-column:1 / -1;
+    text-align:center;
+    font-size:12.5px;
+    color:var(--ink-55);
+    padding:24px 12px;
+  }
+  .tab{
+    font-size:11.5px;
+    font-weight:600;
+    color:var(--ink-70);
+    background:transparent;
+    border:none;
+    padding:4px 9px;
+    border-radius:999px;
+    cursor:pointer;
+    transition:background .15s ease, color .15s ease;
+  }
+  .tab.active{ background:var(--ink); color:#fff; }
+  .tab:not(.active):hover{ background:rgba(54,43,34,.08); }
+
+  .tray-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:8px;
+    overflow-y:auto;
+    padding-right:2px;
+  }
+  .sticker{
+    background:var(--glass-bg-strong);
+    border:1px solid rgba(255,255,255,.6);
+    border-radius:13px;
+    padding:7px 5px 6px;
+    text-align:center;
+    cursor:grab;
+    transform:rotate(var(--tilt,0deg));
+    transition:transform .16s ease, box-shadow .16s ease, background .16s ease;
+    touch-action:none;
+    user-select:none;
+  }
+  .sticker:hover{
+    transform:rotate(0deg) translateY(-2px);
+    background:var(--paper-light);
+    box-shadow:0 6px 16px rgba(20,15,10,.20);
+  }
+  .sticker-thumb{
+    position:relative;
+    width:100%; aspect-ratio:1/1;
+    display:flex; align-items:center; justify-content:center;
+    margin-bottom:4px;
+    pointer-events:none;
+  }
+  .sticker-attr-overlay{
+    position:absolute; inset:0;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    gap:5px;
+    padding:8px;
+    opacity:0;
+    transition:opacity .3s ease .05s;
+    pointer-events:none;
+  }
+  .sticker:hover .sticker-attr-overlay{ opacity:1; }
+  .sticker-attr-pill{
+    background:rgba(46,36,26,.42);
+    backdrop-filter:blur(6px);
+    -webkit-backdrop-filter:blur(6px);
+    border:1px solid rgba(120,105,85,.4);
+    color:#fff;
+    font-size:10.5px;
+    font-weight:600;
+    padding:4px 10px;
+    border-radius:99px;
+    white-space:nowrap;
+  }
+  .sticker-thumb img{
+    max-width:88%; max-height:88%;
+    object-fit:contain;
+    filter:drop-shadow(0 6px 8px rgba(30,22,14,.20));
+    transition:filter .35s ease;
+  }
+  .sticker:hover .sticker-thumb img{
+    filter:drop-shadow(0 6px 8px rgba(30,22,14,.20)) blur(3.5px);
+  }
+  .sticker-label{
+    font-size:9px;
+    font-weight:600;
+    color:var(--ink-70);
+    line-height:1.2;
+    pointer-events:none;
+  }
+
+  /* grouped color variants — one neutral card shown by default, with a
+     row of true-color dots hinting at the other colors; tapping the card
+     reveals the rest (see renderGroupCard) so the tray doesn't need a
+     separate slot per color */
+  .sticker-group{ display:contents; }
+  .sticker-group.expanded{ display:block; grid-column:1 / -1; }
+  .sticker-group.expanded .sticker-primary{ max-width:calc(50% - 4px); }
+  .sticker-primary{ position:relative; }
+  .variant-dots{
+    display:flex;
+    justify-content:center;
+    flex-wrap:wrap;
+    gap:4px;
+    margin-top:5px;
+    pointer-events:none;
+  }
+  .variant-dot{
+    width:8px; height:8px;
+    border-radius:50%;
+    box-shadow:0 0 0 1px rgba(54,43,34,.18), inset 0 0 0 1px rgba(255,255,255,.35);
+  }
+  .sticker-group.expanded .sticker-primary{
+    box-shadow:0 0 0 1.5px var(--gold);
+  }
+  .variant-row{
+    display:grid;
+    grid-template-columns:repeat(auto-fill, minmax(70px, 1fr));
+    gap:8px;
+    margin-top:8px;
+    padding-top:8px;
+    border-top:1px dashed var(--line-strong);
+  }
+
+  /* mute toggle */
+  .music-controls{
+    position:fixed;
+    top:12px; left:50%;
+    transform:translateX(-50%);
+    z-index:7000;
+    display:flex;
+    align-items:center;
+    gap:5px;
+    background:var(--glass-bg-strong);
+    backdrop-filter:blur(10px) saturate(150%);
+    -webkit-backdrop-filter:blur(10px) saturate(150%);
+    border:1px solid var(--glass-border);
+    border-radius:999px;
+    box-shadow:0 3px 8px rgba(20,15,10,.16);
+    padding:3px 10px 3px 3px;
+    opacity:.82;
+    transition:opacity .15s ease;
+  }
+  .music-controls:hover{ opacity:1; }
+  .mute-toggle{
+    width:26px; height:26px;
+    flex-shrink:0;
+    border-radius:50%;
+    background:transparent;
+    border:none;
+    display:flex; align-items:center; justify-content:center;
+    cursor:pointer;
+    color:var(--ink);
+    padding:0;
+  }
+  .mute-toggle:hover{ background:rgba(255,255,255,.35); }
+  .mute-toggle svg{ width:12px; height:12px; }
+  .mute-toggle .icon-muted{ display:none; }
+  .mute-toggle.muted .icon-unmuted{ display:none; }
+  .volume-slider{
+    width:46px;
+    height:3px;
+    accent-color:var(--gold);
+    cursor:pointer;
+  }
+  .mute-toggle.muted .icon-muted{ display:block; }
+
+  /* drag ghost */
+  .drag-ghost{
+    position:fixed; top:0; left:0;
+    width:110px;
+    pointer-events:none;
+    z-index:5000;
+    opacity:0;
+    display:none;
+    transform:translate(-50%,-50%);
+  }
+  .drag-ghost img{
+    width:100%; display:block;
+    filter:drop-shadow(0 10px 16px rgba(30,22,14,.35));
+  }
+
+  /* =========================================================
+     RESULTS OVERLAY
+  ==========================================================*/
+  .results-overlay{
+    position:fixed; inset:0;
+    background:var(--overlay-dim);
+    z-index:6000;
+    display:none;
+    align-items:center;
+    justify-content:center;
+    padding:20px;
+  }
+  .results-overlay.active{ display:flex; }
+  .results-card{
+    position:relative;
+    background:var(--paper-light);
+    border-radius:26px;
+    padding:34px 30px 28px;
+    max-width:380px;
+    width:100%;
+    text-align:center;
+    box-shadow:0 24px 60px rgba(0,0,0,.35);
+    animation:popIn .32s cubic-bezier(.2,.9,.3,1.15);
+  }
+  .results-close{
+    position:absolute; top:12px; right:14px;
+    background:none; border:none;
+    font-size:22px; line-height:1;
+    color:var(--ink-35);
+    cursor:pointer;
+  }
+  .results-close:hover{ color:var(--ink); }
+  .results-eyebrow{ font-size:12.5px; color:var(--ink-55); display:block; margin-bottom:4px; }
+  .results-title{
+    font-family:'Fraunces',serif;
+    font-style:italic;
+    font-weight:600;
+    font-size:25px;
+    margin:0 0 12px;
+  }
+  .results-score{
+    font-family:'Fraunces',serif;
+    font-weight:650;
+    font-size:46px;
+    color:var(--sage-dark);
+    margin-bottom:20px;
+  }
+  .results-score span{
+    font-size:17px;
+    color:var(--ink-35);
+    font-family:'Karla',sans-serif;
+    font-weight:600;
+  }
+  .results-bars{ display:flex; flex-direction:column; gap:12px; margin-bottom:24px; text-align:left; }
+  .result-bar-row .label-row{
+    display:flex; justify-content:space-between;
+    font-size:12.5px; font-weight:600; color:var(--ink-70);
+    margin-bottom:4px;
+  }
+  .result-bar-track{ height:8px; border-radius:99px; background:var(--line); overflow:hidden; }
+  .result-bar-fill{ height:100%; border-radius:99px; background:var(--sage); transition:width .5s cubic-bezier(.2,.8,.3,1); }
+  .results-actions{ display:flex; gap:10px; justify-content:center; flex-wrap:wrap; }
+  .profile-link-btn{
+    display:block; width:100%; margin-bottom:14px;
+    background:linear-gradient(135deg, var(--clay), var(--gold));
+    color:#fff; border:none;
+    box-shadow:0 8px 20px rgba(189,123,82,.4);
+  }
+  .profile-link-btn:hover{ transform:translateY(-1px); box-shadow:0 10px 24px rgba(189,123,82,.5); }
+
+  .achievements-overlay{
+    position:fixed; inset:0;
+    background:var(--overlay-dim);
+    z-index:6200;
+    display:none;
+    align-items:center;
+    justify-content:center;
+    padding:24px;
+  }
+  .achievements-overlay.active{ display:flex; }
+  .achievements-card{
+    position:relative;
+    background:var(--paper);
+    border-radius:28px;
+    padding:28px;
+    max-width:640px;
+    width:100%;
+    max-height:86vh;
+    overflow-y:auto;
+    box-shadow:0 24px 60px rgba(0,0,0,.35);
+    animation:popIn .32s cubic-bezier(.2,.9,.3,1.15);
+  }
+  .achievements-title{ font-family:'Fraunces',serif; font-size:24px; margin:0 0 2px; color:var(--ink); }
+  .achievements-subtitle{ display:block; font-size:13px; color:var(--ink-55); margin-bottom:18px; }
+  .achievements-grid{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  .achievement-card{
+    display:flex; align-items:flex-start; gap:12px;
+    background:var(--glass-bg-strong);
+    border:1px solid rgba(255,255,255,.6);
+    border-radius:16px;
+    padding:12px 14px;
+  }
+  .achievement-card-medal{
+    width:38px; height:38px; border-radius:50%; flex-shrink:0;
+    display:flex; align-items:center; justify-content:center;
+    background:linear-gradient(155deg, var(--gold), var(--clay));
+  }
+  .achievement-card-medal span{ font-family:'Fraunces',serif; font-size:16px; font-weight:650; color:#fff; }
+  .achievement-card-name{ font-family:'Fraunces',serif; font-size:14.5px; font-weight:560; color:var(--ink); display:block; margin-bottom:2px; }
+  .achievement-card-desc{ font-size:11.5px; color:var(--ink-55); line-height:1.35; }
+  .achievement-card.locked{ opacity:.6; }
+  .achievement-card.locked .achievement-card-medal{ background:var(--ink-35); }
+  .achievement-card.locked .achievement-card-name{ color:var(--ink-55); }
+
+  .achievement-toast{
+    position:fixed;
+    top:24px; left:50%;
+    transform:translate(-50%,-140%);
+    z-index:6500;
+    display:flex; align-items:center; gap:12px;
+    background:var(--paper-light);
+    border:1px solid var(--glass-border);
+    border-radius:99px;
+    padding:8px 20px 8px 8px;
+    box-shadow:0 14px 34px rgba(20,15,10,.28);
+    transition:transform .5s cubic-bezier(.2,.9,.3,1.1);
+    pointer-events:none;
+  }
+  .achievement-toast.active{ transform:translate(-50%,0); }
+  .achievement-toast-medal{
+    width:40px; height:40px; border-radius:50%; flex-shrink:0;
+    background:linear-gradient(155deg, var(--gold), var(--clay));
+    display:flex; align-items:center; justify-content:center;
+    box-shadow:0 0 0 3px rgba(217,163,68,.25);
+  }
+  .achievement-toast-letter{ font-family:'Fraunces',serif; font-size:18px; font-weight:650; color:#fff; }
+  .achievement-toast-text{ display:flex; flex-direction:column; }
+  .achievement-toast-eyebrow{ font-size:11.5px; color:var(--ink-55); }
+  .achievement-toast-name{ font-family:'Fraunces',serif; font-size:15.5px; font-weight:560; color:var(--ink); }
+
+  .profile-overlay{
+    position:fixed; inset:0;
+    background:var(--overlay-dim);
+    z-index:6100;
+    display:none;
+    align-items:center;
+    justify-content:center;
+    padding:28px;
+    overflow:hidden;
+  }
+  .profile-overlay.active{ display:flex; }
+  /* a soft, blurred wash built from the room's own dominant colors (JS
+     sets the gradient inline) — the glassy backdrop the tiles float over,
+     instead of a flat dim scrim */
+  .profile-backdrop{
+    position:absolute; inset:-10%;
+    filter:blur(70px);
+    opacity:.85;
+  }
+  .profile-card{
+    position:relative;
+    z-index:1;
+    border-radius:32px;
+    padding:22px;
+    max-width:1140px;
+    width:100%;
+    max-height:90vh;
+    overflow-y:auto;
+    animation:popIn .32s cubic-bezier(.2,.9,.3,1.15);
+  }
+  .profile-card .results-close{
+    top:14px; right:14px; z-index:2;
+    background:rgba(255,255,255,.3);
+    color:#fff;
+  }
+
+  .profile-grid{
+    display:grid;
+    grid-template-columns:repeat(4, 1fr);
+    gap:14px;
+  }
+  .profile-hero{ grid-column:span 2; }
+  .profile-donut-tile{ grid-column:span 1; }
+  .profile-material-tile{ grid-column:span 2; }
+  .profile-category-tile{ grid-column:span 1; }
+
+  /* every tile's gradient is color-mix()'d live from --tile-tint, a hex JS
+     sets per tile from the room's own dominant material/color — the card
+     colors ARE the room's data, not decoration laid on top. True glass:
+     translucent + blurred, so the backdrop shows through and behind it. */
+  .profile-tile{
+    --tile-tint:#B8AA92;
+    position:relative;
+    background:linear-gradient(155deg,
+      color-mix(in srgb, var(--tile-tint) 78%, white 12%) 0%,
+      color-mix(in srgb, var(--tile-tint) 55%, black 8%) 100%);
+    backdrop-filter:blur(24px) saturate(1.5);
+    -webkit-backdrop-filter:blur(24px) saturate(1.5);
+    border:1px solid rgba(255,255,255,.4);
+    border-radius:24px;
+    padding:18px 20px;
+    box-shadow:0 8px 26px rgba(30,20,10,.16);
+    color:#fff;
+  }
+  .profile-tile-label{
+    display:block;
+    font-size:12.5px;
+    font-weight:600;
+    color:rgba(255,255,255,.82);
+    margin-bottom:10px;
+  }
+
+  .profile-hero{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:16px;
+    padding:22px 24px;
+  }
+  .profile-hero-label{ display:block; font-size:12.5px; color:rgba(255,255,255,.8); margin-bottom:3px; }
+  .profile-hero-title{
+    font-family:'Fraunces',serif;
+    font-size:25px;
+    font-weight:560;
+    color:#fff;
+    margin:0 0 6px;
+    line-height:1.15;
+  }
+  .profile-hero-count{ font-size:13px; color:rgba(255,255,255,.85); }
+  .profile-ring{ width:86px; height:86px; flex-shrink:0; }
+  .profile-ring-svg{ width:100%; height:100%; }
+  .profile-ring-small{ width:62px; height:62px; }
+
+  .profile-donut-row{ display:flex; align-items:center; gap:14px; }
+  .profile-legend{ display:flex; flex-direction:column; gap:6px; min-width:0; flex:1; }
+  .profile-legend-row{ flex-direction:row; flex-wrap:wrap; gap:8px 14px; }
+  .profile-legend-item{
+    display:flex; align-items:center; gap:6px;
+    font-size:12px; font-weight:600; color:rgba(255,255,255,.92);
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  }
+  .profile-legend-dot{ width:10px; height:10px; border-radius:50%; flex-shrink:0; box-shadow:0 0 0 1px rgba(0,0,0,.15); }
+
+  .profile-ribbon{
+    display:flex;
+    height:16px;
+    border-radius:99px;
+    overflow:hidden;
+    background:rgba(255,255,255,.25);
+    margin-bottom:12px;
+  }
+  .profile-ribbon-seg{ height:100%; }
+
+  .profile-stat-row{ display:flex; align-items:baseline; gap:8px; }
+  .profile-stat-row b{ font-family:'Fraunces',serif; font-size:34px; font-weight:560; color:#fff; }
+  .profile-stat-row span{ font-size:13px; color:rgba(255,255,255,.82); }
+
+  /* the one quiet tile — after four saturated ones, this stays a plain
+     bright glass surface with dark text, a resting point for the eye */
+  .profile-category-tile{
+    --tile-tint:#FFFFFF;
+    color:var(--ink);
+  }
+  .profile-category-tile .profile-tile-label{ color:var(--ink-55); }
+  .profile-category-grid{ display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+  .profile-category-cell{
+    background:rgba(255,255,255,.5);
+    border:1px solid rgba(255,255,255,.6);
+    border-radius:14px;
+    padding:8px 10px;
+  }
+  .profile-category-cell b{ display:block; font-size:16px; color:var(--ink); }
+  .profile-category-cell span{ font-size:11.5px; color:var(--ink-55); }
+  .profile-roomtype-tile{ grid-column:span 4; }
+  .profile-chip-row{ display:flex; flex-wrap:wrap; gap:8px; }
+  .profile-roomtype-chip{
+    padding:6px 14px;
+    border-radius:99px;
+    font-size:13px; font-weight:600;
+    background:linear-gradient(135deg, var(--clay), var(--gold));
+    color:#fff;
+  }
+
+  .visually-hidden{
+    position:absolute; width:1px; height:1px;
+    padding:0; margin:-1px; overflow:hidden;
+    clip:rect(0,0,0,0); white-space:nowrap; border:0;
+  }
+</style>
+</head>
+<body>
+
+<!-- ============================================================
+     TITLE SCREEN
+============================================================ -->
+<section class="screen screen-title active flex" id="screen-title">
+  <div class="title-bg"></div>
+  <div class="title-scrim"></div>
+  <div class="title-card">
+    <h1 class="title-mark">Roomstories</h1>
+    <p class="title-tag">A cozy little sandbox for styling rooms, one piece at a time.</p>
+    <button class="btn-primary" id="titleStartBtn" style="font-size:15px; padding:13px 30px;">Pick a room</button>
+    <button class="title-fresh-link" id="titleFreshBtn" style="display:none;">Or start a brand new room</button>
+  </div>
+</section>
+
+<!-- ============================================================
+     ROOM PICKER SCREEN
+============================================================ -->
+<section class="screen screen-picker" id="screen-picker">
+  <div class="picker-header">
+    <button class="picker-back" id="pickerBackBtn" type="button">
+      <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4 6 10l6 6"/></svg>
+      Back
+    </button>
+  </div>
+  <div class="picker-heading">
+    <h2 class="picker-title">Choose your room</h2>
+    <p class="picker-sub">Pick a space to start decorating. You can switch rooms later without losing your layout.</p>
+  </div>
+  <div class="room-grid" id="roomGrid"></div>
+</section>
+
+<!-- ============================================================
+     BUILDER SCREEN
+============================================================ -->
+<section class="screen screen-builder" id="screen-builder">
+  <div class="rooms-viewport" id="roomsViewport"></div>
+  <button class="room-nav-btn room-nav-left" id="roomNavLeft" type="button" aria-label="Previous room" style="display:none;">
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4 6 10l6 6"/></svg>
+  </button>
+  <button class="room-nav-btn room-nav-right" id="roomNavRight" type="button" aria-label="Next room" style="display:none;">
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 4l6 6-6 6"/></svg>
+  </button>
+
+  <div class="builder-topbar">
+    <span class="builder-brand">Roomstories</span>
+    <div class="builder-actions">
+      <div class="time-controls" id="timeControls"></div>
+      <div class="arch-picker" id="archPicker" style="display:none;">
+        <button class="btn-ghost btn-on-glass" id="archPickerBtn" type="button" aria-label="Room layout" aria-expanded="false" title="Room layout">
+          <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="14" height="12" rx="1"/><path d="M3 8h5v8"/><path d="M12.5 9.5a1.5 2 0 0 1 0 4" opacity=".7"/></svg>
+        </button>
+        <div class="arch-popover" id="archPopover"></div>
+      </div>
+      <button class="btn-ghost btn-on-glass motion-toggle" id="motionToggle" type="button" aria-label="Toggle ambient effects" aria-pressed="true" title="Ambient particles &amp; light">
+        <svg class="icon-on" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12c2-3 4-3 6 0s4 3 6 0"/><path d="M4 7c2-3 4-3 6 0s4 3 6 0" opacity=".5"/></svg>
+        <svg class="icon-off" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12c2-3 4-3 6 0s4 3 6 0"/><path d="M4 7c2-3 4-3 6 0s4 3 6 0" opacity=".5"/><path d="M4 4l12 12"/></svg>
+      </button>
+      <button class="btn-ghost btn-on-glass" id="changeRoomBtn" type="button">Change room</button>
+      <button class="btn-ghost btn-on-glass" id="clearBtn" type="button">Clear room</button>
+      <button class="btn-primary" id="finishBtn" type="button" style="padding:10px 20px;">Finish room</button>
+    </div>
+  </div>
+
+  <button class="tray-toggle" id="trayToggle" type="button" aria-label="Show or hide items" aria-expanded="true">
+    <svg class="icon-open" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="6" height="6" rx="1.4"/><rect x="11" y="3" width="6" height="6" rx="1.4"/><rect x="3" y="11" width="6" height="6" rx="1.4"/><rect x="11" y="11" width="6" height="6" rx="1.4"/></svg>
+    <svg class="icon-close" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M5 5l10 10M15 5 5 15"/></svg>
+  </button>
+
+  <div class="tray-panel" id="trayPanel">
+    <div class="tray-drag-handle" id="trayDragHandle" aria-label="Drag to move"><span></span></div>
+    <div class="tray-tabs" id="trayTabs"></div>
+    <div class="tray-filter-row">
+      <select class="tray-filter-select" id="styleFilterSelect"><option value="">Any style</option></select>
+      <select class="tray-filter-select" id="colorFilterSelect"><option value="">Any color</option></select>
+    </div>
+    <div class="tray-grid" id="trayGrid"></div>
+  </div>
+</section>
+
+<!-- floating selection toolbar -->
+<div class="item-toolbar" id="itemToolbar">
+  <button type="button" data-action="back" title="Send to back" aria-label="Send to back">
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><rect x="4" y="4" width="9" height="9" rx="1.5"/><path d="M8 16h8a1 1 0 0 0 1-1V7" stroke-dasharray="2.2 2.2"/></svg>
+  </button>
+  <button type="button" data-action="step-back" title="Move back one step" aria-label="Move back one step">
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 8l5 5 5-5"/></svg>
+  </button>
+  <button type="button" data-action="step-forward" title="Move forward one step" aria-label="Move forward one step">
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5-5 5 5"/></svg>
+  </button>
+  <button type="button" data-action="front" title="Bring to front" aria-label="Bring to front">
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M7 4h8a1 1 0 0 1 1 1v8" stroke-dasharray="2.2 2.2"/><rect x="4" y="7" width="9" height="9" rx="1.5"/></svg>
+  </button>
+  <div class="divider"></div>
+  <button type="button" data-action="duplicate" title="Duplicate" aria-label="Duplicate">
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><rect x="3" y="7" width="9" height="10" rx="1.6"/><path d="M7 7V4.6A1.6 1.6 0 0 1 8.6 3H16a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1h-2.4"/></svg>
+  </button>
+  <button type="button" data-action="flip" title="Mirror left/right" aria-label="Mirror left/right">
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M10 3v14" stroke-dasharray="2 2"/><path d="M6 7 3 10l3 3"/><path d="M14 7l3 3-3 3"/></svg>
+  </button>
+  <button type="button" data-action="view" id="viewToolbarBtn" title="Turn to another side" aria-label="Turn to another side" style="display:none;">
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10a6 6 0 0 1 10.5-4"/><path d="M16 10a6 6 0 0 1-10.5 4"/><path d="M14 3.5v3h-3"/><path d="M6 16.5v-3h3"/></svg>
+  </button>
+  <button type="button" data-action="sway" id="swayToolbarBtn" title="Toggle swaying" aria-label="Toggle swaying" style="display:none;">
+    <svg viewBox="0 0 20 20" fill="none">
+      <rect class="bar bar-1" x="3" y="12" width="3" height="5" rx="1" fill="currentColor"/>
+      <rect class="bar bar-2" x="8.5" y="8" width="3" height="9" rx="1" fill="currentColor"/>
+      <rect class="bar bar-3" x="14" y="4" width="3" height="13" rx="1" fill="currentColor"/>
+    </svg>
+  </button>
+  <button type="button" data-action="light" id="lightToolbarBtn" title="Light intensity" aria-label="Light intensity" style="display:none;">
+    <svg viewBox="0 0 20 20" fill="none">
+      <rect class="bar bar-1" x="3" y="12" width="3" height="5" rx="1" fill="currentColor"/>
+      <rect class="bar bar-2" x="8.5" y="8" width="3" height="9" rx="1" fill="currentColor"/>
+      <rect class="bar bar-3" x="14" y="4" width="3" height="13" rx="1" fill="currentColor"/>
+    </svg>
+  </button>
+  <button type="button" data-action="opacity" id="opacityToolbarBtn" title="Transparency" aria-label="Transparency" style="display:none;">
+    <span id="opacityBtnLabel" style="font-size:9.5px; font-weight:700; line-height:1;">100</span>
+  </button>
+  <div class="divider"></div>
+  <button type="button" class="danger" data-action="delete" title="Delete" aria-label="Delete">
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h12"/><path d="M8 6V4.6A1 1 0 0 1 9 3.6h2a1 1 0 0 1 1 1V6"/><path d="M5.5 6 6.3 16a1 1 0 0 0 1 .9h5.4a1 1 0 0 0 1-.9L14.5 6"/></svg>
+  </button>
+</div>
+
+<div class="drag-ghost" id="dragGhost"><img id="dragGhostImg" alt=""></div>
+
+<audio id="bgMusic" preload="none"></audio>
+<div class="music-controls" id="musicControls">
+  <button class="mute-toggle" id="muteToggle" type="button" aria-label="Mute or unmute music" aria-pressed="false">
+    <svg class="icon-unmuted" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8v4h3l4 3V5L7 8H4Z"/><path d="M13.5 7.2a3.6 3.6 0 0 1 0 5.6"/><path d="M15.7 5a6.6 6.6 0 0 1 0 10"/></svg>
+    <svg class="icon-muted" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8v4h3l4 3V5L7 8H4Z"/><path d="M13 8l4 4M17 8l-4 4"/></svg>
+  </button>
+  <input type="range" id="volumeSlider" class="volume-slider" min="0" max="100" value="65" aria-label="Music volume">
+</div>
+
+<!-- ============================================================
+     RESULTS OVERLAY
+============================================================ -->
+<div class="results-overlay" id="resultsOverlay">
+  <div class="results-card">
+    <button class="results-close" id="resultsClose" aria-label="Close">&times;</button>
+    <span class="results-eyebrow">Your room, finished</span>
+    <h2 class="results-title" id="resultsTitle">Well-Loved Room</h2>
+    <div class="results-score" id="resultsScore">0<span>/100</span></div>
+    <div class="results-bars" id="resultsBars"></div>
+    <button class="btn-ghost profile-link-btn" id="viewProfileBtn" type="button">View design profile</button>
+    <button class="btn-ghost" id="viewAchievementsBtn" type="button" style="display:block; width:100%; margin-bottom:14px;">Achievements (<span id="achievementCountLabel">0</span>/<span id="achievementTotalLabel">0</span>)</button>
+    <div class="results-actions">
+      <button class="btn-ghost" id="resultsKeepBtn">Keep decorating</button>
+      <button class="btn-ghost" id="resultsChangeRoomBtn">Try a new room</button>
+    </div>
+  </div>
+</div>
+
+<div class="achievements-overlay" id="achievementsOverlay">
+  <div class="achievements-card">
+    <button class="results-close" id="achievementsClose" aria-label="Close">&times;</button>
+    <h2 class="achievements-title">Achievements</h2>
+    <span class="achievements-subtitle" id="achievementsSubtitle">0 of 0 discovered</span>
+    <div class="achievements-grid" id="achievementsGrid"></div>
+  </div>
+</div>
+
+<div class="achievement-toast" id="achievementToast">
+  <div class="achievement-toast-medal"><span class="achievement-toast-letter">C</span></div>
+  <div class="achievement-toast-text">
+    <span class="achievement-toast-eyebrow">You discovered</span>
+    <span class="achievement-toast-name">Conversation Corner</span>
+  </div>
+</div>
+
+<div class="profile-overlay" id="profileOverlay">
+  <div class="profile-backdrop" id="profileBackdrop"></div>
+  <div class="profile-card">
+    <button class="results-close" id="profileClose" aria-label="Close">&times;</button>
+
+    <div class="profile-grid">
+      <div class="profile-tile profile-hero" id="profileHero">
+        <div class="profile-hero-text">
+          <span class="profile-hero-label">Your room, in short</span>
+          <h2 class="profile-hero-title" id="profileCharacter">Your Room</h2>
+          <span class="profile-hero-count" id="profileTotal">0 items</span>
+        </div>
+        <div class="profile-ring" id="profileRing"></div>
+      </div>
+
+      <div class="profile-tile profile-donut-tile" id="profileColorTile">
+        <span class="profile-tile-label">Palette</span>
+        <div class="profile-donut-row">
+          <div class="profile-ring profile-ring-small" id="profileColorDonut"></div>
+          <div class="profile-legend" id="profileColors"></div>
+        </div>
+      </div>
+
+      <div class="profile-tile profile-donut-tile" id="profileStyleTile">
+        <span class="profile-tile-label">Style mood</span>
+        <div class="profile-donut-row">
+          <div class="profile-ring profile-ring-small" id="profileStyleDonut"></div>
+          <div class="profile-legend" id="profileStyles"></div>
+        </div>
+      </div>
+
+      <div class="profile-tile profile-material-tile" id="profileMaterialTile">
+        <span class="profile-tile-label">Materials</span>
+        <div class="profile-ribbon" id="profileMaterialRibbon"></div>
+        <div class="profile-legend profile-legend-row" id="profileMaterialLegend"></div>
+      </div>
+
+      <div class="profile-tile" id="profileStatsTile">
+        <span class="profile-tile-label">The flat so far</span>
+        <div class="profile-stat-row"><b id="profileRoomCount">1</b><span>room built</span></div>
+      </div>
+
+      <div class="profile-tile profile-category-tile">
+        <span class="profile-tile-label">What's in the room</span>
+        <div class="profile-category-grid" id="profileCategories"></div>
+      </div>
+
+      <div class="profile-tile profile-roomtype-tile" id="profileRoomTypeTile" style="display:none">
+        <span class="profile-tile-label">This room reads as</span>
+        <div class="profile-chip-row" id="profileRoomTypes"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="data.js"></script>
+<script>
+(function(){
+  "use strict";
+
+  /* ---------------- assets ---------------- */
+  var CATEGORIES = [
+    { id:'seating', label:'Seating' },
+    { id:'bed', label:'Bed' },
+    { id:'kitchen', label:'Kitchen' },
+    { id:'tables', label:'Tables' },
+    { id:'storage', label:'Storage' },
+    { id:'lighting', label:'Lighting' },
+    { id:'rugs', label:'Rugs' },
+    { id:'wall-art', label:'Wall Art' },
+    { id:'curtains', label:'Curtains' },
+    { id:'plants', label:'Plants' },
+    { id:'decor', label:'Decor' },
+    { id:'textiles', label:'Textiles' },
+  ];
+
+  /* ---------------- color-variant families ----------------
+     Items that are the same piece in different colors (e.g. "Hale Couch
+     Beige/Grey/Black...") are auto-detected from id + color, rather than
+     hand-tagged — so this keeps working as new colorways get added to
+     data.js with no extra bookkeeping. A family shows one neutral card in
+     the tray with small dots hinting at the other colors; tapping it
+     reveals the rest (see renderGroupCard). */
+  var SWATCH_COLORS = {
+    'White':'#F7F3EC','Beige':'#DCC9A8','Black':'#2E2822','Grey':'#9A948B','Brown':'#7A5A3E',
+    'Blue':'#7C93B8','Green':'#7C9270','Red':'#B65A4C','Yellow':'#DCB35C','Gold':'#C9A24C',
+    'Silver':'#BFC1C2','Pink':'#DDA6AE','Rosa':'#E0AEB8','Blush':'#E3BFB8','Greige':'#C3B6A0',
+    'Zebra':'linear-gradient(90deg,#2E2822 50%,#F7F3EC 50%)','Multi':'linear-gradient(90deg,#B65A4C,#DCB35C,#7C9270,#7C93B8)',
+    'Dark Wood':'#5A4028','Light Wood':'#CDA876','Medium Wood':'#9C7648','Warm Wood':'#A87A48',
+    'Natural':'#D8C6A6','Chrome':'#C7CACB','Brass':'#BD9A5A','Steel':'#A9ADB0',
+    'Clear':'#E7EEEA','Frosted':'#DCE4E0','Tinted':'#B9C4BE','Smoked':'#6C6E6C',
+    'Travertine':'#DCCFB4','Terrazzo':'#D3C9BC','Orange':'#C97C42','Carrara':'#E4E1D8',
+    'Calacatta':'#EDE7DA','Cognac':'#8C5A34'
+  };
+  function swatchStyleFor(color){
+    var val = SWATCH_COLORS[color] || 'var(--ink-35)';
+    return val.indexOf('gradient') === 0 ? 'background:'+val+';' : 'background-color:'+val+';';
+  }
+  // color temperature groups, used by the Statement Piece achievement to
+  // tell a deliberate "neutral room, one bold accent" apart from just any
+  // random mix. Zebra/Multi are patterns rather than a single hue, so they
+  // sit in neither bucket and are simply left out of that achievement.
+  var NEUTRAL_COLORS = ['Beige','White','Black','Grey','Greige','Brown','Dark Wood','Light Wood','Medium Wood',
+    'Warm Wood','Natural','Silver','Chrome','Steel','Clear','Frosted','Tinted','Smoked','Travertine','Terrazzo',
+    'Carrara','Calacatta'];
+  var COLD_COLORS = ['Blue','Green','Purple'];
+  var WARM_COLORS = ['Red','Orange','Yellow','Pink','Rosa','Blush','Gold','Brass','Cognac'];
+  function colorSuffixVariants(color){
+    var lower = (color||'').toLowerCase();
+    if (!lower) return [];
+    return [lower.replace(/\s+/g,'-'), lower.replace(/\s+/g,'')];
+  }
+  // a handful of items don't follow the "...-colorname" id pattern the
+  // automatic grouping relies on (an odd filename, a purely descriptive
+  // name with no color word in it) — rather than trying to keep
+  // generalizing the pattern-matcher for every one-off, these are just
+  // told directly which family they belong to.
+  var VARIANT_GROUP_OVERRIDES = {
+    'curtain-siri-darkbrown': 'curtains::curtain-siri',
+    'book-collection-blue-21': 'decor::book-collection',
+    'book-collection-blue-22': 'decor::book-collection',
+    'book-collection-earthy': 'decor::book-collection'
+  };
+  // some items carry a size modifier after the color in their id (e.g.
+  // "couch-hennes-beige-long" / "...-short") rather than the color being
+  // the very last segment — strip a known trailing modifier first so the
+  // color match underneath it still resolves, and fold the modifier back
+  // into the group key so "Long" and "Short" versions form separate
+  // families rather than getting merged into one.
+  var TRAILING_SIZE_MODIFIERS = ['-long', '-short'];
+  function variantBaseKey(item){
+    if (VARIANT_GROUP_OVERRIDES[item.id]) return VARIANT_GROUP_OVERRIDES[item.id];
+    var id = item.id, modifier = '';
+    for (var m=0; m<TRAILING_SIZE_MODIFIERS.length; m++){
+      var mod = TRAILING_SIZE_MODIFIERS[m];
+      if (id.length > mod.length && id.slice(-mod.length) === mod){
+        modifier = mod;
+        id = id.slice(0, -mod.length);
+        break;
+      }
+    }
+    var suffixes = colorSuffixVariants(item.color);
+    for (var i=0;i<suffixes.length;i++){
+      var suffix = '-' + suffixes[i];
+      if (suffixes[i] && id.length > suffix.length && id.slice(-suffix.length) === suffix){
+        return item.category + '::' + id.slice(0, -suffix.length) + modifier;
+      }
+    }
+    return null;
+  }
+  function stripColorFromName(name, color){
+    if (!name || !color) return name;
+    var esc = color.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+    var suffixRe = new RegExp('\\s+'+esc+'$', 'i');
+    var prefixRe = new RegExp('^'+esc+'\\s+', 'i');
+    var midRe = new RegExp('\\s+'+esc+'(?=\\s)', 'i');
+    if (suffixRe.test(name)) return name.replace(suffixRe, '').trim();
+    if (prefixRe.test(name)) return name.replace(prefixRe, '').trim();
+    if (midRe.test(name)) return name.replace(midRe, '').replace(/\s+/g,' ').trim();
+    return name.trim();
+  }
+  var NEUTRAL_PREFERENCE = ['Black','White','Beige'];
+  function pickPrimaryVariant(members){
+    for (var i=0;i<NEUTRAL_PREFERENCE.length;i++){
+      var match = members.filter(function(m){ return m.color === NEUTRAL_PREFERENCE[i]; });
+      if (match.length) return match[0];
+    }
+    return members[0];
+  }
+  // groups a list of items (already filtered to one category) into
+  // { key -> { primary, label, variants:[...] } } for items with 2+
+  // color siblings; items with no siblings are left out, so callers
+  // should render those as ordinary single cards.
+  function groupVariants(itemsInCat){
+    var byKey = {};
+    itemsInCat.forEach(function(item){
+      var key = variantBaseKey(item);
+      if (!key) return;
+      (byKey[key] = byKey[key] || []).push(item);
+    });
+    var groups = {};
+    Object.keys(byKey).forEach(function(key){
+      var members = byKey[key];
+      if (members.length < 2) return;
+      var primary = pickPrimaryVariant(members);
+      groups[key] = { key:key, primary:primary, label:stripColorFromName(primary.name, primary.color), variants:members };
+    });
+    return groups;
+  }
+
+  var MIN_WIDTH = 4, MAX_WIDTH = 65, MIN_WIDTH_DECOR = 1.2;
+  function minWidthFor(assetId){
+    var asset = getAsset(assetId);
+    return (asset && asset.category === 'decor') ? MIN_WIDTH_DECOR : MIN_WIDTH;
+  }
+
+  function applyStretchStyle(el, piece){
+    // Only ever touches curtains — anything without an explicit stored
+    // height (every normal item, including rods now) must be left
+    // completely alone here, or their picture gets frozen at a fixed
+    // pixel size instead of following normal resize.
+    if (piece.height == null) return;
+    // Force exact pixel dimensions on the inner wrapper and the visual
+    // element directly, rather than trusting percentage inheritance
+    // through several nested position:absolute/relative layers — that
+    // chain has proven unreliable in practice, so this removes the
+    // ambiguity entirely rather than trying to reason about it further.
+    el.style.height = piece.height + '%';
+    var rect = el.getBoundingClientRect(); // forces layout with the size just set
+    var inner = el.querySelector('.piece-inner');
+    if (!inner) return;
+    inner.style.width = rect.width + 'px';
+    inner.style.height = rect.height + 'px';
+    var visual = inner.querySelector('.piece-visual');
+    if (visual){
+      visual.style.width = rect.width + 'px';
+      visual.style.height = rect.height + 'px';
+    }
+  }
+
+  var TIME_ICONS = {
+    sun:  '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="10" cy="10" r="3.4"/><path d="M10 3v1.6M10 15.4V17M3 10h1.6M15.4 10H17M5.1 5.1l1.15 1.15M13.75 13.75l1.15 1.15M14.9 5.1l-1.15 1.15M6.25 13.75 5.1 14.9"/></svg>',
+    moon: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M16 11.5A6.5 6.5 0 0 1 8.5 4a6.5 6.5 0 1 0 7.5 7.5Z"/></svg>',
+    dawn: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 14h12"/><path d="M6.5 14a3.5 3.5 0 0 1 7 0"/><path d="M8.3 5.8 10 4l1.7 1.8"/><path d="M10 4v3"/></svg>',
+    dusk: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 14h12"/><path d="M6.5 14a3.5 3.5 0 0 1 7 0"/><path d="M8.3 5.2 10 7l1.7-1.8"/><path d="M10 4v3"/></svg>'
+  };
+
+  /* ---------------- state ---------------- */
+  var state = {
+    activeCategory: 'seating',
+    rooms: [
+      { id:'room-1', backgroundId: BACKGROUNDS[0].id, architectureId: null }
+    ],
+    focusedRoomId: 'room-1',
+    roomIdCounter: 2,
+    placed: [],
+    selectedUid: null,
+    uidCounter: 1,
+    trayOpen: true,
+    isNight: false,
+    activeTime: 'day',
+    motionOff: false,
+    expandedGroup: null,
+    discoveredAchievements: [],
+    styleFilter: '',
+    colorFilter: ''
+  };
+
+  function getAsset(id){ for (var i=0;i<ITEMS.length;i++) if (ITEMS[i].id===id) return ITEMS[i]; return null; }
+  function getBackground(id){ for (var i=0;i<BACKGROUNDS.length;i++) if (BACKGROUNDS[i].id===id) return BACKGROUNDS[i]; return null; }
+  function getPiece(uid){ for (var i=0;i<state.placed.length;i++) if (state.placed[i].uid===uid) return state.placed[i]; return null; }
+  function getRoom(id){ for (var i=0;i<state.rooms.length;i++) if (state.rooms[i].id===id) return state.rooms[i]; return null; }
+  function architectureFor(room){
+    if (!room) return null;
+    var bg = getBackground(room.backgroundId);
+    if (!bg || !bg.architectures) return null;
+    return bg.architectures.filter(function(a){ return a.id === room.architectureId; })[0] || bg.architectures[0];
+  }
+  function roomStageEl(id){ return document.querySelector('.room-stage[data-room-id="'+id+'"]'); }
+
+  /* ---------------- save / load (localStorage) ----------------
+     no backend, so the browser's own storage is the natural fit — this
+     is what makes "come back later and find your rooms as you left
+     them" actually work, without needing an account or a server. */
+  var SAVE_KEY = 'roomstories_save_v1';
+  function serializeState(){
+    return {
+      version: 1,
+      rooms: state.rooms,
+      placed: state.placed,
+      focusedRoomId: state.focusedRoomId,
+      roomIdCounter: state.roomIdCounter,
+      uidCounter: state.uidCounter,
+      activeTime: state.activeTime,
+      isNight: state.isNight,
+      discoveredAchievements: state.discoveredAchievements
+    };
+  }
+  function saveGame(){
+    try{ localStorage.setItem(SAVE_KEY, JSON.stringify(serializeState())); }
+    catch(err){ /* storage full/unavailable — nothing more we can do here */ }
+  }
+  function loadSavedGame(){
+    try{
+      var raw = localStorage.getItem(SAVE_KEY);
+      if (!raw) return null;
+      var data = JSON.parse(raw);
+      if (!data || data.version !== 1 || !Array.isArray(data.rooms) || !data.rooms.length) return null;
+      return data;
+    }catch(err){ return null; }
+  }
+  function clearSavedGame(){
+    try{ localStorage.removeItem(SAVE_KEY); }catch(err){}
+  }
+  function applySavedGame(data){
+    state.rooms = data.rooms;
+    state.placed = Array.isArray(data.placed) ? data.placed : [];
+    state.focusedRoomId = data.focusedRoomId || data.rooms[0].id;
+    state.roomIdCounter = data.roomIdCounter || (data.rooms.length + 1);
+    state.uidCounter = data.uidCounter || (state.placed.length + 1);
+    if (data.activeTime) state.activeTime = data.activeTime;
+    if (typeof data.isNight === 'boolean') state.isNight = data.isNight;
+    if (Array.isArray(data.discoveredAchievements)) state.discoveredAchievements = data.discoveredAchievements;
+  }
+  function resetToFreshGame(){
+    state.rooms = [{ id:'room-1', backgroundId: BACKGROUNDS[0].id, architectureId: null }];
+    state.placed = [];
+    state.focusedRoomId = 'room-1';
+    state.roomIdCounter = 2;
+    state.uidCounter = 1;
+    state.selectedUid = null;
+    state.isNight = false;
+    state.activeTime = 'day';
+  }
+  function clamp(v,min,max){ return Math.max(min, Math.min(max, v)); }
+
+  /* ---------------- dom refs ---------------- */
+  var screens = {
+    title: document.getElementById('screen-title'),
+    picker: document.getElementById('screen-picker'),
+    builder: document.getElementById('screen-builder')
+  };
+  var roomsViewport = document.getElementById('roomsViewport');
+  var roomNavLeft = document.getElementById('roomNavLeft');
+  var roomNavRight = document.getElementById('roomNavRight');
+  var roomGrid = document.getElementById('roomGrid');
+  var trayTabs = document.getElementById('trayTabs');
+  var trayGrid = document.getElementById('trayGrid');
+  var trayToggle = document.getElementById('trayToggle');
+  var trayPanel = document.getElementById('trayPanel');
+  var trayDragHandle = document.getElementById('trayDragHandle');
+  var timeControls = document.getElementById('timeControls');
+  var archPicker = document.getElementById('archPicker');
+  var archPickerBtn = document.getElementById('archPickerBtn');
+  var archPopover = document.getElementById('archPopover');
+  var motionToggle = document.getElementById('motionToggle');
+  var itemToolbar = document.getElementById('itemToolbar');
+  var clearBtn = document.getElementById('clearBtn');
+  var finishBtn = document.getElementById('finishBtn');
+  var changeRoomBtn = document.getElementById('changeRoomBtn');
+  var dragGhost = document.getElementById('dragGhost');
+  var dragGhostImg = document.getElementById('dragGhostImg');
+  var bgMusic = document.getElementById('bgMusic');
+  var muteToggle = document.getElementById('muteToggle');
+  var volumeSlider = document.getElementById('volumeSlider');
+  var resultsOverlay = document.getElementById('resultsOverlay');
+  var resultsBars = document.getElementById('resultsBars');
+
+  // A rotating playlist rather than one looping track — when a track ends,
+  // the next one starts, wrapping back to the first after the last.
+  var MUSIC_TRACKS = [
+    'audio/romantic_calm_piano_for_relaxation.mp3',
+    'audio/Wild_Beauty.mp3',
+    'audio/Wishful_Piano.mp3'
+  ];
+  var currentTrack = 0;
+  function playCurrentTrack(){
+    bgMusic.src = MUSIC_TRACKS[currentTrack];
+    bgMusic.play().catch(function(){});
+  }
+  bgMusic.addEventListener('ended', function(){
+    currentTrack = (currentTrack + 1) % MUSIC_TRACKS.length;
+    playCurrentTrack();
+  });
+
+  /* ---------------- screen navigation ---------------- */
+  muteToggle.addEventListener('click', function(){
+    bgMusic.muted = !bgMusic.muted;
+    muteToggle.classList.toggle('muted', bgMusic.muted);
+    muteToggle.setAttribute('aria-pressed', bgMusic.muted ? 'true' : 'false');
+  });
+  bgMusic.volume = volumeSlider.value / 100;
+  volumeSlider.addEventListener('input', function(){
+    bgMusic.volume = volumeSlider.value / 100;
+    if (bgMusic.muted){
+      bgMusic.muted = false;
+      muteToggle.classList.remove('muted');
+      muteToggle.setAttribute('aria-pressed', 'false');
+    }
+  });
+
+  function showScreen(name){
+    Object.keys(screens).forEach(function(key){
+      var isTitle = key === 'title';
+      screens[key].classList.toggle('active', key === name);
+      if (key === name && isTitle) screens[key].classList.add('flex');
+    });
+  }
+
+  var hasExistingSave = false;
+  document.getElementById('titleStartBtn').addEventListener('click', function(){
+    showScreen(hasExistingSave ? 'builder' : 'picker');
+    playCurrentTrack();
+  });
+  document.getElementById('titleFreshBtn').addEventListener('click', function(){
+    hasExistingSave = false;
+    clearSavedGame();
+    resetToFreshGame();
+    renderRooms();
+    document.getElementById('titleStartBtn').textContent = 'Pick a room';
+    document.getElementById('titleFreshBtn').style.display = 'none';
+    showScreen('picker');
+    playCurrentTrack();
+  });
+  document.getElementById('pickerBackBtn').addEventListener('click', function(){
+    showScreen('title');
+  });
+  changeRoomBtn.addEventListener('click', function(){
+    renderRoomGrid();
+    showScreen('picker');
+  });
+
+  /* ---------------- deterministic tilt for stickers ---------------- */
+  function tiltFor(id){
+    var h = 0;
+    for (var i=0;i<id.length;i++) h = (h*31 + id.charCodeAt(i)) % 1000;
+    return ((h/1000)*4.4 - 2.2).toFixed(2);
+  }
+
+  /* ---------------- render: room picker ---------------- */
+  function bgThumbSrc(bg){
+    if (bg.architectures){
+      var a0 = bg.architectures[0];
+      return a0.times ? a0.times[0].src : a0.src;
+    }
+    return bg.src;
+  }
+
+  /* ---------------- quiet background preloading ----------------
+     the room-picker grid, the architecture popover, and the day/night
+     buttons all reuse full-size room art as their thumbnails/variants —
+     the first time any of them is requested, the browser has to fetch it
+     fresh, which is what makes switching or opening a picker feel slow.
+     Once the current room is up and interactive, we quietly warm the
+     browser's cache with everything else the player is likely to click
+     next, so that by the time they do, it's already sitting there. */
+  function preloadImage(src){
+    var img = new Image();
+    img.src = src;
+  }
+  function runWhenIdle(fn){
+    if (typeof requestIdleCallback === 'function') requestIdleCallback(fn, { timeout:2000 });
+    else setTimeout(fn, 300);
+  }
+  function preloadAheadOfNeed(){
+    BACKGROUNDS.forEach(function(bg){
+      if (bg.architectures){
+        bg.architectures.forEach(function(arch){
+          if (arch.times) arch.times.forEach(function(t){ preloadImage(t.src); });
+          else if (arch.src) preloadImage(arch.src);
+        });
+      } else if (bg.times){
+        bg.times.forEach(function(t){ preloadImage(t.src); });
+      } else if (bg.src){
+        preloadImage(bg.src);
+      }
+    });
+  }
+
+  function renderRoomGrid(){
+    roomGrid.innerHTML = '';
+    var focused = getRoom(state.focusedRoomId);
+    BACKGROUNDS.forEach(function(bg){
+      var isActive = focused && bg.id === focused.backgroundId;
+      var card = document.createElement('button');
+      card.type = 'button';
+      card.className = 'room-card' + (isActive ? ' active' : '');
+      card.innerHTML =
+        '<img src="'+bgThumbSrc(bg)+'" alt="'+bg.name+'" loading="lazy">' +
+        '<span class="room-card-label">'+bg.name+'</span>' +
+        (isActive ? '<span class="room-card-check"><svg viewBox="0 0 20 20" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10.5 8 14l8-8"/></svg></span>' : '');
+      card.querySelector('img').addEventListener('error', function(){ card.classList.add('img-error'); });
+      card.addEventListener('click', function(){
+        var room = getRoom(state.focusedRoomId);
+        if (!room) return;
+        room.backgroundId = bg.id;
+        room.architectureId = bg.architectures ? bg.architectures[0].id : null;
+        renderRooms();
+        showScreen('builder');
+      });
+      roomGrid.appendChild(card);
+    });
+    var soon = document.createElement('div');
+    soon.className = 'room-card-soon';
+    soon.innerHTML = '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M10 4v12M4 10h12"/></svg><span>More rooms soon</span>';
+    roomGrid.appendChild(soon);
+  }
+  function currentTimeSrcForRoom(room){
+    var bg = getBackground(room.backgroundId);
+    var arch = bg.architectures ? architectureFor(room) : bg;
+    if (arch.times){
+      var t = arch.times.filter(function(t){ return t.id === state.activeTime; })[0] || arch.times[0];
+      return t.src;
+    }
+    return (state.isNight && arch.nightSrc) ? arch.nightSrc : arch.src;
+  }
+  function applyBackgroundForRoom(room){
+    var roomEl = roomStageEl(room.id);
+    if (!roomEl) return;
+    var src = currentTimeSrcForRoom(room);
+    var layers = roomEl.querySelectorAll('.stage-bg-layer');
+    var activeLayer = roomEl.querySelector('.stage-bg-layer.active') || layers[0];
+    var incoming = activeLayer === layers[0] ? layers[1] : layers[0];
+    var img = new Image();
+    img.onload = function(){
+      incoming.style.backgroundImage = "url('"+src+"')";
+      incoming.classList.add('active');
+      activeLayer.classList.remove('active');
+    };
+    img.src = src;
+  }
+  function updateNightOverlayForRoom(room){
+    var roomEl = roomStageEl(room.id);
+    if (!roomEl) return;
+    var nightOverlayEl = roomEl.querySelector('.night-overlay');
+    var bg = getBackground(room.backgroundId);
+    var arch = bg.architectures ? architectureFor(room) : bg;
+    nightOverlayEl.classList.remove('tint-dawn','tint-dusk','tint-night');
+    if (arch.times){
+      if (state.activeTime === 'dawn') nightOverlayEl.classList.add('tint-dawn');
+      else if (state.activeTime === 'dusk') nightOverlayEl.classList.add('tint-dusk');
+      else if (state.activeTime === 'night') nightOverlayEl.classList.add('tint-night');
+    } else if (state.isNight){
+      nightOverlayEl.classList.add('tint-night');
+    }
+  }
+  // candles (and similar) with autoLightAtNight get switched to their lit
+  // state the moment the flat turns to dusk/night, same as someone walking
+  // through lighting them at sundown — but it's a one-time nudge at the
+  // transition, not a rule that's continuously re-applied, so turning one
+  // back off by hand sticks even while it's still evening.
+  function autoLightCandlesForEvening(){
+    state.placed.forEach(function(piece){
+      var asset = getAsset(piece.assetId);
+      if (asset.autoLightAtNight && !piece.toggled){
+        var el = pieceEl(piece.uid);
+        if (el) toggleItemState(piece, asset, el);
+      }
+    });
+  }
+  function updateLampsLitForRoom(room){
+    var roomEl = roomStageEl(room.id);
+    if (!roomEl) return;
+    var bg = getBackground(room.backgroundId);
+    var arch = bg.architectures ? architectureFor(room) : bg;
+    var lit = arch.times ? (state.activeTime==='dusk' || state.activeTime==='night') : state.isNight;
+    roomEl.classList.toggle('lamps-lit', lit);
+  }
+
+  var LAMP_GLOW_RADIUS = 30; // max reach of the effect, in % of stage width
+  function updateLampProximityGlow(onlyRoomId){
+    var rooms = onlyRoomId ? state.rooms.filter(function(r){ return r.id === onlyRoomId; }) : state.rooms;
+    rooms.forEach(function(room){
+      var roomEl = roomStageEl(room.id);
+      if (!roomEl) return;
+      var dark = roomEl.classList.contains('lamps-lit');
+      var stageRect = roomEl.getBoundingClientRect();
+      var roomPieces = state.placed.filter(function(p){ return p.roomId === room.id; });
+      var litLamps = [];
+      roomPieces.forEach(function(p){
+        var a = getAsset(p.assetId);
+        if (a.category === 'lighting' && p.lampOn !== false) litLamps.push(p);
+      });
+
+      roomPieces.forEach(function(piece){
+        var asset = getAsset(piece.assetId);
+        if (asset.category === 'lighting') return; // lamps don't relight themselves
+        var el = pieceEl(piece.uid);
+        var visual = el ? el.querySelector('.piece-visual') : null;
+        if (!visual) return;
+
+        if (!dark || litLamps.length === 0){
+          visual.style.filter = '';
+          return;
+        }
+
+        var best = null, bestDistPx = Infinity;
+        litLamps.forEach(function(lamp){
+          var dxPx = (lamp.x - piece.x)/100 * stageRect.width;
+          var dyPx = (lamp.y - piece.y)/100 * stageRect.height;
+          var distPx = Math.hypot(dxPx, dyPx);
+          if (distPx < bestDistPx){ bestDistPx = distPx; best = { dx:dxPx, dy:dyPx, lamp:lamp }; }
+        });
+
+        var maxPx = LAMP_GLOW_RADIUS/100 * stageRect.width;
+        if (!best || bestDistPx > maxPx || bestDistPx === 0){
+          visual.style.filter = '';
+          return;
+        }
+
+        var rimMult = LIGHT_LEVELS[best.lamp.lightIntensity || 2].rim;
+        var intensity = (1 - (bestDistPx / maxPx)) * rimMult; // 0..1, stronger when closer or brighter
+        var angle = Math.atan2(best.dy, best.dx);
+        var ux = Math.cos(angle), uy = Math.sin(angle);
+
+        // correct for this piece's own flip/rotation, since the filter is
+        // computed in the piece's local space but we want the glow pointing
+        // at the lamp's real position on screen, regardless of orientation
+        if (piece.flipped) ux = -ux;
+        var rot = -(piece.rotation||0) * Math.PI/180;
+        var rux = ux*Math.cos(rot) - uy*Math.sin(rot);
+        var ruy = ux*Math.sin(rot) + uy*Math.cos(rot);
+
+        var off1 = 3 + intensity*3, off2 = 6 + intensity*4;
+        var blur1 = 12 + intensity*8, blur2 = 22 + intensity*10;
+        var alpha1 = (0.16 + intensity*0.30).toFixed(2);
+        var alpha2 = (0.09 + intensity*0.18).toFixed(2);
+
+        visual.style.filter =
+          'drop-shadow(0 10px 14px rgba(30,22,14,.30)) ' +
+          'drop-shadow(' + (rux*off1).toFixed(1) + 'px ' + (ruy*off1).toFixed(1) + 'px ' + blur1.toFixed(0) + 'px rgba(255,200,120,'+alpha1+')) ' +
+          'drop-shadow(' + (rux*off2).toFixed(1) + 'px ' + (ruy*off2).toFixed(1) + 'px ' + blur2.toFixed(0) + 'px rgba(255,180,90,'+alpha2+'))';
+      });
+    });
+  }
+
+  function updateLampLightPools(onlyRoomId){
+    var rooms = onlyRoomId ? state.rooms.filter(function(r){ return r.id === onlyRoomId; }) : state.rooms;
+    rooms.forEach(function(room){
+      var roomEl = roomStageEl(room.id);
+      if (!roomEl) return;
+      var layer = roomEl.querySelector('.lamp-light-pools');
+      if (!layer) return;
+      var dark = roomEl.classList.contains('lamps-lit');
+      var roomPieces = state.placed.filter(function(p){ return p.roomId === room.id; });
+      var litLamps = dark ? roomPieces.filter(function(p){
+        var a = getAsset(p.assetId);
+        return a.category === 'lighting' && p.lampOn !== false;
+      }) : [];
+      if (!litLamps.length){ layer.style.background = 'none'; return; }
+      var stageRect = roomEl.getBoundingClientRect();
+      var radiusPx = Math.round(LAMP_GLOW_RADIUS/100 * stageRect.width);
+      layer.style.background = litLamps.map(function(lamp){
+        var mult = LIGHT_LEVELS[lamp.lightIntensity || 2].pool;
+        var alpha = (0.5 * mult).toFixed(2);
+        return 'radial-gradient(circle '+radiusPx+'px at '+lamp.x+'% '+lamp.y+'%, rgba(255,190,110,'+alpha+'), rgba(255,190,110,0) 75%)';
+      }).join(', ');
+    });
+  }
+
+  // both effects share the same "who's lit and where" question, so they're
+  // always refreshed together. Pass a roomId when only one room's lamps
+  // could possibly have changed (a drag, a toggle, a single new piece) —
+  // every other room's lighting is still correct as it was, so recomputing
+  // it too is pure waste. Omit it for genuinely global changes (time of
+  // day, a full rebuild) where every room's lit state could shift at once.
+  function updateLampLighting(onlyRoomId){
+    updateLampProximityGlow(onlyRoomId);
+    updateLampLightPools(onlyRoomId);
+  }
+
+  function refreshRoomVisuals(){
+    state.rooms.forEach(function(room){
+      var arch = architectureFor(room);
+      // a room whose current layout has no time-of-day art doesn't need a
+      // fresh image swap on every time change — just its dark/light tint
+      if (arch && arch.times) applyBackgroundForRoom(room);
+      updateNightOverlayForRoom(room);
+      updateLampsLitForRoom(room);
+    });
+    updateLampLighting();
+  }
+  function renderTimeControls(){
+    var room = getRoom(state.focusedRoomId);
+    var bg = room ? getBackground(room.backgroundId) : null;
+    var arch = bg ? (bg.architectures ? architectureFor(room) : bg) : null;
+    timeControls.innerHTML = '';
+    if (!arch) return;
+    if (arch.times){
+      arch.times.forEach(function(t){
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'time-btn' + (state.activeTime===t.id ? ' active' : '');
+        btn.title = t.label;
+        btn.setAttribute('aria-label', t.label);
+        btn.innerHTML = TIME_ICONS[t.icon];
+        btn.addEventListener('click', function(){
+          if (state.activeTime === t.id) return;
+          var wasEvening = (state.activeTime === 'dusk' || state.activeTime === 'night');
+          state.activeTime = t.id;
+          var isEvening = (state.activeTime === 'dusk' || state.activeTime === 'night');
+          if (isEvening && !wasEvening) autoLightCandlesForEvening();
+          refreshRoomVisuals();
+          renderTimeControls();
+        });
+        timeControls.appendChild(btn);
+      });
+    } else {
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'time-btn' + (state.isNight ? ' active' : '');
+      btn.title = state.isNight ? 'Switch to day' : 'Switch to night';
+      btn.setAttribute('aria-label', btn.title);
+      btn.innerHTML = TIME_ICONS[state.isNight ? 'moon' : 'sun'];
+      btn.addEventListener('click', function(){
+        var wasNight = state.isNight;
+        state.isNight = !state.isNight;
+        if (state.isNight && !wasNight) autoLightCandlesForEvening();
+        refreshRoomVisuals();
+        renderTimeControls();
+      });
+      timeControls.appendChild(btn);
+    }
+  }
+
+  function renderArchPicker(){
+    var room = getRoom(state.focusedRoomId);
+    var bg = room ? getBackground(room.backgroundId) : null;
+    if (!bg || !bg.architectures){
+      archPicker.style.display = 'none';
+      archPopover.classList.remove('open');
+      archPickerBtn.setAttribute('aria-expanded', 'false');
+      return;
+    }
+    var resolvedArch = architectureFor(room);
+    // once a room is actually connected to a neighbor on a side, its own
+    // layout picker shouldn't offer anything that would drop that door —
+    // an unconnected side stays completely free to pick from
+    var idx = state.rooms.indexOf(room);
+    var connectedLeft = idx > 0;
+    var connectedRight = idx !== -1 && idx < state.rooms.length - 1;
+    var validOptions = bg.architectures.filter(function(a){
+      return (!connectedLeft || a.hasLeftDoor) && (!connectedRight || a.hasRightDoor);
+    });
+    archPicker.style.display = '';
+    archPopover.innerHTML = '';
+    validOptions.forEach(function(a){
+      var card = document.createElement('button');
+      card.type = 'button';
+      card.className = 'arch-card' + (resolvedArch && resolvedArch.id===a.id ? ' active' : '');
+      var thumb = a.times ? a.times[0].src : a.src;
+      card.innerHTML = '<img src="'+thumb+'" alt="" loading="lazy"><span>'+a.label+'</span>';
+      card.addEventListener('click', function(){
+        room.architectureId = a.id;
+        renderRooms();
+        archPopover.classList.remove('open');
+        archPickerBtn.setAttribute('aria-expanded', 'false');
+      });
+      archPopover.appendChild(card);
+    });
+  }
+  archPickerBtn.addEventListener('click', function(){
+    var open = archPopover.classList.toggle('open');
+    archPickerBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+  });
+  document.addEventListener('pointerdown', function(e){
+    if (archPopover.classList.contains('open') && !archPicker.contains(e.target)){
+      archPopover.classList.remove('open');
+      archPickerBtn.setAttribute('aria-expanded', 'false');
+    }
+  });
+
+  /* ---------------- multi-room flat: building & scrolling between rooms ---------------- */
+  function buildRoomStageEl(room){
+    var el = document.createElement('div');
+    el.className = 'stage room-stage' + (state.motionOff ? ' motion-off' : '');
+    el.dataset.roomId = room.id;
+    el.innerHTML =
+      '<div class="stage-bg-layer active"></div>' +
+      '<div class="stage-bg-layer"></div>' +
+      '<div class="cloud-shadow"></div>' +
+      '<div class="stage-vignette-top"></div>' +
+      '<div class="breathing-light"></div>' +
+      '<div class="night-overlay"></div>' +
+      '<div class="lamp-light-pools"></div>' +
+      '<p class="stage-hint">Drag a piece onto the room to start decorating</p>';
+    return el;
+  }
+
+  var addRoomPopoverEl = null;
+  function closeAddRoomPopover(){
+    if (addRoomPopoverEl){ addRoomPopoverEl.remove(); addRoomPopoverEl = null; }
+    document.removeEventListener('pointerdown', onDocPointerDownCloseAddRoom);
+  }
+  function onDocPointerDownCloseAddRoom(e){
+    if (addRoomPopoverEl && !addRoomPopoverEl.contains(e.target)) closeAddRoomPopover();
+  }
+  function openAddRoomPopover(anchorBtn, side, options, onPick){
+    closeAddRoomPopover();
+    var pop = document.createElement('div');
+    pop.className = 'arch-popover open';
+    pop.style.position = 'fixed';
+    if (!options.length){
+      pop.innerHTML = '<span style="font-size:11px;font-weight:600;color:var(--ink-70);max-width:150px;display:block;">No matching layouts yet</span>';
+    }
+    options.forEach(function(a){
+      var card = document.createElement('button');
+      card.type = 'button';
+      card.className = 'arch-card';
+      var thumb = a.times ? a.times[0].src : a.src;
+      card.innerHTML = '<img src="'+thumb+'" alt="" loading="lazy"><span>'+a.label+'</span>';
+      card.addEventListener('click', function(e){
+        e.stopPropagation();
+        closeAddRoomPopover();
+        onPick(a);
+      });
+      pop.appendChild(card);
+    });
+    document.body.appendChild(pop);
+    var rect = anchorBtn.getBoundingClientRect();
+    pop.style.top = Math.max(70, window.innerHeight/2 - 100) + 'px';
+    if (side === 'left'){
+      // the button sits at the left edge, so open toward the room (rightward)
+      pop.style.left = (rect.right + 8) + 'px';
+      pop.style.right = 'auto';
+    } else {
+      // the button sits at the right edge, so open toward the room (leftward)
+      pop.style.right = (window.innerWidth - rect.left + 8) + 'px';
+      pop.style.left = 'auto';
+    }
+    addRoomPopoverEl = pop;
+    setTimeout(function(){ document.addEventListener('pointerdown', onDocPointerDownCloseAddRoom); }, 0);
+  }
+
+  function focusedRoomIndex(){
+    for (var i=0;i<state.rooms.length;i++) if (state.rooms[i].id === state.focusedRoomId) return i;
+    return -1;
+  }
+  function updateRoomNavButtons(){
+    var idx = focusedRoomIndex();
+    roomNavLeft.style.display = idx > 0 ? 'flex' : 'none';
+    roomNavRight.style.display = (idx !== -1 && idx < state.rooms.length - 1) ? 'flex' : 'none';
+  }
+  roomNavLeft.addEventListener('click', function(){
+    var idx = focusedRoomIndex();
+    if (idx > 0) focusRoom(state.rooms[idx-1].id);
+  });
+  roomNavRight.addEventListener('click', function(){
+    var idx = focusedRoomIndex();
+    if (idx !== -1 && idx < state.rooms.length - 1) focusRoom(state.rooms[idx+1].id);
+  });
+
+  var roomScrollAnimId = 0;
+  function animateRoomsScrollTo(targetLeft, duration){
+    var myId = ++roomScrollAnimId;
+    var startLeft = roomsViewport.scrollLeft;
+    var delta = targetLeft - startLeft;
+    if (Math.abs(delta) < 1) return;
+    // scroll-snap briefly fighting a JS-driven scrollLeft for the final
+    // pixel or two is what made this feel worse, not better — turning it
+    // off for the duration of our own animation and restoring it once
+    // we've landed exactly on the target avoids that tug-of-war
+    roomsViewport.style.scrollSnapType = 'none';
+    var startTime = null;
+    function step(timestamp){
+      if (myId !== roomScrollAnimId) return; // superseded by a newer transition
+      if (startTime === null) startTime = timestamp;
+      var t = Math.min(1, (timestamp - startTime) / duration);
+      // ease-in-out-cubic — a gentle glide in and a soft landing, rather
+      // than the curt, near-linear snap of the browser's own smooth-scroll
+      var eased = t < 0.5 ? 4*t*t*t : 1 - Math.pow(-2*t+2, 3)/2;
+      roomsViewport.scrollLeft = startLeft + delta*eased;
+      if (t < 1){
+        requestAnimationFrame(step);
+      } else {
+        roomsViewport.style.scrollSnapType = '';
+      }
+    }
+    requestAnimationFrame(step);
+  }
+  function focusRoom(id){
+    state.focusedRoomId = id;
+    var el = roomStageEl(id);
+    if (el){
+      var targetLeft = el.offsetLeft - (roomsViewport.clientWidth - el.offsetWidth)/2;
+      animateRoomsScrollTo(targetLeft, 560);
+    }
+    renderTimeControls();
+    renderArchPicker();
+    updateRoomNavButtons();
+  }
+
+  function buildAddRoomButton(side, adjacentRoom){
+    var btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'add-room-btn add-room-btn-'+side;
+    btn.setAttribute('aria-label', side === 'left' ? 'Add room to the left' : 'Add room to the right');
+    btn.innerHTML = '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M10 4v12M4 10h12"/></svg>';
+    btn.addEventListener('click', function(e){
+      e.stopPropagation();
+      // a new room always joins the same family as the room it's
+      // extending from — a Twin Windows flat grows more Twin Windows
+      // rooms, a future Bathroom flat grows more Bathrooms, and so on,
+      // with no per-style code needed here
+      var bg = getBackground(adjacentRoom.backgroundId);
+      if (!bg || !bg.architectures) return;
+      var needsDoor = side === 'left' ? 'hasRightDoor' : 'hasLeftDoor';
+      var options = bg.architectures.filter(function(a){ return a[needsDoor]; });
+      openAddRoomPopover(btn, side, options, function(chosenArch){
+        var newRoom = { id:'room-'+(state.roomIdCounter++), backgroundId:adjacentRoom.backgroundId, architectureId:chosenArch.id };
+        if (side === 'left') state.rooms.unshift(newRoom);
+        else state.rooms.push(newRoom);
+        renderRooms();
+        focusRoom(newRoom.id);
+      });
+    });
+    return btn;
+  }
+
+  var roomFocusObserver = null;
+  function setupRoomFocusTracking(){
+    if (roomFocusObserver) roomFocusObserver.disconnect();
+    if (typeof IntersectionObserver === 'undefined') return;
+    roomFocusObserver = new IntersectionObserver(function(entries){
+      var best = null, bestRatio = 0;
+      entries.forEach(function(entry){
+        if (entry.intersectionRatio > bestRatio){ bestRatio = entry.intersectionRatio; best = entry.target; }
+      });
+      if (best && best.dataset.roomId !== state.focusedRoomId){
+        state.focusedRoomId = best.dataset.roomId;
+        renderTimeControls();
+        renderArchPicker();
+        updateRoomNavButtons();
+      }
+    }, { root: roomsViewport, threshold: [0.5, 0.75, 0.9] });
+    document.querySelectorAll('.room-stage').forEach(function(el){ roomFocusObserver.observe(el); });
+  }
+
+  function renderRooms(){
+    roomsViewport.innerHTML = '';
+    state.rooms.forEach(function(room){
+      roomsViewport.appendChild(buildRoomStageEl(room));
+    });
+    if (!getRoom(state.focusedRoomId)) state.focusedRoomId = state.rooms[0].id;
+    state.rooms.forEach(function(room){
+      applyBackgroundForRoom(room);
+      updateNightOverlayForRoom(room);
+      updateLampsLitForRoom(room);
+      createDustMotes(roomStageEl(room.id));
+    });
+    // the "+" to extend the flat only ever sits on the two open ends of the
+    // chain, floating over that room's own corner rather than taking up
+    // scroll space of its own
+    var firstRoom = state.rooms[0];
+    var lastRoom = state.rooms[state.rooms.length - 1];
+    var firstArch = architectureFor(firstRoom);
+    var lastArch = architectureFor(lastRoom);
+    if (firstArch && firstArch.hasLeftDoor){
+      roomStageEl(firstRoom.id).appendChild(buildAddRoomButton('left', firstRoom));
+    }
+    if (lastArch && lastArch.hasRightDoor){
+      roomStageEl(lastRoom.id).appendChild(buildAddRoomButton('right', lastRoom));
+    }
+    fullRerenderPieces();
+    updateLampLighting();
+    renderTimeControls();
+    renderArchPicker();
+    updateRoomNavButtons();
+    setupRoomFocusTracking();
+  }
+
+  /* ---------------- render: tray ---------------- */
+  function renderTabs(){
+    trayTabs.innerHTML = '';
+    CATEGORIES.forEach(function(cat){
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'tab' + (cat.id===state.activeCategory ? ' active' : '');
+      btn.textContent = cat.label;
+      btn.addEventListener('click', function(){
+        state.activeCategory = cat.id;
+        renderTabs();
+        renderTray();
+      });
+      trayTabs.appendChild(btn);
+    });
+  }
+
+  function setupTrayFilters(){
+    var styles = {}, colors = {};
+    ITEMS.forEach(function(it){
+      if (it.style1) styles[it.style1] = true;
+      if (it.style2) styles[it.style2] = true;
+      if (it.color) colors[it.color] = true;
+    });
+    var styleSelect = document.getElementById('styleFilterSelect');
+    var colorSelect = document.getElementById('colorFilterSelect');
+    Object.keys(styles).sort().forEach(function(s){
+      var opt = document.createElement('option'); opt.value = s; opt.textContent = s;
+      styleSelect.appendChild(opt);
+    });
+    Object.keys(colors).sort().forEach(function(c){
+      var opt = document.createElement('option'); opt.value = c; opt.textContent = c;
+      colorSelect.appendChild(opt);
+    });
+    styleSelect.addEventListener('change', function(){
+      state.styleFilter = styleSelect.value;
+      styleSelect.classList.toggle('active', !!styleSelect.value);
+      renderTray();
+    });
+    colorSelect.addEventListener('change', function(){
+      state.colorFilter = colorSelect.value;
+      colorSelect.classList.toggle('active', !!colorSelect.value);
+      renderTray();
+    });
+  }
+
+  function renderTray(){
+    trayGrid.innerHTML = '';
+    var itemsInCat = ITEMS.filter(function(it){ return it.category===state.activeCategory; });
+    var filtering = !!(state.styleFilter || state.colorFilter);
+    if (state.styleFilter){
+      itemsInCat = itemsInCat.filter(function(it){ return it.style1===state.styleFilter || it.style2===state.styleFilter; });
+    }
+    if (state.colorFilter){
+      itemsInCat = itemsInCat.filter(function(it){ return it.color===state.colorFilter; });
+    }
+    if (filtering){
+      // filtering is about finding a specific item, so show exact matches
+      // plainly rather than folding them back into a color-family card
+      if (!itemsInCat.length){
+        trayGrid.innerHTML = '<div class="tray-empty-note">No items match that filter</div>';
+        return;
+      }
+      itemsInCat.forEach(function(item){ renderSingleCard(item); });
+      return;
+    }
+    var groups = groupVariants(itemsInCat);
+    var renderedGroupKeys = {};
+    itemsInCat.forEach(function(item){
+      var key = variantBaseKey(item);
+      var group = key && groups[key];
+      if (group){
+        if (renderedGroupKeys[group.key]) return;
+        renderedGroupKeys[group.key] = true;
+        renderGroupCard(group);
+      } else {
+        renderSingleCard(item);
+      }
+    });
+  }
+
+  // style + material shown as small pills over the thumbnail on hover —
+  // color is left out since the picture already shows that at a glance
+  function attributePillsHtml(item){
+    var attrs = [item.style1, item.style2, item.material].filter(Boolean);
+    if (!attrs.length) return '';
+    return '<div class="sticker-attr-overlay">' +
+      attrs.map(function(a){ return '<span class="sticker-attr-pill">'+a+'</span>'; }).join('') +
+      '</div>';
+  }
+  function renderSingleCard(item){
+    var card = document.createElement('div');
+    card.className = 'sticker';
+    card.style.setProperty('--tilt', tiltFor(item.id)+'deg');
+    card.innerHTML =
+      '<div class="sticker-thumb"><img src="'+item.src+'" alt="">'+attributePillsHtml(item)+'</div>' +
+      '<div class="sticker-label">'+item.name+'</div>';
+    card.addEventListener('pointerdown', function(e){ startTrayDrag(e, item, card); });
+    trayGrid.appendChild(card);
+  }
+
+  function renderGroupCard(group){
+    var primary = group.primary, variants = group.variants;
+    var expanded = state.expandedGroup === group.key;
+    var wrap = document.createElement('div');
+    wrap.className = 'sticker-group' + (expanded ? ' expanded' : '');
+
+    var card = document.createElement('div');
+    card.className = 'sticker sticker-primary';
+    card.style.setProperty('--tilt', tiltFor(primary.id)+'deg');
+    card.innerHTML =
+      '<div class="sticker-thumb"><img src="'+primary.src+'" alt="">'+attributePillsHtml(primary)+'</div>' +
+      '<div class="sticker-label">'+group.label+'</div>' +
+      '<div class="variant-dots">' + variants.map(function(v){ return '<span class="variant-dot" style="'+swatchStyleFor(v.color)+'"></span>'; }).join('') + '</div>';
+    // dragging still places this exact color immediately; a plain tap
+    // toggles the other colors open instead of placing right away
+    card.addEventListener('pointerdown', function(e){
+      startTrayDrag(e, primary, card, function(){
+        state.expandedGroup = expanded ? null : group.key;
+        renderTray();
+      });
+    });
+    wrap.appendChild(card);
+
+    if (expanded){
+      var row = document.createElement('div');
+      row.className = 'variant-row';
+      variants.forEach(function(v){
+        var vcard = document.createElement('div');
+        vcard.className = 'sticker';
+        vcard.style.setProperty('--tilt', tiltFor(v.id)+'deg');
+        vcard.innerHTML =
+          '<div class="sticker-thumb"><img src="'+v.src+'" alt="">'+attributePillsHtml(v)+'</div>' +
+          '<div class="sticker-label">'+v.color+'</div>';
+        vcard.addEventListener('pointerdown', function(e){ startTrayDrag(e, v, vcard); });
+        row.appendChild(vcard);
+      });
+      wrap.appendChild(row);
+    }
+
+    trayGrid.appendChild(wrap);
+  }
+
+  /* ---------------- hit-testing helper (glass tray floats over the stage) ---------------- */
+  function roomStageAtPoint(x, y){
+    var topEl = document.elementFromPoint(x, y);
+    if (!topEl) return null;
+    if (topEl.closest('.tray-panel') || topEl.closest('.tray-toggle') || topEl.closest('.builder-topbar')) return null;
+    return topEl.closest('.room-stage');
+  }
+
+  /* ---------------- show / hide the items panel ---------------- */
+  function setTrayOpen(open){
+    state.trayOpen = open;
+    trayPanel.classList.toggle('hidden', !open);
+    trayToggle.classList.toggle('open', open);
+    trayToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+    if (!trayPanelMoved) roomNavRight.classList.toggle('tray-open', open);
+  }
+  trayToggle.addEventListener('click', function(){ setTrayOpen(!state.trayOpen); });
+
+  /* ---------------- dragging the item tray to a new spot on screen ---------------- */
+  var trayPanelMoved = false;
+  var trayPanelDrag = null;
+  trayDragHandle.addEventListener('pointerdown', function(e){
+    e.preventDefault();
+    var rect = trayPanel.getBoundingClientRect();
+    // switch from the default right/bottom anchoring to left/top so the
+    // panel can be freely repositioned anywhere on screen
+    trayPanel.style.left = rect.left + 'px';
+    trayPanel.style.top = rect.top + 'px';
+    trayPanel.style.right = 'auto';
+    trayPanel.style.bottom = 'auto';
+    trayPanelDrag = { pointerId:e.pointerId, startX:e.clientX, startY:e.clientY, startLeft:rect.left, startTop:rect.top };
+    trayPanel.classList.add('dragging');
+    if (!trayPanelMoved){
+      trayPanelMoved = true;
+      roomNavRight.classList.remove('tray-open');
+    }
+    try{ trayDragHandle.setPointerCapture(e.pointerId); }catch(err){}
+    trayDragHandle.addEventListener('pointermove', onTrayPanelDragMove);
+    trayDragHandle.addEventListener('pointerup', onTrayPanelDragEnd);
+    trayDragHandle.addEventListener('pointercancel', onTrayPanelDragEnd);
+  });
+  function onTrayPanelDragMove(e){
+    if (!trayPanelDrag || e.pointerId !== trayPanelDrag.pointerId) return;
+    var dx = e.clientX - trayPanelDrag.startX;
+    var dy = e.clientY - trayPanelDrag.startY;
+    var rect = trayPanel.getBoundingClientRect();
+    var newLeft = clamp(trayPanelDrag.startLeft + dx, 4, window.innerWidth - rect.width - 4);
+    var newTop = clamp(trayPanelDrag.startTop + dy, 4, window.innerHeight - rect.height - 4);
+    trayPanel.style.left = newLeft + 'px';
+    trayPanel.style.top = newTop + 'px';
+  }
+  function onTrayPanelDragEnd(e){
+    if (!trayPanelDrag || e.pointerId !== trayPanelDrag.pointerId) return;
+    trayDragHandle.removeEventListener('pointermove', onTrayPanelDragMove);
+    trayDragHandle.removeEventListener('pointerup', onTrayPanelDragEnd);
+    trayDragHandle.removeEventListener('pointercancel', onTrayPanelDragEnd);
+    trayPanel.classList.remove('dragging');
+    trayPanelDrag = null;
+  }
+
+  motionToggle.addEventListener('click', function(){
+    state.motionOff = !state.motionOff;
+    document.querySelectorAll('.room-stage').forEach(function(s){ s.classList.toggle('motion-off', state.motionOff); });
+    motionToggle.classList.toggle('off', state.motionOff);
+    motionToggle.setAttribute('aria-pressed', state.motionOff ? 'false' : 'true');
+  });
+
+  /* ---------------- placing from tray ---------------- */
+  var trayDrag = null;
+
+  function startTrayDrag(e, item, cardEl, onTapOverride){
+    e.preventDefault();
+    try{ cardEl.setPointerCapture(e.pointerId); }catch(err){}
+    trayDrag = { pointerId:e.pointerId, item:item, cardEl:cardEl, startX:e.clientX, startY:e.clientY, moved:false, onTapOverride:onTapOverride };
+    dragGhostImg.src = item.src;
+    dragGhost.style.transform = 'translate(-50%,-50%) rotate('+tiltFor(item.id)+'deg)';
+
+    cardEl.addEventListener('pointermove', onTrayDragMove);
+    cardEl.addEventListener('pointerup', onTrayDragEnd);
+    cardEl.addEventListener('pointercancel', onTrayDragEnd);
+  }
+
+  function onTrayDragMove(e){
+    if (!trayDrag || e.pointerId !== trayDrag.pointerId) return;
+    var dx = e.clientX - trayDrag.startX, dy = e.clientY - trayDrag.startY;
+    if (Math.abs(dx) > 4 || Math.abs(dy) > 4) trayDrag.moved = true;
+    if (!trayDrag.moved) return;
+
+    dragGhost.style.display = 'block';
+    dragGhost.style.opacity = '0.92';
+    dragGhost.style.left = e.clientX + 'px';
+    dragGhost.style.top = e.clientY + 'px';
+
+    var overRoom = roomStageAtPoint(e.clientX, e.clientY);
+    document.querySelectorAll('.room-stage.drop-active').forEach(function(s){
+      if (s !== overRoom) s.classList.remove('drop-active');
+    });
+    if (overRoom) overRoom.classList.add('drop-active');
+  }
+
+  function onTrayDragEnd(e){
+    if (!trayDrag || e.pointerId !== trayDrag.pointerId) return;
+    var d = trayDrag;
+    d.cardEl.removeEventListener('pointermove', onTrayDragMove);
+    d.cardEl.removeEventListener('pointerup', onTrayDragEnd);
+    d.cardEl.removeEventListener('pointercancel', onTrayDragEnd);
+    dragGhost.style.display = 'none';
+    dragGhost.style.opacity = '0';
+    document.querySelectorAll('.room-stage.drop-active').forEach(function(s){ s.classList.remove('drop-active'); });
+
+    var overRoom = roomStageAtPoint(e.clientX, e.clientY);
+
+    if (!d.moved){
+      if (d.onTapOverride){ d.onTapOverride(); trayDrag = null; return; }
+      if (roomStageEl(state.focusedRoomId)){
+        var jx = 50 + (Math.random()*16-8);
+        var jy = 48 + (Math.random()*10-5);
+        addPiece(d.item, clamp(jx,4,96), clamp(jy,4,96), state.focusedRoomId);
+      }
+    } else if (overRoom){
+      var rect = overRoom.getBoundingClientRect();
+      var xPct = (e.clientX - rect.left) / rect.width * 100;
+      var yPct = (e.clientY - rect.top) / rect.height * 100;
+      addPiece(d.item, clamp(xPct,0,100), clamp(yPct,0,100), overRoom.dataset.roomId);
+    }
+    trayDrag = null;
+  }
+
+  function addPiece(item, xPct, yPct, roomId){
+    var height = null;
+    var roomEl = roomStageEl(roomId);
+    if (item.ratio != null && roomEl){
+      var stageRect = roomEl.getBoundingClientRect();
+      var widthPx = item.defaultWidth/100 * stageRect.width;
+      var heightPx = widthPx / item.ratio;
+      height = heightPx / stageRect.height * 100;
+    }
+    var piece = { uid:'p'+(state.uidCounter++), roomId:roomId, assetId:item.id, x:xPct, y:yPct, width:item.defaultWidth, height:height, rotation:0, z:0, lampOn:true, flipped:false, swayLevel:2, lightIntensity:2 };
+    state.placed.push(piece);
+    reassignZIndices();
+    renderPiece(piece, true);
+    selectPiece(piece.uid);
+    updateAllHints();
+    updateLampLighting(roomId);
+    checkAchievements(roomId);
+  }
+
+  var SWAY_LEVELS = {
+    1: { amp:0.55, minDur:11,  maxDur:14  },
+    2: { amp:1.0,  minDur:8,   maxDur:10  },
+    3: { amp:1.7,  minDur:6,   maxDur:7.5 }
+  };
+  // per-lamp brightness — scales the lamp's own glow, its contribution to
+  // the room-wide light pool, and its contribution to nearby objects' rim
+  // glow, all together. New lamps default to Medium, since Strong is what
+  // felt "too intense" as a blanket default.
+  var LIGHT_LEVELS = {
+    1: { glow:0.45, pool:0.45, rim:0.45 },
+    2: { glow:0.70, pool:0.70, rim:0.70 },
+    3: { glow:1.0,  pool:1.0,  rim:1.0  }
+  };
+  function updateLampIntensityVar(el, piece, asset){
+    if (asset.category !== 'lighting') return;
+    var level = piece.lightIntensity || 2;
+    el.style.setProperty('--lamp-intensity', LIGHT_LEVELS[level].glow);
+  }
+  function canSway(asset){
+    // tied to the plant's own tagged size (Medium and up), not how big you've
+    // dragged this particular instance — resizing one plant shouldn't turn
+    // its sway on or off. Monstera is a specific, requested exception.
+    // Curtains sway too, but pivot from the top instead of the base.
+    return (asset.category === 'plants' && (asset.defaultWidth >= 13 || asset.id === 'monstera-small'))
+      || asset.curtainSway === true;
+  }
+  // "view rotation" (turning an item to see it from another side) is a
+  // separate concept from the freehand angle-rotate handle — it swaps in a
+  // completely different piece of art rather than spinning the current one.
+  // Only a handful of items have the extra side/back artwork so far; a
+  // "front" view always exists (it's just the item's normal src) and never
+  // needs an entry of its own in asset.rotations.
+  var VIEW_ROTATION_ORDER = ['front','left','back','right'];
+  function availableViews(asset){
+    return VIEW_ROTATION_ORDER.filter(function(v){ return v === 'front' || (asset.rotations && asset.rotations[v]); });
+  }
+  function viewSrcFor(piece, asset){
+    var view = piece.viewRotation;
+    if (view && view !== 'front' && asset.rotations && asset.rotations[view]) return asset.rotations[view];
+    if (piece.toggled && asset.toggleSrc) return asset.toggleSrc;
+    return asset.src;
+  }
+  function toggleItemState(piece, asset, el){
+    piece.toggled = !piece.toggled;
+    el.classList.toggle('flicker-on', piece.toggled && !!asset.flickerWhenOn);
+    var newSrc = viewSrcFor(piece, asset);
+    var inner = el.querySelector('.piece-inner');
+    var visualEl = el.querySelector('.piece-visual');
+    if (visualEl && inner && visualEl.tagName === 'IMG'){
+      // a real crossfade: the new picture fades in on top while the
+      // current one keeps showing underneath the whole time, rather than
+      // fading out to nothing first and back in after
+      var targetOpacity = (piece.transparency||100)/100;
+      var overlay = document.createElement('img');
+      overlay.className = visualEl.className;
+      overlay.src = newSrc;
+      overlay.alt = visualEl.alt;
+      overlay.style.position = 'absolute';
+      overlay.style.top = '0';
+      overlay.style.left = '0';
+      overlay.style.opacity = '0';
+      overlay.style.transition = 'opacity .45s ease';
+      inner.insertBefore(overlay, visualEl.nextSibling);
+      overlay.getBoundingClientRect(); // force layout so the fade-in doesn't collapse into one frame
+      requestAnimationFrame(function(){ overlay.style.opacity = targetOpacity; });
+      setTimeout(function(){
+        visualEl.src = newSrc; // now the "real" element carries the new state
+        overlay.remove();
+      }, 460);
+    } else if (visualEl){
+      loadStretchableSvg(newSrc, visualEl); // item has been stretched already; use its existing swap path
+    }
+    if (asset.toggleSound){
+      try{
+        var sfx = new Audio(asset.toggleSound);
+        sfx.volume = 0.7;
+        sfx.play().catch(function(){});
+      }catch(err){}
+    }
+  }
+  function updateSwayEligibility(el, piece, asset){
+    var level = piece.swayLevel || 0;
+    var eligible = canSway(asset) && level > 0;
+    el.classList.toggle('sway-eligible', eligible);
+    el.classList.toggle('sway-top', asset.curtainSway === true);
+    if (eligible){
+      var cfg = SWAY_LEVELS[level];
+      el.style.setProperty('--sway-amp', cfg.amp+'deg');
+      el.style.setProperty('--sway-duration', (cfg.minDur + Math.random()*(cfg.maxDur-cfg.minDur)).toFixed(2)+'s');
+    }
+  }
+
+  // fake depth-of-field: a piece that's both generously sized AND sitting
+  // near the bottom or side edges reads as "close to camera", so it gets
+  // a soft blur — framing the shot like a real lens would, rather than a
+  // flat top-down canvas. Applied to .piece-inner (not .piece-visual,
+  // which the lamp-glow effect already drives its own filter on) so the
+  // two effects never fight over the same CSS property.
+  function updateForegroundBlurFor(piece, el){
+    if (!el) return;
+    var inner = el.querySelector('.piece-inner');
+    if (!inner) return;
+    // left/right edges only — being low in the room doesn't count, since
+    // that's just where furniture normally sits and blurring it read as
+    // "the middle of the room is randomly blurry" rather than framing
+    var bigness = clamp((piece.width - 15) / 28, 0, 1);
+    var edgeDist = Math.min(piece.x, 100 - piece.x);
+    var sideness = clamp((8 - edgeDist) / 8, 0, 1);
+    var blurPx = bigness * sideness * 6.5;
+    inner.style.filter = blurPx > 0.05 ? 'blur(' + blurPx.toFixed(2) + 'px)' : '';
+  }
+
+  /* ---------------- rendering placed pieces ---------------- */
+  var svgTextCache = {};
+  var svgNamespaceCounter = 0;
+  function namespaceSvgNames(svgEl, ns){
+    // Design-tool SVG exports reuse generic names like ".cls-1" or
+    // "#gradient1" across completely different files. Fine when isolated
+    // in an <img>, but these get injected directly into the live page, so
+    // two different curtains/rods sharing a name would collide and one's
+    // colors would silently override the other's. Every asset gets a
+    // unique prefix on its classes and ids before it's ever shown.
+    var classNames = {};
+    svgEl.querySelectorAll('[class]').forEach(function(node){
+      node.classList.forEach(function(c){ classNames[c] = true; });
+    });
+    Object.keys(classNames).forEach(function(cls){
+      var escaped = cls.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      var re = new RegExp('\\.' + escaped + '(?=[\\s,{:.\\[]|$)', 'g');
+      svgEl.querySelectorAll('style').forEach(function(styleEl){
+        styleEl.textContent = styleEl.textContent.replace(re, '.' + ns + cls);
+      });
+    });
+    svgEl.querySelectorAll('[class]').forEach(function(node){
+      var renamed = Array.prototype.map.call(node.classList, function(c){ return ns + c; });
+      node.setAttribute('class', renamed.join(' '));
+    });
+
+    var idMap = {};
+    svgEl.querySelectorAll('[id]').forEach(function(node){
+      idMap[node.getAttribute('id')] = ns + node.getAttribute('id');
+    });
+    Object.keys(idMap).forEach(function(oldId){
+      var newId = idMap[oldId];
+      var escaped = oldId.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      var refRe = new RegExp('#' + escaped + '(?=[\\)\'"\\s]|$)', 'g');
+      svgEl.querySelectorAll('[id="'+oldId+'"]').forEach(function(node){ node.setAttribute('id', newId); });
+      svgEl.querySelectorAll('*').forEach(function(node){
+        ['fill','stroke','filter','clip-path','mask'].forEach(function(attr){
+          var val = node.getAttribute(attr);
+          if (val && val.indexOf('#'+oldId) !== -1) node.setAttribute(attr, val.replace(refRe, '#'+newId));
+        });
+        var xlink = node.getAttributeNS ? node.getAttributeNS('http://www.w3.org/1999/xlink', 'href') : null;
+        if (xlink && xlink.indexOf('#'+oldId) !== -1) node.setAttributeNS('http://www.w3.org/1999/xlink', 'href', xlink.replace(refRe, '#'+newId));
+      });
+      svgEl.querySelectorAll('style').forEach(function(styleEl){
+        styleEl.textContent = styleEl.textContent.replace(refRe, '#'+newId);
+      });
+    });
+  }
+  function loadStretchableSvg(url, container){
+    if (!svgTextCache[url]){
+      svgTextCache[url] = fetch(url).then(function(r){ return r.text(); }).then(function(svgText){
+        var temp = document.createElement('div');
+        temp.innerHTML = svgText;
+        var svgEl = temp.querySelector('svg');
+        if (svgEl) namespaceSvgNames(svgEl, 'svgns' + (svgNamespaceCounter++) + '-');
+        return svgEl ? svgEl.outerHTML : svgText;
+      });
+    }
+    svgTextCache[url].then(function(svgText){
+      var temp = document.createElement('div');
+      temp.innerHTML = svgText;
+      var svgEl = temp.querySelector('svg');
+      if (svgEl){
+        // this is the one setting that's guaranteed to force an SVG to
+        // distort to fill any box, since it's part of the SVG spec itself
+        // rather than a CSS/background-image interaction that browsers
+        // are free to interpret inconsistently
+        svgEl.setAttribute('preserveAspectRatio', 'none');
+        svgEl.setAttribute('width', '100%');
+        svgEl.setAttribute('height', '100%');
+        svgEl.style.display = 'block';
+      }
+      container.innerHTML = '';
+      container.appendChild(svgEl || temp);
+    }).catch(function(){ /* leave container empty on failure rather than crash */ });
+  }
+
+  function renderPiece(piece, animate){
+    var asset = getAsset(piece.assetId);
+    var isStretchable = asset.ratio != null || piece.height != null;
+    // every item can be stretched now; an item that hasn't declared its
+    // own art proportions (the vast majority) just doesn't know its own
+    // height yet — that gets measured and locked in the moment someone
+    // actually grabs a stretch handle (see upgradeToStretchableVisual)
+    var stretchMode = asset.stretchControl || 'both';
+    var el = document.createElement('div');
+    el.className = 'piece' +
+      (asset.category==='lighting' && !piece.lampOn ? ' lamp-off' : '') +
+      (piece.toggled && asset.flickerWhenOn ? ' flicker-on' : '') +
+      (piece.flipped ? ' flipped' : '');
+    el.dataset.uid = piece.uid;
+    el.dataset.category = asset.category;
+    updateSwayEligibility(el, piece, asset);
+    updateLampIntensityVar(el, piece, asset);
+    if (asset.category === 'plants' || asset.curtainSway){
+      el.style.setProperty('--sway-delay', (Math.random()*-12).toFixed(2)+'s');
+    }
+    el.style.left = piece.x + '%';
+    el.style.top = piece.y + '%';
+    el.style.width = piece.width + '%';
+    el.style.zIndex = piece.z;
+    el.style.transform = 'translate(-50%,-50%) rotate('+piece.rotation+'deg)';
+
+    var extraHandles = '';
+    if (stretchMode === 'both' || stretchMode === 'horizontal'){
+      extraHandles += '<div class="handle-edge handle-edge-h" data-handle="stretch-h"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 4 3 8l3 4"/><path d="M10 4l3 4-3 4"/></svg></div>';
+    }
+    if (stretchMode === 'both'){
+      extraHandles += '<div class="handle-edge handle-edge-v" data-handle="stretch-v"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6 8 3l4 3"/><path d="M4 10l4 3 4-3"/></svg></div>';
+    }
+    // rods and curtains stretch to fit a window — free rotation doesn't
+    // curtains and rods never get a rotation handle — a window dressing
+    // doesn't get rotated at an angle, in this game at least
+    var rotateHandle = asset.category === 'curtains' ? '' :
+      '<div class="handle handle-rotate" data-handle="rotate"><svg viewBox="0 0 20 20" fill="none" stroke="#BD7B52" stroke-width="1.6" stroke-linecap="round"><path d="M6 6a5 5 0 1 1-1 3"/><path d="M5 4v3h3"/></svg></div>';
+
+    var visualHtml = isStretchable
+      ? '<div class="piece-visual" style="opacity:'+((piece.transparency||100)/100)+'"></div>'
+      : '<img class="piece-visual" src="'+viewSrcFor(piece, asset)+'" alt="'+asset.name+'" style="opacity:'+((piece.transparency||100)/100)+'">';
+
+    el.innerHTML =
+      '<div class="piece-inner'+(animate?' pop':'')+'">' +
+        (asset.category==='lighting' ? '<div class="lamp-glow"></div>' : '') +
+        (asset.flickerWhenOn ? '<div class="flame-glow"></div>' : '') +
+        visualHtml +
+        '<div class="piece-outline"></div>' +
+        rotateHandle +
+        '<div class="handle handle-resize" data-handle="resize"></div>' +
+        extraHandles +
+      '</div>';
+
+    var pieceRoomEl = roomStageEl(piece.roomId);
+    if (pieceRoomEl) pieceRoomEl.appendChild(el);
+    applyStretchStyle(el, piece);
+    if (isStretchable){
+      var visualEl = el.querySelector('.piece-visual');
+      if (visualEl) loadStretchableSvg(viewSrcFor(piece, asset), visualEl);
+    }
+
+    var innerEl = el.querySelector('.piece-inner');
+    if (animate) setTimeout(function(){ innerEl.classList.remove('pop'); }, 340);
+    if (animate && el.classList.contains('sway-eligible')){
+      el.classList.add('settling');
+      setTimeout(function(){ el.classList.remove('settling'); }, 1500);
+    }
+
+    el.addEventListener('pointerdown', function(e){ onPieceDown(e, piece.uid, el); });
+    el.querySelector('[data-handle="resize"]').addEventListener('pointerdown', function(e){ e.stopPropagation(); startResize(e, piece.uid, el); });
+    var rotateEl = el.querySelector('[data-handle="rotate"]');
+    if (rotateEl) rotateEl.addEventListener('pointerdown', function(e){ e.stopPropagation(); startRotate(e, piece.uid, el); });
+    var stretchH = el.querySelector('[data-handle="stretch-h"]');
+    if (stretchH) stretchH.addEventListener('pointerdown', function(e){ e.stopPropagation(); startStretch(e, piece.uid, el, 'h'); });
+    var stretchV = el.querySelector('[data-handle="stretch-v"]');
+    if (stretchV) stretchV.addEventListener('pointerdown', function(e){ e.stopPropagation(); startStretch(e, piece.uid, el, 'v'); });
+    updateForegroundBlurFor(piece, el);
+  }
+
+  function fullRerenderPieces(){
+    Array.prototype.slice.call(document.querySelectorAll('.piece')).forEach(function(n){ n.remove(); });
+    state.placed.slice().sort(function(a,b){ return a.z-b.z; }).forEach(function(p){ renderPiece(p,false); });
+    if (state.selectedUid) applySelectionClass();
+    updateAllHints();
+    updateLampLighting();
+  }
+
+  function pieceEl(uid){ return document.querySelector('.piece[data-uid="'+uid+'"]'); }
+
+  // Stacking order is simply the order of state.placed — index 0 is the
+  // very back, the last entry is the very front. z-index is always
+  // reassigned as a clean 1..N range from that order, so it can never
+  // drift into extreme values the way an ever-incrementing/decrementing
+  // counter could (which is what let a piece end up sent so far back it
+  // sank below other stage layers and became unclickable).
+  function reassignZIndices(){
+    state.rooms.forEach(function(room){
+      var i = 0;
+      state.placed.forEach(function(p){
+        if (p.roomId !== room.id) return;
+        i++;
+        p.z = i;
+        var el = pieceEl(p.uid);
+        if (el) el.style.zIndex = p.z;
+      });
+    });
+  }
+  function bringToFront(piece){
+    var idx = state.placed.indexOf(piece);
+    if (idx === -1 || idx === state.placed.length - 1) return;
+    state.placed.splice(idx, 1);
+    state.placed.push(piece);
+    reassignZIndices();
+  }
+  function sendToBack(piece){
+    var idx = state.placed.indexOf(piece);
+    if (idx <= 0) return;
+    state.placed.splice(idx, 1);
+    state.placed.unshift(piece);
+    reassignZIndices();
+  }
+  function roomPiecesOrdered(roomId){
+    return state.placed.filter(function(p){ return p.roomId === roomId; });
+  }
+  function moveStepForward(piece){
+    var roomPieces = roomPiecesOrdered(piece.roomId);
+    var idx = roomPieces.indexOf(piece);
+    if (idx === -1 || idx === roomPieces.length - 1) return;
+    var next = roomPieces[idx + 1];
+    var realIdxA = state.placed.indexOf(piece);
+    var realIdxB = state.placed.indexOf(next);
+    state.placed[realIdxA] = next;
+    state.placed[realIdxB] = piece;
+    reassignZIndices();
+  }
+  function moveStepBackward(piece){
+    var roomPieces = roomPiecesOrdered(piece.roomId);
+    var idx = roomPieces.indexOf(piece);
+    if (idx <= 0) return;
+    var prev = roomPieces[idx - 1];
+    var realIdxA = state.placed.indexOf(piece);
+    var realIdxB = state.placed.indexOf(prev);
+    state.placed[realIdxA] = prev;
+    state.placed[realIdxB] = piece;
+    reassignZIndices();
+  }
+
+  function applySelectionClass(){
+    Array.prototype.slice.call(document.querySelectorAll('.piece')).forEach(function(n){
+      n.classList.toggle('selected', n.dataset.uid === state.selectedUid);
+    });
+  }
+
+  function updateSwayButtonUI(){
+    var btn = document.getElementById('swayToolbarBtn');
+    var piece = state.selectedUid ? getPiece(state.selectedUid) : null;
+    var asset = piece ? getAsset(piece.assetId) : null;
+    if (piece && asset && canSway(asset)){
+      btn.style.display = 'flex';
+      var level = piece.swayLevel || 0;
+      btn.dataset.level = level;
+      var labels = ['Off','Gentle','Medium','Strong'];
+      btn.title = 'Swaying: '+labels[level]+' (click to change)';
+    } else {
+      btn.style.display = 'none';
+    }
+  }
+
+  function updateLightButtonUI(){
+    var btn = document.getElementById('lightToolbarBtn');
+    var piece = state.selectedUid ? getPiece(state.selectedUid) : null;
+    var asset = piece ? getAsset(piece.assetId) : null;
+    if (piece && asset && asset.category === 'lighting'){
+      btn.style.display = 'flex';
+      var level = piece.lightIntensity || 2;
+      btn.dataset.level = level;
+      var labels = ['', 'Gentle', 'Medium', 'Strong'];
+      btn.title = 'Light intensity: '+labels[level]+' (click to change)';
+    } else {
+      btn.style.display = 'none';
+    }
+  }
+
+  function updateOpacityButtonUI(){
+    var btn = document.getElementById('opacityToolbarBtn');
+    var piece = state.selectedUid ? getPiece(state.selectedUid) : null;
+    var asset = piece ? getAsset(piece.assetId) : null;
+    if (piece && asset && asset.opacityControl){
+      btn.style.display = 'flex';
+      var val = piece.transparency || 100;
+      document.getElementById('opacityBtnLabel').textContent = val;
+      btn.title = 'Transparency: '+val+'% (click to change)';
+    } else {
+      btn.style.display = 'none';
+    }
+  }
+
+  function updateViewButtonUI(){
+    var btn = document.getElementById('viewToolbarBtn');
+    var piece = state.selectedUid ? getPiece(state.selectedUid) : null;
+    var asset = piece ? getAsset(piece.assetId) : null;
+    if (piece && asset && asset.rotations){
+      btn.style.display = 'flex';
+      var labels = { front:'Front', left:'Left side', back:'Back', right:'Right side' };
+      var view = piece.viewRotation || 'front';
+      btn.title = 'Showing: '+(labels[view]||view)+' — click to turn';
+    } else {
+      btn.style.display = 'none';
+    }
+  }
+
+  function selectPiece(uid){
+    state.selectedUid = uid; applySelectionClass(); positionToolbar(); updateSwayButtonUI(); updateOpacityButtonUI(); updateLightButtonUI(); updateViewButtonUI();
+  }
+  function deselect(){
+    state.selectedUid = null; applySelectionClass(); itemToolbar.classList.remove('visible');
+  }
+  function updateAllHints(){
+    state.rooms.forEach(function(room){
+      var roomEl = roomStageEl(room.id);
+      if (!roomEl) return;
+      var hint = roomEl.querySelector('.stage-hint');
+      if (!hint) return;
+      var count = state.placed.filter(function(p){ return p.roomId === room.id; }).length;
+      hint.classList.toggle('hidden', count > 0);
+    });
+  }
+
+  /* ---------------- moving a placed piece ---------------- */
+  var moveDrag = null;
+  function onPieceDown(e, uid, el){
+    if (e.target.closest('[data-handle]')) return;
+    e.preventDefault();
+    selectPiece(uid);
+    var piece = getPiece(uid);
+    var rect = roomStageEl(piece.roomId).getBoundingClientRect();
+    moveDrag = { pointerId:e.pointerId, uid:uid, el:el, rect:rect, startX:e.clientX, startY:e.clientY, startPctX:piece.x, startPctY:piece.y, moved:false };
+    el.classList.add('dragging');
+    try{ el.setPointerCapture(e.pointerId); }catch(err){}
+    el.addEventListener('pointermove', onMoveMove);
+    el.addEventListener('pointerup', onMoveEnd);
+    el.addEventListener('pointercancel', onMoveEnd);
+  }
+  function onMoveMove(e){
+    if (!moveDrag || e.pointerId!==moveDrag.pointerId) return;
+    if (Math.abs(e.clientX-moveDrag.startX) > 4 || Math.abs(e.clientY-moveDrag.startY) > 4) moveDrag.moved = true;
+    var piece = getPiece(moveDrag.uid);
+    var dxPct = (e.clientX - moveDrag.startX) / moveDrag.rect.width * 100;
+    var dyPct = (e.clientY - moveDrag.startY) / moveDrag.rect.height * 100;
+    piece.x = clamp(moveDrag.startPctX + dxPct, 0, 100);
+    piece.y = clamp(moveDrag.startPctY + dyPct, 0, 100);
+    moveDrag.el.style.left = piece.x + '%';
+    moveDrag.el.style.top = piece.y + '%';
+    updateLampLighting(piece.roomId);
+    updateForegroundBlurFor(piece, moveDrag.el);
+    positionToolbar();
+  }
+  function onMoveEnd(e){
+    if (!moveDrag || e.pointerId!==moveDrag.pointerId) return;
+    if (!moveDrag.moved){
+      var piece = getPiece(moveDrag.uid);
+      var asset = getAsset(piece.assetId);
+      if (asset.category === 'lighting'){
+        piece.lampOn = !piece.lampOn;
+        moveDrag.el.classList.toggle('lamp-off', !piece.lampOn);
+        updateLampLighting(piece.roomId);
+      } else if (asset.toggleSrc){
+        toggleItemState(piece, asset, moveDrag.el);
+      }
+    } else {
+      checkAchievements(getPiece(moveDrag.uid).roomId);
+    }
+    moveDrag.el.classList.remove('dragging');
+    moveDrag.el.removeEventListener('pointermove', onMoveMove);
+    moveDrag.el.removeEventListener('pointerup', onMoveEnd);
+    moveDrag.el.removeEventListener('pointercancel', onMoveEnd);
+    moveDrag = null;
+  }
+
+  /* ---------------- resizing ---------------- */
+  var resizeDrag = null;
+  function startResize(e, uid, el){
+    e.preventDefault();
+    selectPiece(uid);
+    var piece = getPiece(uid);
+    var rect = el.getBoundingClientRect();
+    var cx = rect.left + rect.width/2, cy = rect.top + rect.height/2;
+    var startDist = Math.hypot(e.clientX-cx, e.clientY-cy);
+    resizeDrag = { pointerId:e.pointerId, uid:uid, el:el, cx:cx, cy:cy, startDist:startDist, startWidth:piece.width, startHeight:piece.height };
+    var handle = e.target.closest('.handle');
+    try{ handle.setPointerCapture(e.pointerId); }catch(err){}
+    handle.addEventListener('pointermove', onResizeMove);
+    handle.addEventListener('pointerup', onResizeEnd);
+    handle.addEventListener('pointercancel', onResizeEnd);
+  }
+  function onResizeMove(e){
+    if (!resizeDrag || e.pointerId!==resizeDrag.pointerId) return;
+    var piece = getPiece(resizeDrag.uid);
+    var dist = Math.hypot(e.clientX-resizeDrag.cx, e.clientY-resizeDrag.cy);
+    var scale = dist / Math.max(resizeDrag.startDist, 1);
+    piece.width = clamp(resizeDrag.startWidth * scale, minWidthFor(piece.assetId), MAX_WIDTH);
+    resizeDrag.el.style.width = piece.width + '%';
+    // once a piece has an independent height (stretched at some point),
+    // the corner handle scales both dimensions together proportionally
+    // instead of letting the natural image ratio take back over
+    if (resizeDrag.startHeight != null){
+      piece.height = clamp(resizeDrag.startHeight * scale, 2, 90);
+      applyStretchStyle(resizeDrag.el, piece);
+    }
+    updateSwayEligibility(resizeDrag.el, piece, getAsset(piece.assetId));
+    updateForegroundBlurFor(piece, resizeDrag.el);
+    positionToolbar();
+  }
+  function onResizeEnd(e){
+    if (!resizeDrag || e.pointerId!==resizeDrag.pointerId) return;
+    var handle = resizeDrag.el.querySelector('[data-handle="resize"]');
+    handle.removeEventListener('pointermove', onResizeMove);
+    handle.removeEventListener('pointerup', onResizeEnd);
+    handle.removeEventListener('pointercancel', onResizeEnd);
+    resizeDrag = null;
+  }
+
+  /* ---------------- independent horizontal/vertical stretch ---------------- */
+  var stretchDrag = null;
+  function upgradeToStretchableVisual(el, piece, asset){
+    // this item never declared its own art proportions, so it's been
+    // rendering as a plain <img> at its natural size up to now. The first
+    // time someone actually grabs a stretch handle, measure whatever
+    // height it's currently sitting at and lock that in as its starting
+    // point, then swap to the same inline-SVG technique curtains use —
+    // a plain <img> won't reliably distort, only an SVG's own
+    // preserveAspectRatio attribute does that consistently.
+    if (piece.height != null) return;
+    var stageEl = roomStageEl(piece.roomId);
+    if (!stageEl) return;
+    var rect = el.getBoundingClientRect();
+    var stageRect = stageEl.getBoundingClientRect();
+    if (!stageRect.height) return;
+    piece.height = clamp(rect.height / stageRect.height * 100, 2, 90);
+    var oldVisual = el.querySelector('.piece-visual');
+    if (oldVisual && oldVisual.tagName === 'IMG'){
+      var newVisual = document.createElement('div');
+      newVisual.className = 'piece-visual';
+      newVisual.style.opacity = oldVisual.style.opacity;
+      oldVisual.replaceWith(newVisual);
+      applyStretchStyle(el, piece);
+      loadStretchableSvg(viewSrcFor(piece, asset), newVisual);
+    } else {
+      applyStretchStyle(el, piece);
+    }
+  }
+  function startStretch(e, uid, el, mode){
+    e.preventDefault();
+    selectPiece(uid);
+    var piece = getPiece(uid);
+    var asset = getAsset(piece.assetId);
+    upgradeToStretchableVisual(el, piece, asset);
+    var stageRect = roomStageEl(piece.roomId).getBoundingClientRect();
+    stretchDrag = {
+      mode:mode, pointerId:e.pointerId, uid:uid, el:el, stageRect:stageRect,
+      startX:e.clientX, startY:e.clientY,
+      startWidth:piece.width, startHeight:piece.height,
+      startPieceX:piece.x, startPieceY:piece.y
+    };
+    var handle = e.target.closest('.handle-edge');
+    try{ handle.setPointerCapture(e.pointerId); }catch(err){}
+    handle.addEventListener('pointermove', onStretchMove);
+    handle.addEventListener('pointerup', onStretchEnd);
+    handle.addEventListener('pointercancel', onStretchEnd);
+  }
+  function onStretchMove(e){
+    if (!stretchDrag || e.pointerId!==stretchDrag.pointerId) return;
+    var piece = getPiece(stretchDrag.uid);
+    if (stretchDrag.mode === 'h'){
+      var dxPct = (e.clientX - stretchDrag.startX) / stretchDrag.stageRect.width * 100;
+      var newWidth = clamp(stretchDrag.startWidth + dxPct, minWidthFor(piece.assetId), 90);
+      var deltaW = newWidth - stretchDrag.startWidth;
+      piece.width = newWidth;
+      piece.x = clamp(stretchDrag.startPieceX + deltaW/2, 0, 100); // left edge stays put
+      stretchDrag.el.style.width = piece.width + '%';
+      stretchDrag.el.style.left = piece.x + '%';
+      applyStretchStyle(stretchDrag.el, piece);
+    } else {
+      var dyPct = (e.clientY - stretchDrag.startY) / stretchDrag.stageRect.height * 100;
+      var newHeight = clamp(stretchDrag.startHeight + dyPct, 2, 90);
+      var deltaH = newHeight - stretchDrag.startHeight;
+      piece.height = newHeight;
+      piece.y = clamp(stretchDrag.startPieceY + deltaH/2, 0, 100); // top edge stays put
+      applyStretchStyle(stretchDrag.el, piece);
+      stretchDrag.el.style.top = piece.y + '%';
+    }
+    updateLampLighting(piece.roomId);
+    updateForegroundBlurFor(piece, stretchDrag.el);
+    positionToolbar();
+  }
+  function onStretchEnd(e){
+    if (!stretchDrag || e.pointerId!==stretchDrag.pointerId) return;
+    var handle = stretchDrag.el.querySelector('[data-handle="stretch-'+stretchDrag.mode+'"]');
+    handle.removeEventListener('pointermove', onStretchMove);
+    handle.removeEventListener('pointerup', onStretchEnd);
+    handle.removeEventListener('pointercancel', onStretchEnd);
+    stretchDrag = null;
+  }
+
+  /* ---------------- rotating ---------------- */
+  var rotateDrag = null;
+  function startRotate(e, uid, el){
+    e.preventDefault();
+    selectPiece(uid);
+    var rect = el.getBoundingClientRect();
+    rotateDrag = { pointerId:e.pointerId, uid:uid, el:el, cx:rect.left+rect.width/2, cy:rect.top+rect.height/2 };
+    var handle = e.target.closest('.handle');
+    try{ handle.setPointerCapture(e.pointerId); }catch(err){}
+    handle.addEventListener('pointermove', onRotateMove);
+    handle.addEventListener('pointerup', onRotateEnd);
+    handle.addEventListener('pointercancel', onRotateEnd);
+  }
+  function onRotateMove(e){
+    if (!rotateDrag || e.pointerId!==rotateDrag.pointerId) return;
+    var piece = getPiece(rotateDrag.uid);
+    var angle = Math.atan2(e.clientY-rotateDrag.cy, e.clientX-rotateDrag.cx) * 180/Math.PI + 90;
+    angle = ((angle % 360) + 360) % 360;
+    [0,90,180,270,360].forEach(function(snap){ if (Math.abs(angle-snap) < 4) angle = (snap===360?0:snap); });
+    piece.rotation = angle;
+    rotateDrag.el.style.transform = 'translate(-50%,-50%) rotate('+angle+'deg)';
+    positionToolbar();
+  }
+  function onRotateEnd(e){
+    if (!rotateDrag || e.pointerId!==rotateDrag.pointerId) return;
+    var handle = rotateDrag.el.querySelector('[data-handle="rotate"]');
+    handle.removeEventListener('pointermove', onRotateMove);
+    handle.removeEventListener('pointerup', onRotateEnd);
+    handle.removeEventListener('pointercancel', onRotateEnd);
+    rotateDrag = null;
+  }
+
+  /* ---------------- floating toolbar ---------------- */
+  function positionToolbar(){
+    if (!state.selectedUid){ itemToolbar.classList.remove('visible'); return; }
+    var el = pieceEl(state.selectedUid);
+    if (!el){ itemToolbar.classList.remove('visible'); return; }
+    var rect = el.getBoundingClientRect();
+    itemToolbar.classList.add('visible');
+    var top = rect.top - 12;
+    var left = rect.left + rect.width/2;
+    if (top < 60){
+      itemToolbar.style.transform = 'translate(-50%, 12px)';
+      itemToolbar.style.top = rect.bottom + 'px';
+    } else {
+      itemToolbar.style.transform = 'translate(-50%, -100%)';
+      itemToolbar.style.top = top + 'px';
+    }
+    itemToolbar.style.left = left + 'px';
+  }
+
+  itemToolbar.addEventListener('click', function(e){
+    var btn = e.target.closest('button');
+    if (!btn || !state.selectedUid) return;
+    var piece = getPiece(state.selectedUid);
+    var action = btn.dataset.action;
+    if (action==='front'){ bringToFront(piece); }
+    if (action==='back'){ sendToBack(piece); }
+    if (action==='step-forward'){ moveStepForward(piece); }
+    if (action==='step-back'){ moveStepBackward(piece); }
+    if (action==='flip'){ piece.flipped = !piece.flipped; pieceEl(piece.uid).classList.toggle('flipped', piece.flipped); }
+    if (action==='view'){
+      var viewAsset = getAsset(piece.assetId);
+      var views = availableViews(viewAsset);
+      var vIdx = views.indexOf(piece.viewRotation || 'front');
+      piece.viewRotation = views[(vIdx+1) % views.length];
+      var visualEl = pieceEl(piece.uid).querySelector('.piece-visual');
+      if (visualEl){
+        if (visualEl.tagName === 'IMG') visualEl.src = viewSrcFor(piece, viewAsset);
+        else loadStretchableSvg(viewSrcFor(piece, viewAsset), visualEl); // already upgraded by a stretch
+      }
+      updateViewButtonUI();
+    }
+    if (action==='sway'){
+      piece.swayLevel = ((piece.swayLevel || 0) + 1) % 4;
+      updateSwayEligibility(pieceEl(piece.uid), piece, getAsset(piece.assetId));
+      updateSwayButtonUI();
+    }
+    if (action==='light'){
+      piece.lightIntensity = (piece.lightIntensity % 3) + 1;
+      updateLampIntensityVar(pieceEl(piece.uid), piece, getAsset(piece.assetId));
+      updateLampLighting(piece.roomId);
+      updateLightButtonUI();
+    }
+    if (action==='opacity'){
+      var levels = [100,80,70];
+      var idx = levels.indexOf(piece.transparency || 100);
+      piece.transparency = levels[(idx+1) % levels.length];
+      pieceEl(piece.uid).querySelector('.piece-visual').style.opacity = piece.transparency/100;
+      updateOpacityButtonUI();
+    }
+    if (action==='duplicate'){
+      var copy = { uid:'p'+(state.uidCounter++), roomId:piece.roomId, assetId:piece.assetId, x:clamp(piece.x+4,0,100), y:clamp(piece.y+4,0,100), width:piece.width, height:piece.height, rotation:piece.rotation, z:0, lampOn:piece.lampOn, flipped:piece.flipped, swayLevel:piece.swayLevel, transparency:piece.transparency, lightIntensity:piece.lightIntensity, viewRotation:piece.viewRotation, toggled:piece.toggled };
+      state.placed.push(copy);
+      reassignZIndices();
+      renderPiece(copy, true);
+      selectPiece(copy.uid);
+      updateLampLighting(copy.roomId);
+      checkAchievements(copy.roomId);
+    }
+    if (action==='delete'){
+      state.placed = state.placed.filter(function(p){ return p.uid!==piece.uid; });
+      var node = pieceEl(piece.uid);
+      if (node) node.remove();
+      reassignZIndices();
+      deselect();
+      updateAllHints();
+      updateLampLighting(piece.roomId);
+    }
+  });
+
+  /* ---------------- stage-level interactions ---------------- */
+  var roomPanDrag = null;
+  roomsViewport.addEventListener('pointerdown', function(e){
+    if (e.target.classList.contains('room-stage') || e.target.classList.contains('stage-hint')){
+      deselect();
+      if (state.trayOpen) setTrayOpen(false);
+      // click-and-drag panning is a desktop-mouse convenience; touch
+      // devices already get native swipe-scrolling via touch-action, and
+      // mixing the two would double up the movement
+      if (e.pointerType === 'mouse'){
+        var stageEl = e.target.closest('.room-stage');
+        roomPanDrag = { pointerId:e.pointerId, startX:e.clientX, startScrollLeft:roomsViewport.scrollLeft, stageEl:stageEl };
+        if (stageEl) stageEl.classList.add('panning');
+        try{ roomsViewport.setPointerCapture(e.pointerId); }catch(err){}
+      }
+    }
+  });
+  roomsViewport.addEventListener('pointermove', function(e){
+    if (!roomPanDrag || e.pointerId !== roomPanDrag.pointerId) return;
+    var dx = e.clientX - roomPanDrag.startX;
+    roomsViewport.scrollLeft = roomPanDrag.startScrollLeft - dx;
+  });
+  function snapToNearestRoom(){
+    var viewportCenter = roomsViewport.scrollLeft + roomsViewport.clientWidth/2;
+    var closest = null, closestDist = Infinity;
+    state.rooms.forEach(function(room){
+      var el = roomStageEl(room.id);
+      if (!el) return;
+      var center = el.offsetLeft + el.offsetWidth/2;
+      var dist = Math.abs(center - viewportCenter);
+      if (dist < closestDist){ closestDist = dist; closest = room; }
+    });
+    if (closest) focusRoom(closest.id);
+  }
+  function endRoomPan(e){
+    if (!roomPanDrag || e.pointerId !== roomPanDrag.pointerId) return;
+    if (roomPanDrag.stageEl) roomPanDrag.stageEl.classList.remove('panning');
+    roomPanDrag = null;
+    snapToNearestRoom();
+  }
+  roomsViewport.addEventListener('pointerup', endRoomPan);
+  roomsViewport.addEventListener('pointercancel', endRoomPan);
+
+  // camera breathing pauses the instant anything is actually touched —
+  // dragging a piece, panning between rooms, grabbing a handle — and
+  // settles back in a couple of seconds after things go quiet again
+  var breathingIdleTimer = null;
+  function pauseBreathing(){
+    document.querySelectorAll('.room-stage').forEach(function(s){ s.classList.add('breathing-paused'); });
+    if (breathingIdleTimer){ clearTimeout(breathingIdleTimer); breathingIdleTimer = null; }
+  }
+  function scheduleResumeBreathing(){
+    if (breathingIdleTimer) clearTimeout(breathingIdleTimer);
+    breathingIdleTimer = setTimeout(function(){
+      document.querySelectorAll('.room-stage').forEach(function(s){ s.classList.remove('breathing-paused'); });
+    }, 2000);
+  }
+  roomsViewport.addEventListener('pointerdown', pauseBreathing);
+  document.addEventListener('pointerup', scheduleResumeBreathing);
+  document.addEventListener('pointercancel', scheduleResumeBreathing);
+  window.addEventListener('resize', positionToolbar);
+  window.addEventListener('scroll', positionToolbar, true);
+
+  document.addEventListener('keydown', function(e){
+    if (!screens.builder.classList.contains('active')) return;
+    if (!state.selectedUid) return;
+    if (e.key === 'Delete' || e.key === 'Backspace'){
+      e.preventDefault();
+      itemToolbar.querySelector('[data-action="delete"]').click();
+    }
+    if (e.key === 'Escape') deselect();
+  });
+
+  /* ---------------- clear room ---------------- */
+  var confirmingClear = false, confirmTimer = null;
+  clearBtn.addEventListener('click', function(){
+    if (!confirmingClear){
+      confirmingClear = true;
+      clearBtn.textContent = 'Click again to confirm';
+      confirmTimer = setTimeout(function(){
+        confirmingClear = false;
+        clearBtn.textContent = 'Clear room';
+      }, 3000);
+      return;
+    }
+    clearTimeout(confirmTimer);
+    confirmingClear = false;
+    clearBtn.textContent = 'Clear room';
+    state.placed = state.placed.filter(function(p){ return p.roomId !== state.focusedRoomId; });
+    state.selectedUid = null;
+    fullRerenderPieces();
+    itemToolbar.classList.remove('visible');
+  });
+
+  /* ---------------- scoring: variety & balance ---------------- */
+  // Aggregates the same per-item attributes (material/color/style1/style2)
+  // that already drive the tray's color-variant grouping, but rolled up
+  // across a whole finished room instead of one item family. This is the
+  // groundwork for a later "story mode" brief/rating system — a brief can
+  // eventually be checked against this same profile — but for now it just
+  // powers the Design Profile view.
+  // tints for the profile view's material/style visuals — drawn from the
+  // game's own palette family (sage/clay/gold/ink) rather than arbitrary
+  // colors, so a tile never feels like it wandered in from another app
+  var MATERIAL_TINTS = {
+    'Wood':'#9C7648','Fabric':'#BD7B52','Metal':'#8B8D89','Marble':'#DCD4C4','Glass':'#A9BFC0',
+    'Ceramic':'#D9A344','Plant':'#77896B','Leather':'#8C5A34','Rattan':'#C3A06C','Canvas':'#C7B99A',
+    'Plastic':'#B9AF9E','Mixed':'#A99A85','Stone':'#ABA294'
+  };
+  var STYLE_TINTS = {
+    'Modern':'#8B8D89','Minimal':'#C7B99A','Cozy':'#BD7B52','Scandinavian':'#77896B','Mid-Century':'#D9A344',
+    'Vintage':'#B08A8A','Traditional':'#A6813F','Rustic':'#8C5A34','Industrial':'#6B6B68','Bohemian':'#A8623F',
+    'Organic':'#5C6E55','Eclectic':'#8A6B8F'
+  };
+  function solidSwatchColor(color){
+    var val = SWATCH_COLORS[color];
+    if (!val || val.indexOf('gradient') === 0) return '#B8AA92';
+    return val;
+  }
+  // a soft segmented ring — the room's own mix (of whichever attribute is
+  // passed in) laid out as arcs, rather than a generic progress ring
+  // standing in for a single number. colorFn maps a row's key to a hex.
+  function buildRingSvg(rows, colorFn){
+    var r = 40, cx = 50, cy = 50;
+    var circumference = 2 * Math.PI * r;
+    var cumulative = 0;
+    var gap = rows.length > 1 ? 2.2 : 0;
+    var segments = rows.map(function(row){
+      var raw = row.pct / 100 * circumference;
+      var dash = Math.max(raw - gap, raw * 0.15);
+      var circle = '<circle cx="'+cx+'" cy="'+cy+'" r="'+r+'" fill="none" stroke="'+colorFn(row.key)+'" ' +
+        'stroke-width="11" stroke-linecap="round" ' +
+        'stroke-dasharray="'+dash.toFixed(2)+' '+(circumference-dash).toFixed(2)+'" ' +
+        'stroke-dashoffset="'+(-cumulative).toFixed(2)+'" transform="rotate(-90 '+cx+' '+cy+')"/>';
+      cumulative += raw;
+      return circle;
+    }).join('');
+    return '<svg viewBox="0 0 100 100" class="profile-ring-svg">'+segments+'</svg>';
+  }
+  function buildLegendHtml(rows, colorFn){
+    return rows.map(function(row){
+      return '<div class="profile-legend-item"><span class="profile-legend-dot" style="background:'+colorFn(row.key)+'"></span>'+row.label+' '+row.pct+'%</div>';
+    }).join('');
+  }
+  // a short, natural-reading line describing the room's overall character,
+  // built from whatever style/material actually dominates it
+  function roomCharacterLine(profile){
+    var style = profile.byStyle[0] ? profile.byStyle[0].label : null;
+    var material = profile.byMaterial[0] ? profile.byMaterial[0].label : null;
+    if (style && material) return style + ' ' + material + ' Room';
+    if (style) return style + ' Room';
+    if (material) return material + ' Room';
+    return 'Your Room';
+  }
+
+  // ---------------- achievements ----------------
+  // item groupings a player can stumble into just by how they place
+  // things — unlocked once, permanently, the moment a room satisfies the
+  // pattern. Proximity uses a simple "N pieces within radius of a common
+  // point" check rather than full spatial clustering — good enough for
+  // "these are sitting together" without needing real geometry — but it
+  // works off each item's actual center, not its raw x/y (which the
+  // renderer treats as the top-left corner), so items of different sizes
+  // compare fairly.
+  var ACHIEVEMENT_PROXIMITY_RADIUS = 24;
+  function pieceCenter(piece){
+    return { cx: piece.x + (piece.width||0)/2, cy: piece.y + (piece.height||0)/2 };
+  }
+  function pieceDistance(a, b){
+    var ca = pieceCenter(a), cb = pieceCenter(b);
+    var dx = ca.cx - cb.cx, dy = ca.cy - cb.cy;
+    return Math.sqrt(dx*dx + dy*dy);
+  }
+  function hasProximityCluster(pieces, minSize, radius){
+    if (pieces.length < minSize) return false;
+    for (var i=0;i<pieces.length;i++){
+      var count = 1;
+      for (var j=0;j<pieces.length;j++){
+        if (i===j) continue;
+        if (pieceDistance(pieces[i], pieces[j]) <= radius) count++;
+      }
+      if (count >= minSize) return true;
+    }
+    return false;
+  }
+  // "Facing" leans on the one directional signal a placed piece actually
+  // has: flipped (a real horizontal mirror — confirmed via .piece.flipped's
+  // scaleX(-1) — meaningful for furniture art drawn at an angle rather
+  // than dead-on). ASSUMPTION, not verified against the actual art:
+  // unflipped pieces face right by default. If that's backwards for this
+  // game's illustrations, flip this one constant and every "facing"
+  // achievement corrects itself.
+  var UNFLIPPED_FACES_RIGHT = true;
+  function facesToward(piece, otherPiece){
+    var dx = pieceCenter(otherPiece).cx - pieceCenter(piece).cx;
+    if (Math.abs(dx) < 0.5) return true; // stacked ~vertically — no clear left/right to violate
+    var facesRight = UNFLIPPED_FACES_RIGHT ? !piece.flipped : !!piece.flipped;
+    return (dx > 0) === facesRight;
+  }
+  function faceEachOther(a, b){
+    return facesToward(a, b) && facesToward(b, a);
+  }
+  function hasFacingPair(pieces, radius){
+    for (var i=0;i<pieces.length;i++){
+      for (var j=i+1;j<pieces.length;j++){
+        if (pieceDistance(pieces[i], pieces[j]) <= radius && faceEachOther(pieces[i], pieces[j])) return true;
+      }
+    }
+    return false;
+  }
+  // type 'novelty' = a fun one-off discovery, celebrated once and then
+  // just part of the collection. type 'room-type' = describes what kind
+  // of room this is — re-checked live against a room's current state (see
+  // liveAchievementsForRoom below) so it can also show up in that room's
+  // results and later be matched against a story-mode brief, not just
+  // recorded as a historical first-time discovery.
+  var ACHIEVEMENTS = [
+    { id:'conversation-corner', name:'Conversation Corner', type:'novelty',
+      description:'Two seats placed close together, facing each other',
+      check:function(entries){
+        var seats = entries.filter(function(e){ return e.asset.category==='seating'; }).map(function(e){ return e.piece; });
+        return hasFacingPair(seats, ACHIEVEMENT_PROXIMITY_RADIUS);
+      } },
+    { id:'library', name:'Library', type:'novelty',
+      description:'5 or more book items in one room',
+      check:function(entries){
+        return entries.filter(function(e){ return e.asset.name.toLowerCase().indexOf('book')!==-1; }).length >= 5;
+      } },
+    { id:'art-studio', name:'Art Studio', type:'novelty',
+      description:'3 or more wall art pieces in one room',
+      check:function(entries){
+        return entries.filter(function(e){ return e.asset.category==='wall-art'; }).length >= 3;
+      } },
+    { id:'green-corner', name:'Green Corner', type:'novelty',
+      description:'4 or more plants clustered together',
+      check:function(entries){
+        var plants = entries.filter(function(e){ return e.asset.category==='plants'; }).map(function(e){ return e.piece; });
+        return hasProximityCluster(plants, 4, ACHIEVEMENT_PROXIMITY_RADIUS);
+      } },
+    { id:'chefs-kitchen', name:"Chef's Kitchen", type:'room-type',
+      description:'A counter or island, plus 4 or more other kitchen appliances',
+      check:function(entries){
+        var isAnchor = function(a){ return a.id.indexOf('kitchen-counter')===0 || a.id.indexOf('kitchen-island')===0; };
+        if (!entries.some(function(e){ return isAnchor(e.asset); })) return false;
+        return entries.filter(function(e){ return e.asset.category==='kitchen' && !isAnchor(e.asset); }).length >= 4;
+      } },
+    { id:'pink-parade', name:'Pink Parade', type:'novelty',
+      description:'5 or more pink or rosa items in one room',
+      check:function(entries){
+        return entries.filter(function(e){ return e.asset.color==='Pink' || e.asset.color==='Rosa'; }).length >= 5;
+      } },
+    { id:'fireside-lounge', name:'Fireside Lounge', type:'novelty',
+      description:'A fireplace, a couch, and 4 or more books together',
+      check:function(entries){
+        var hasFireplace = entries.some(function(e){ return e.asset.id.indexOf('fireplace')===0; });
+        var hasCouch = entries.some(function(e){ return e.asset.id.indexOf('couch-')===0; });
+        var bookCount = entries.filter(function(e){ return e.asset.name.toLowerCase().indexOf('book')!==-1; }).length;
+        return hasFireplace && hasCouch && bookCount >= 4;
+      } },
+    { id:'breakfast-area', name:'Breakfast Area', type:'room-type',
+      description:'A kitchen island with 2+ stools or chairs, a fruit bowl, and a cup nearby',
+      check:function(entries){
+        var islands = entries.filter(function(e){ return e.asset.id.indexOf('kitchen-island')===0; });
+        return islands.some(function(isl){
+          var anchor = isl.piece;
+          var seatsNear = entries.filter(function(e){
+            return (e.asset.id.indexOf('stool')!==-1 || e.asset.id.indexOf('chair-')===0) &&
+              pieceDistance(anchor, e.piece) <= ACHIEVEMENT_PROXIMITY_RADIUS;
+          }).length;
+          var fruitNear = entries.some(function(e){
+            return e.asset.name.toLowerCase().indexOf('fruit')!==-1 && pieceDistance(anchor, e.piece) <= ACHIEVEMENT_PROXIMITY_RADIUS;
+          });
+          var cupNear = entries.some(function(e){
+            var n = e.asset.name.toLowerCase();
+            return n.indexOf('cup')!==-1 && n.indexOf('paintbrush')===-1 && pieceDistance(anchor, e.piece) <= ACHIEVEMENT_PROXIMITY_RADIUS;
+          });
+          return seatsNear >= 2 && fruitNear && cupNear;
+        });
+      } },
+    { id:'kitchen', name:'Kitchen', type:'room-type',
+      description:'A counter or island, a fridge, a light, and at least one more appliance',
+      check:function(entries){
+        var isAnchor = function(a){ return a.id.indexOf('kitchen-counter')===0 || a.id.indexOf('kitchen-island')===0; };
+        var hasAnchor = entries.some(function(e){ return isAnchor(e.asset); });
+        var hasFridge = entries.some(function(e){ return e.asset.id.indexOf('fridge-')===0; });
+        var hasLamp = entries.some(function(e){ return e.asset.category==='lighting'; });
+        var applianceCount = entries.filter(function(e){ return e.asset.category==='kitchen' && !isAnchor(e.asset) && e.asset.id.indexOf('fridge-')!==0; }).length;
+        return hasAnchor && hasFridge && hasLamp && applianceCount >= 1;
+      } },
+    { id:'bedroom', name:'Bedroom', type:'room-type',
+      description:'A bed with 2 nightstands',
+      check:function(entries){
+        var bedCount = entries.filter(function(e){ return e.asset.category==='bed'; }).length;
+        var nightstandCount = entries.filter(function(e){ return e.asset.id.indexOf('bedsidetable-')===0; }).length;
+        return bedCount >= 1 && nightstandCount >= 2;
+      } },
+    { id:'cozy-bedroom', name:'Cozy Bedroom', type:'room-type',
+      description:'A bed, 2 nightstands, 2+ lights, and 3+ cushions',
+      check:function(entries){
+        var bedCount = entries.filter(function(e){ return e.asset.category==='bed'; }).length;
+        var nightstandCount = entries.filter(function(e){ return e.asset.id.indexOf('bedsidetable-')===0; }).length;
+        var lightCount = entries.filter(function(e){ return e.asset.category==='lighting'; }).length;
+        var cushionCount = entries.filter(function(e){ return e.asset.name.toLowerCase().indexOf('cushion')!==-1; }).length;
+        return bedCount >= 1 && nightstandCount >= 2 && lightCount >= 2 && cushionCount >= 3;
+      } },
+    { id:'fire-hazard', name:'Fire Hazard', type:'novelty',
+      description:'5 or more candles in one room — please be careful',
+      check:function(entries){
+        return entries.filter(function(e){ return e.asset.name.toLowerCase().indexOf('candle')!==-1; }).length >= 5;
+      } },
+    { id:'people-person', name:'People Person', type:'novelty',
+      description:'5 or more seats in one room',
+      check:function(entries){
+        return entries.filter(function(e){ return e.asset.category==='seating'; }).length >= 5;
+      } },
+    { id:'living-room', name:'Living Room', type:'room-type',
+      description:'A couch, a coffee table, and a lamp',
+      check:function(entries){
+        var hasCouch = entries.some(function(e){ return e.asset.id.indexOf('couch-')===0; });
+        var hasCouchtable = entries.some(function(e){ return e.asset.category==='tables' && e.asset.id.indexOf('couchtable')!==-1; });
+        var hasLamp = entries.some(function(e){ return e.asset.category==='lighting'; });
+        return hasCouch && hasCouchtable && hasLamp;
+      } },
+    { id:'dining-room', name:'Dining Room', type:'room-type',
+      description:'A dining table with 4 or more seats nearby',
+      check:function(entries){
+        var tables = entries.filter(function(e){ return e.asset.id.indexOf('diningtable-')===0; });
+        return tables.some(function(t){
+          return entries.filter(function(e){ return e.asset.category==='seating' && pieceDistance(t.piece, e.piece) <= ACHIEVEMENT_PROXIMITY_RADIUS; }).length >= 4;
+        });
+      } },
+    { id:'reading-nook', name:'Reading Nook', type:'room-type',
+      description:'A chair or armchair, a lamp, and 2+ books, all close together',
+      check:function(entries){
+        var seats = entries.filter(function(e){ return e.asset.category==='seating'; });
+        return seats.some(function(s){
+          var hasLampNear = entries.some(function(e){ return e.asset.category==='lighting' && pieceDistance(s.piece, e.piece) <= ACHIEVEMENT_PROXIMITY_RADIUS; });
+          var booksNear = entries.filter(function(e){ return e.asset.name.toLowerCase().indexOf('book')!==-1 && pieceDistance(s.piece, e.piece) <= ACHIEVEMENT_PROXIMITY_RADIUS; }).length;
+          return hasLampNear && booksNear >= 2;
+        });
+      } },
+    { id:'walk-in-closet', name:'Walk-in Closet', type:'room-type',
+      description:'6 or more storage items in one room',
+      check:function(entries){
+        return entries.filter(function(e){ return e.asset.category==='storage'; }).length >= 6;
+      } },
+    { id:'monochrome', name:'Monochrome', type:'novelty',
+      description:'8 or more items in one room, all the exact same color',
+      check:function(entries){
+        var counts = {};
+        entries.forEach(function(e){ if (e.asset.color) counts[e.asset.color] = (counts[e.asset.color]||0)+1; });
+        return Object.keys(counts).some(function(c){ return counts[c] >= 8; });
+      } },
+    { id:'rainbow-room', name:'Rainbow Room', type:'novelty',
+      description:'6 or more different colors represented in one room',
+      check:function(entries){
+        var colors = {};
+        entries.forEach(function(e){ if (e.asset.color) colors[e.asset.color] = true; });
+        return Object.keys(colors).length >= 6;
+      } },
+    { id:'wood-works', name:'Wood Works', type:'novelty',
+      description:'8 or more items with Wood material',
+      check:function(entries){
+        return entries.filter(function(e){ return e.asset.material==='Wood'; }).length >= 8;
+      } },
+    { id:'marble-palace', name:'Marble Palace', type:'novelty',
+      description:'4 or more items with Marble material',
+      check:function(entries){
+        return entries.filter(function(e){ return e.asset.material==='Marble'; }).length >= 4;
+      } },
+    { id:'gold-standard', name:'Gold Standard', type:'novelty',
+      description:'4 or more items colored Gold or Brass',
+      check:function(entries){
+        return entries.filter(function(e){ return e.asset.color==='Gold' || e.asset.color==='Brass'; }).length >= 4;
+      } },
+    { id:'wild-side', name:'Wild Side', type:'novelty',
+      description:'4 or more items with a Zebra or Multi pattern',
+      check:function(entries){
+        return entries.filter(function(e){ return e.asset.color==='Zebra' || e.asset.color==='Multi'; }).length >= 4;
+      } },
+    { id:'time-traveler', name:'Time Traveler', type:'novelty',
+      description:'6 or more items tagged Vintage style',
+      check:function(entries){
+        return entries.filter(function(e){ return e.asset.style1==='Vintage' || e.asset.style2==='Vintage'; }).length >= 6;
+      } },
+    { id:'factory-floor', name:'Factory Floor', type:'novelty',
+      description:'4+ Industrial-style items, plus at least 1 Metal item',
+      check:function(entries){
+        var industrial = entries.filter(function(e){ return e.asset.style1==='Industrial' || e.asset.style2==='Industrial'; }).length;
+        var hasMetal = entries.some(function(e){ return e.asset.material==='Metal'; });
+        return industrial >= 4 && hasMetal;
+      } },
+    { id:'boho-spirit', name:'Boho Spirit', type:'novelty',
+      description:'6 or more items tagged Bohemian style',
+      check:function(entries){
+        return entries.filter(function(e){ return e.asset.style1==='Bohemian' || e.asset.style2==='Bohemian'; }).length >= 6;
+      } },
+    { id:'less-is-more', name:'Less Is More', type:'novelty',
+      description:'A finished room with 5 or fewer items, all Minimal or Scandinavian',
+      check:function(entries){
+        if (entries.length < 1 || entries.length > 5) return false;
+        return entries.every(function(e){
+          return ['Minimal','Scandinavian'].indexOf(e.asset.style1)!==-1 || ['Minimal','Scandinavian'].indexOf(e.asset.style2)!==-1;
+        });
+      } },
+    { id:'maximalist', name:'Maximalist', type:'novelty',
+      description:'20+ items in one room, spanning 5 or more different styles',
+      check:function(entries){
+        if (entries.length < 20) return false;
+        var styles = {};
+        entries.forEach(function(e){ if (e.asset.style1) styles[e.asset.style1]=true; if (e.asset.style2) styles[e.asset.style2]=true; });
+        return Object.keys(styles).length >= 5;
+      } },
+    { id:'rug-collector', name:'Rug Collector', type:'novelty',
+      description:'3 or more rugs in one room',
+      check:function(entries){
+        return entries.filter(function(e){ return e.asset.category==='rugs'; }).length >= 3;
+      } },
+    { id:'curtain-call', name:'Curtain Call', type:'novelty', scope:'flat',
+      description:'8 or more curtain items across the whole apartment',
+      check:function(entries){
+        return entries.filter(function(e){ return e.asset.category==='curtains'; }).length >= 8;
+      } },
+    { id:'full-bloom', name:'Full Bloom', type:'novelty',
+      description:'7 or more flower items in one room',
+      check:function(entries){
+        return entries.filter(function(e){ return e.asset.id.indexOf('flowers-')===0; }).length >= 7;
+      } },
+    { id:'vase-collector', name:'Vase Collector', type:'novelty',
+      description:'5 or more vases in one room',
+      check:function(entries){
+        return entries.filter(function(e){ return e.asset.name.toLowerCase().indexOf('vase')!==-1; }).length >= 5;
+      } },
+    { id:'night-in', name:'Night In', type:'novelty',
+      description:'2 or more lamps or candles lit while the flat is set to Night',
+      check:function(entries){
+        var isNightNow = state.activeTime === 'night' || state.isNight;
+        if (!isNightNow) return false;
+        var litCount = entries.filter(function(e){
+          if (e.asset.category==='lighting') return !!e.piece.lampOn;
+          if (e.asset.flickerWhenOn) return !!e.piece.toggled;
+          return false;
+        }).length;
+        return litCount >= 2;
+      } },
+    { id:'perfect-match', name:'Perfect Match', type:'novelty',
+      description:'The exact same item placed twice or more in one room',
+      check:function(entries){
+        var counts = {};
+        entries.forEach(function(e){ counts[e.asset.id] = (counts[e.asset.id]||0)+1; });
+        return Object.keys(counts).some(function(id){ return counts[id] >= 2; });
+      } },
+    { id:'his-and-hers', name:'His & Hers', type:'novelty',
+      description:'Two colorways of the same item design placed in the same room',
+      check:function(entries){
+        var keys = {};
+        entries.forEach(function(e){
+          var key = variantBaseKey(e.asset);
+          if (key){
+            keys[key] = keys[key] || {};
+            keys[key][e.asset.id] = true;
+          }
+        });
+        return Object.keys(keys).some(function(k){ return Object.keys(keys[k]).length >= 2; });
+      } },
+    { id:'golden-hour', name:'Golden Hour', type:'novelty',
+      description:'A Gold or Brass item present while the flat is set to Dusk',
+      check:function(entries){
+        if (state.activeTime !== 'dusk') return false;
+        return entries.some(function(e){ return e.asset.color==='Gold' || e.asset.color==='Brass'; });
+      } },
+    { id:'odd-one-out', name:'The Odd One Out', type:'novelty',
+      description:'5+ items sharing one style, plus exactly one item of a totally different style',
+      check:function(entries){
+        var styleSets = entries.map(function(e){
+          var s = []; if (e.asset.style1) s.push(e.asset.style1); if (e.asset.style2) s.push(e.asset.style2); return s;
+        });
+        var counts = {};
+        styleSets.forEach(function(s){ s.forEach(function(x){ counts[x] = (counts[x]||0)+1; }); });
+        return Object.keys(counts).some(function(dominant){
+          if (counts[dominant] < 5) return false;
+          var outsiders = entries.filter(function(e){ return e.asset.style1!==dominant && e.asset.style2!==dominant; });
+          return outsiders.length === 1;
+        });
+      } },
+    { id:'bedside-manner', name:'Bedside Manner', type:'novelty',
+      description:'2 lamps placed one on each side of a bed',
+      check:function(entries){
+        var beds = entries.filter(function(e){ return e.asset.category==='bed'; });
+        return beds.some(function(b){
+          var bedX = pieceCenter(b.piece).cx;
+          var lampsNear = entries.filter(function(e){ return e.asset.category==='lighting' && pieceDistance(b.piece, e.piece) <= ACHIEVEMENT_PROXIMITY_RADIUS; });
+          var left = lampsNear.some(function(e){ return pieceCenter(e.piece).cx < bedX; });
+          var right = lampsNear.some(function(e){ return pieceCenter(e.piece).cx > bedX; });
+          return left && right;
+        });
+      } },
+    { id:'fresh-air', name:'Fresh Air', type:'novelty',
+      description:'A curtain at maximum sway, and a plant, placed close together',
+      check:function(entries){
+        var maxSwayCurtains = entries.filter(function(e){ return e.asset.category==='curtains' && e.piece.swayLevel===3; });
+        return maxSwayCurtains.some(function(c){
+          return entries.some(function(e){ return e.asset.category==='plants' && pieceDistance(c.piece, e.piece) <= ACHIEVEMENT_PROXIMITY_RADIUS; });
+        });
+      } },
+    { id:'well-rounded', name:'Well Rounded', type:'novelty',
+      description:'6 or more different item categories represented in one room',
+      check:function(entries){
+        var cats = {};
+        entries.forEach(function(e){ cats[e.asset.category] = true; });
+        return Object.keys(cats).length >= 6;
+      } },
+    { id:'warm-and-cozy', name:'Warm & Cozy', type:'novelty',
+      description:'A lit fireplace or lit candle, plus a plant, together',
+      check:function(entries){
+        var litFireOrCandle = entries.filter(function(e){
+          return (e.asset.id.indexOf('fireplace')===0 || e.asset.flickerWhenOn) && e.piece.toggled;
+        });
+        return litFireOrCandle.some(function(f){
+          return entries.some(function(e){ return e.asset.category==='plants' && pieceDistance(f.piece, e.piece) <= ACHIEVEMENT_PROXIMITY_RADIUS; });
+        });
+      } },
+    { id:'coffee-break', name:'Coffee Break', type:'novelty',
+      description:'A coffee maker in its "on" state near a coffee cup',
+      check:function(entries){
+        var onMakers = entries.filter(function(e){ return e.asset.id==='coffeemaker-alana' && e.piece.toggled; });
+        return onMakers.some(function(m){
+          return entries.some(function(e){
+            var n = e.asset.name.toLowerCase();
+            return n.indexOf('cup')!==-1 && n.indexOf('paintbrush')===-1 && pieceDistance(m.piece, e.piece) <= ACHIEVEMENT_PROXIMITY_RADIUS;
+          });
+        });
+      } },
+    { id:'midnight-snack', name:'Midnight Snack', type:'novelty',
+      description:'The flat set to Night while a Kitchen-type room is in view',
+      check:function(entries){
+        var isNightNow = state.activeTime === 'night' || state.isNight;
+        if (!isNightNow) return false;
+        var isAnchor = function(a){ return a.id.indexOf('kitchen-counter')===0 || a.id.indexOf('kitchen-island')===0; };
+        return entries.some(function(e){ return isAnchor(e.asset); }) && entries.some(function(e){ return e.asset.id.indexOf('fridge-')===0; });
+      } },
+    { id:'gallery-wall', name:'Gallery Wall', type:'novelty',
+      description:'5+ wall-art pieces of different styles, clustered together',
+      check:function(entries){
+        var art = entries.filter(function(e){ return e.asset.category==='wall-art'; });
+        return art.some(function(anchor){
+          var cluster = art.filter(function(e){ return pieceDistance(anchor.piece, e.piece) <= ACHIEVEMENT_PROXIMITY_RADIUS; });
+          if (cluster.length < 5) return false;
+          var styles = {};
+          cluster.forEach(function(e){ if (e.asset.style1) styles[e.asset.style1]=true; if (e.asset.style2) styles[e.asset.style2]=true; });
+          return Object.keys(styles).length >= 2;
+        });
+      } },
+    { id:'green-thumb', name:'Green Thumb', type:'novelty',
+      description:'A plant placed right on or next to a storage piece',
+      check:function(entries){
+        var storage = entries.filter(function(e){ return e.asset.category==='storage'; });
+        return storage.some(function(s){
+          return entries.some(function(e){ return e.asset.category==='plants' && pieceDistance(s.piece, e.piece) <= ACHIEVEMENT_PROXIMITY_RADIUS; });
+        });
+      } },
+    { id:'statement-piece', name:'Statement Piece', type:'novelty',
+      description:'One vividly colored item standing alone among an otherwise neutral room',
+      check:function(entries){
+        if (entries.length < 4) return false;
+        var vivid = entries.filter(function(e){ return COLD_COLORS.indexOf(e.asset.color)!==-1 || WARM_COLORS.indexOf(e.asset.color)!==-1; });
+        if (vivid.length !== 1) return false;
+        var rest = entries.filter(function(e){ return e !== vivid[0]; });
+        return rest.every(function(e){ return NEUTRAL_COLORS.indexOf(e.asset.color)!==-1; });
+      } },
+    { id:'deep-cut', name:'Deep Cut', type:'novelty', meta:true,
+      description:'Discover 10 achievements in total' },
+    { id:'first-steps', name:'First Steps', type:'novelty', meta:true,
+      description:"Your very first discovery — whatever it turns out to be" }
+  ];
+  function roomAchievementEntries(roomId){
+    return state.placed.filter(function(p){ return p.roomId === roomId; })
+      .map(function(p){ return { piece:p, asset:getAsset(p.assetId) }; })
+      .filter(function(e){ return e.asset; });
+  }
+  // for achievements whose scope is 'flat' rather than 'room' — counted
+  // across every room in the apartment at once (e.g. Curtain Call)
+  function flatAchievementEntries(){
+    return state.placed.map(function(p){ return { piece:p, asset:getAsset(p.assetId) }; })
+      .filter(function(e){ return e.asset; });
+  }
+  function checkAchievements(roomId){
+    var roomEntries = roomAchievementEntries(roomId);
+    var flatEntries = null; // computed lazily, only if a flat-scope achievement is still locked
+    var hadNonePreviously = state.discoveredAchievements.length === 0;
+    var newlyFound = [];
+    ACHIEVEMENTS.forEach(function(ach){
+      if (ach.meta) return; // meta achievements (e.g. First Steps) are granted, never checked directly
+      if (state.discoveredAchievements.indexOf(ach.id) !== -1) return;
+      var entries = roomEntries;
+      if (ach.scope === 'flat'){
+        if (!flatEntries) flatEntries = flatAchievementEntries();
+        entries = flatEntries;
+      }
+      if (ach.check(entries)){
+        state.discoveredAchievements.push(ach.id);
+        newlyFound.push(ach);
+      }
+    });
+    // First Steps rides along with whatever the player's very first real
+    // discovery turns out to be, rather than being hunted for directly
+    if (newlyFound.length && hadNonePreviously){
+      var firstSteps = ACHIEVEMENTS.filter(function(a){ return a.id==='first-steps'; })[0];
+      if (firstSteps && state.discoveredAchievements.indexOf('first-steps')===-1){
+        state.discoveredAchievements.push('first-steps');
+        newlyFound.push(firstSteps);
+      }
+    }
+    // Deep Cut is a milestone on top of everything else — once the
+    // collection itself reaches 10, that's worth its own recognition
+    if (state.discoveredAchievements.length >= 10 && state.discoveredAchievements.indexOf('deep-cut')===-1){
+      var deepCut = ACHIEVEMENTS.filter(function(a){ return a.id==='deep-cut'; })[0];
+      if (deepCut){
+        state.discoveredAchievements.push('deep-cut');
+        newlyFound.push(deepCut);
+      }
+    }
+    if (newlyFound.length) queueAchievementToasts(newlyFound);
+  }
+  // read-only: which achievements does this room satisfy right now,
+  // regardless of whether they were already discovered elsewhere before.
+  // This is what results/profile display, and what a future story-mode
+  // brief would check a room against — a live fact about the room, not a
+  // historical record. Flat-scope and meta achievements are excluded here
+  // since "does this one room count as X" isn't a meaningful question for
+  // either of those.
+  function liveAchievementsForRoom(roomId){
+    var entries = roomAchievementEntries(roomId);
+    return ACHIEVEMENTS.filter(function(ach){ return !ach.meta && ach.scope !== 'flat' && ach.check(entries); });
+  }
+  var achievementToastQueue = [];
+  var achievementToastShowing = false;
+  function queueAchievementToasts(list){
+    achievementToastQueue = achievementToastQueue.concat(list);
+    if (!achievementToastShowing) showNextAchievementToast();
+  }
+  function showNextAchievementToast(){
+    var ach = achievementToastQueue.shift();
+    if (!ach){ achievementToastShowing = false; return; }
+    achievementToastShowing = true;
+    var el = document.getElementById('achievementToast');
+    el.querySelector('.achievement-toast-letter').textContent = ach.name.charAt(0);
+    el.querySelector('.achievement-toast-name').textContent = ach.name;
+    el.classList.add('active');
+    setTimeout(function(){
+      el.classList.remove('active');
+      setTimeout(showNextAchievementToast, 400);
+    }, 3600);
+  }
+
+  function computeAttributeProfile(roomId){
+    var placed = state.placed.filter(function(p){ return p.roomId === roomId; });
+    var total = placed.length;
+    if (total === 0) return null;
+
+    function tally(getKeys){
+      var counts = {};
+      placed.forEach(function(p){
+        var asset = getAsset(p.assetId);
+        var keys = getKeys(asset);
+        (Array.isArray(keys) ? keys : [keys]).forEach(function(k){
+          if (!k) return;
+          counts[k] = (counts[k] || 0) + 1;
+        });
+      });
+      return Object.keys(counts)
+        .map(function(k){ return { key:k, count:counts[k] }; })
+        .sort(function(a,b){ return b.count - a.count; });
+    }
+
+    var byCategory = tally(function(a){ return a.category; }).map(function(row){
+      var catInfo = CATEGORIES.filter(function(c){ return c.id === row.key; })[0];
+      return { key:row.key, label:catInfo ? catInfo.label : row.key, count:row.count, pct:Math.round(row.count/total*100) };
+    });
+    var byMaterial = tally(function(a){ return a.material; }).map(function(row){
+      return { key:row.key, label:row.key, count:row.count, pct:Math.round(row.count/total*100) };
+    });
+    var byColor = tally(function(a){ return a.color; }).map(function(row){
+      return { key:row.key, label:row.key, count:row.count, pct:Math.round(row.count/total*100) };
+    });
+    // style1 and style2 both describe the same piece, so they're tallied
+    // together into one "style mood" rather than as two separate charts
+    var byStyle = tally(function(a){ return [a.style1, a.style2]; }).map(function(row){
+      return { key:row.key, label:row.key, count:row.count, pct:Math.round(row.count/total*100) };
+    });
+
+    return { total:total, byCategory:byCategory, byMaterial:byMaterial, byColor:byColor, byStyle:byStyle };
+  }
+
+  function computeScore(){
+    var placed = state.placed.filter(function(p){ return p.roomId === state.focusedRoomId; });
+    var n = placed.length;
+    if (n === 0) return null;
+
+    var categoriesUsed = {}, assetsUsed = {}, sumWidth = 0;
+    var zones = [false,false,false];
+    placed.forEach(function(p){
+      var asset = getAsset(p.assetId);
+      categoriesUsed[asset.category] = true;
+      assetsUsed[p.assetId] = true;
+      sumWidth += p.width;
+      var zoneIdx = p.x < 33.34 ? 0 : (p.x < 66.67 ? 1 : 2);
+      zones[zoneIdx] = true;
+    });
+
+    var categoryScore = Math.round(Object.keys(categoriesUsed).length / CATEGORIES.length * 100);
+    var varietyScore = Math.round(Object.keys(assetsUsed).length / Math.min(n, ITEMS.length) * 100);
+    var coverageScore = clamp(100 - Math.abs(sumWidth - 55) * 2, 0, 100);
+    var zonesUsed = zones.filter(Boolean).length;
+    var spreadScore = n <= 1 ? 100 : Math.round(zonesUsed / 3 * 100);
+    var spaceScore = Math.round(coverageScore * 0.6 + spreadScore * 0.4);
+    var overall = Math.round((categoryScore + varietyScore + spaceScore) / 3);
+
+    return { overall:overall, categoryScore:categoryScore, varietyScore:varietyScore, spaceScore:spaceScore };
+  }
+
+  function titleForScore(s){
+    if (s >= 90) return 'A Roomstory Worth Telling';
+    if (s >= 75) return 'Beautifully Balanced';
+    if (s >= 50) return 'Well-Loved Room';
+    if (s >= 25) return 'Getting Cozy';
+    return 'Just Moved In';
+  }
+
+  finishBtn.addEventListener('click', function(){
+    var result = computeScore();
+    if (!result){
+      finishBtn.classList.add('nudge');
+      setTimeout(function(){ finishBtn.classList.remove('nudge'); }, 450);
+      return;
+    }
+    document.getElementById('resultsTitle').textContent = titleForScore(result.overall);
+    document.getElementById('resultsScore').innerHTML = result.overall + '<span>/100</span>';
+    var rows = [
+      { label:'Category mix', value:result.categoryScore },
+      { label:'Fresh picks', value:result.varietyScore },
+      { label:'Room balance', value:result.spaceScore }
+    ];
+    resultsBars.innerHTML = rows.map(function(r){
+      return '<div class="result-bar-row"><div class="label-row"><span>'+r.label+'</span><span>'+r.value+'</span></div>' +
+             '<div class="result-bar-track"><div class="result-bar-fill" style="width:'+r.value+'%"></div></div></div>';
+    }).join('');
+    document.getElementById('achievementCountLabel').textContent = state.discoveredAchievements.length;
+    document.getElementById('achievementTotalLabel').textContent = ACHIEVEMENTS.length;
+    resultsOverlay.classList.add('active');
+  });
+
+  document.getElementById('resultsClose').addEventListener('click', function(){ resultsOverlay.classList.remove('active'); });
+  document.getElementById('resultsKeepBtn').addEventListener('click', function(){ resultsOverlay.classList.remove('active'); });
+  document.getElementById('resultsChangeRoomBtn').addEventListener('click', function(){
+    resultsOverlay.classList.remove('active');
+    renderRoomGrid();
+    showScreen('picker');
+  });
+
+  var profileOverlay = document.getElementById('profileOverlay');
+  document.getElementById('viewProfileBtn').addEventListener('click', function(){
+    var profile = computeAttributeProfile(state.focusedRoomId);
+    if (!profile) return;
+    var styleColor = function(key){ return STYLE_TINTS[key] || '#8B8D89'; };
+
+    document.getElementById('profileCharacter').textContent = roomCharacterLine(profile);
+    document.getElementById('profileTotal').textContent = profile.total + (profile.total===1 ? ' item' : ' items');
+    document.getElementById('profileRing').innerHTML = buildRingSvg(profile.byColor, solidSwatchColor);
+    document.getElementById('profileColorDonut').innerHTML = buildRingSvg(profile.byColor, solidSwatchColor);
+    document.getElementById('profileStyleDonut').innerHTML = buildRingSvg(profile.byStyle, styleColor);
+    document.getElementById('profileColors').innerHTML = buildLegendHtml(profile.byColor, solidSwatchColor);
+    document.getElementById('profileStyles').innerHTML = buildLegendHtml(profile.byStyle, styleColor);
+
+    var topColorHex = solidSwatchColor(profile.byColor[0].key);
+    var topMaterialHex = MATERIAL_TINTS[profile.byMaterial[0].key] || topColorHex;
+    document.getElementById('profileHero').style.setProperty('--tile-tint', topColorHex);
+    document.getElementById('profileColorTile').style.setProperty('--tile-tint', topColorHex);
+    document.getElementById('profileStyleTile').style.setProperty('--tile-tint', styleColor(profile.byStyle[0].key));
+    document.getElementById('profileMaterialTile').style.setProperty('--tile-tint', topMaterialHex);
+    document.getElementById('profileStatsTile').style.setProperty('--tile-tint', topColorHex);
+
+    // the backdrop is the room's own top colors, blurred into a soft wash
+    // behind the glass tiles — an actual reflection of what you built,
+    // not a decorative background
+    var blobColors = profile.byColor.slice(0, 3).map(function(row){ return solidSwatchColor(row.key); });
+    while (blobColors.length < 3) blobColors.push(blobColors[0] || '#DCC9A8');
+    document.getElementById('profileBackdrop').style.background =
+      'radial-gradient(circle at 15% 20%, '+blobColors[0]+' 0%, transparent 55%), ' +
+      'radial-gradient(circle at 85% 15%, '+blobColors[1]+' 0%, transparent 55%), ' +
+      'radial-gradient(circle at 50% 90%, '+blobColors[2]+' 0%, transparent 60%), ' +
+      'var(--paper)';
+
+    document.getElementById('profileMaterialRibbon').innerHTML = profile.byMaterial.map(function(row){
+      var tint = MATERIAL_TINTS[row.key] || '#B8AA92';
+      return '<div class="profile-ribbon-seg" style="width:'+row.pct+'%; background:'+tint+'"></div>';
+    }).join('');
+    document.getElementById('profileMaterialLegend').innerHTML = buildLegendHtml(profile.byMaterial, function(key){ return MATERIAL_TINTS[key] || '#B8AA92'; });
+
+    document.getElementById('profileRoomCount').textContent = state.rooms.length;
+    document.getElementById('profileRoomCount').nextElementSibling.textContent = state.rooms.length===1 ? 'room built' : 'rooms built';
+
+    document.getElementById('profileCategories').innerHTML = profile.byCategory.map(function(row){
+      return '<div class="profile-category-cell"><b>'+row.count+'</b><span>'+row.label+'</span></div>';
+    }).join('');
+
+    var roomTypes = liveAchievementsForRoom(state.focusedRoomId).filter(function(a){ return a.type==='room-type'; });
+    var roomTypeTile = document.getElementById('profileRoomTypeTile');
+    if (roomTypes.length){
+      roomTypeTile.style.display = '';
+      document.getElementById('profileRoomTypes').innerHTML = roomTypes.map(function(a){
+        return '<span class="profile-roomtype-chip">'+a.name+'</span>';
+      }).join('');
+    } else {
+      roomTypeTile.style.display = 'none';
+    }
+
+    resultsOverlay.classList.remove('active');
+    profileOverlay.classList.add('active');
+  });
+  document.getElementById('profileClose').addEventListener('click', function(){ profileOverlay.classList.remove('active'); });
+
+  document.getElementById('viewAchievementsBtn').addEventListener('click', function(){
+    var grid = document.getElementById('achievementsGrid');
+    grid.innerHTML = ACHIEVEMENTS.map(function(ach){
+      var unlocked = state.discoveredAchievements.indexOf(ach.id) !== -1;
+      if (unlocked){
+        return '<div class="achievement-card"><div class="achievement-card-medal"><span>'+ach.name.charAt(0)+'</span></div>' +
+          '<div><span class="achievement-card-name">'+ach.name+'</span><span class="achievement-card-desc">'+ach.description+'</span></div></div>';
+      }
+      return '<div class="achievement-card locked"><div class="achievement-card-medal"><span>?</span></div>' +
+        '<div><span class="achievement-card-name">???</span><span class="achievement-card-desc">Not discovered yet</span></div></div>';
+    }).join('');
+    var count = state.discoveredAchievements.length;
+    document.getElementById('achievementsSubtitle').textContent = count + ' of ' + ACHIEVEMENTS.length + ' discovered';
+    resultsOverlay.classList.remove('active');
+    document.getElementById('achievementsOverlay').classList.add('active');
+  });
+  document.getElementById('achievementsClose').addEventListener('click', function(){
+    document.getElementById('achievementsOverlay').classList.remove('active');
+  });
+
+  /* ---------------- ambient dust motes ---------------- */
+  function createDustMotes(roomEl){
+    var count = 13;
+    for (var i=0;i<count;i++){
+      var mote = document.createElement('div');
+      mote.className = 'dust-mote';
+      var size = 3.5 + Math.random()*5;
+      mote.style.width = size+'px';
+      mote.style.height = size+'px';
+      mote.style.left = (Math.random()*100)+'%';
+      mote.style.top = (30+Math.random()*65)+'%';
+      mote.style.setProperty('--drift-x', (Math.random()*40-20).toFixed(0)+'px');
+      mote.style.setProperty('--drift-y', (-(90+Math.random()*110)).toFixed(0)+'px');
+      var duration = 14 + Math.random()*14;
+      mote.style.animationDuration = duration.toFixed(1)+'s';
+      mote.style.animationDelay = (Math.random()*-duration).toFixed(1)+'s';
+      roomEl.appendChild(mote);
+    }
+  }
+
+  /* ---------------- init ---------------- */
+  var existingSave = loadSavedGame();
+  if (existingSave){
+    hasExistingSave = true;
+    applySavedGame(existingSave);
+    // a save can carry z values from an older version of the game (or from
+    // before a stacking-order edge case was fixed); re-deriving them fresh
+    // from the loaded piece order guarantees they're always a clean 1..N
+    // range per room before anything is ever drawn, so nothing can load in
+    // already sunk behind the room background.
+    reassignZIndices();
+    document.getElementById('titleStartBtn').textContent = 'Continue Decorating';
+    document.getElementById('titleFreshBtn').style.display = 'block';
+  }
+  document.querySelector('.title-bg').style.backgroundImage = "url('"+bgThumbSrc(BACKGROUNDS[0])+"')";
+  renderRoomGrid();
+  renderRooms();
+  renderTabs();
+  setupTrayFilters();
+  renderTray();
+  setTrayOpen(state.trayOpen);
+  runWhenIdle(preloadAheadOfNeed);
+
+  // autosave: a periodic snapshot covers virtually every change without
+  // needing a save-hook wired into every single action in the game, and
+  // the unload/visibility handlers catch the moment right before the
+  // player actually leaves, so nothing from the last few seconds is lost
+  setInterval(saveGame, 4000);
+  window.addEventListener('beforeunload', saveGame);
+  document.addEventListener('visibilitychange', function(){
+    if (document.visibilityState === 'hidden') saveGame();
+  });
+
+})();
+</script>
+</body>
+</html>
