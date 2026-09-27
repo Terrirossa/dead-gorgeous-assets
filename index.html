@@ -736,17 +736,9 @@ JOKER_CARDS.forEach((c) => { c.rarity = "Basic"; });
 // matches if its rarity is one of anyOf). Each worn piece is checked against
 // every requirement independently, so "two styles" briefs (e.g. Elegant +
 // Daring) are meant to be solved by two *different* pieces, not one piece
-// doing double duty. req()/rarityReq() are tiny constructors, kept here (not
-// deeper in the file) purely for readability of the CLIENTS data below —
-// function declarations are hoisted, so definition order doesn't matter.
-function req(attr, value, label) { return { attr, value, label: label || value }; }
-
-function rarityReq(label) { return { attr: "rarity", anyOf: RARE_OR_HIGHER, label: label || "Rare-or-higher" }; }
-// A permanent hidden preference, in the shape preferenceMatches() (below,
-// further down the file — function declarations are hoisted) understands:
-// { type:"attr", attr, value } — separate from the active brief, and not
-// shown to the player until she's worn it once (see finishStyling()).
-function pref(attr, value) { return { type: "attr", attr, value }; }
+// doing double duty. req()/rarityReq()/pref() now live in data-cards.js:
+// CLIENTS (in data-story.js) calls them while building each character's
+// briefs and preferences, and data-story.js runs before this script does.
 
 // The Core Four, per the narrative bible. Greetings and question answers
 // marked [bible] are lifted or lightly adapted from the source document's
