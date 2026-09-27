@@ -587,6 +587,51 @@
   /* ---------- End / year review ---------- */
   .year-list { display: flex; flex-direction: column; gap: 10px; max-width: 340px; margin: 0 auto 30px; }
   .year-row { display: flex; align-items: center; justify-content: space-between; background: rgba(255,255,255,0.06); border-radius: 12px; padding: 12px 16px; font-size: 14px; }
+
+  /* ============================================================
+     DESKTOP LAYOUT
+     Everything above is mobile-first and stays exactly as-is below
+     this breakpoint. Above it: the page stops being a phone-width
+     column adrift in empty space and becomes a framed "game window"
+     panel, and the card grids (deck browser, shop, riddle picker,
+     Quartett, new-cards reveal, etc. -- all originally pinned to a
+     3-per-row phone layout via .deck-grid) go adaptive so they use
+     the extra width instead of just rendering bigger margins.
+     Prose/dialogue widths are deliberately left untouched -- long
+     lines of dialogue don't get more readable at 700px, only card
+     grids benefit from the room.
+     ============================================================ */
+  @media (min-width: 900px) {
+    body { padding: 40px 20px; }
+
+    .stage {
+      max-width: 760px;
+      background: rgba(20, 14, 30, 0.55);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 28px;
+      box-shadow: 0 40px 100px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.05);
+      padding: 0 28px 40px;
+      backdrop-filter: blur(2px);
+    }
+
+    .top-bar {
+      max-width: 760px; margin: 0 auto;
+      border-radius: 28px 28px 0 0;
+      padding: 18px 28px;
+    }
+
+    /* Adaptive card grids instead of a fixed 3-column phone layout. */
+    .deck-grid, .new-cards-grid, .set-showcase-grid,
+    .quartett-pick-grid, .quartett-opponent-grid {
+      max-width: 680px;
+      grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    }
+    .ach-list, .souls-list, .year-list,
+    .filter-panel, .set-panel, .deck-header, .deck-sort-row,
+    .hand-fan, .quartett-hand-row {
+      max-width: 680px;
+    }
+  }
 </style>
 </head>
 <body>
