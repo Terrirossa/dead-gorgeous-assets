@@ -1634,6 +1634,192 @@
   }
   @media (prefers-reduced-motion: reduce) { .tilt-stage, .card-viewer-info { animation: none !important; } }
 
+  /* ============================================================
+     QUARTETT — a duel at the café table
+     ============================================================ */
+  /* entry */
+  .q-entry-sub { color: var(--paper-2); font-size: 15px; margin: 0 0 18px; max-width: 520px; text-align: center; line-height: 1.5; }
+  .q-entry-ask { font-size: clamp(18px, 1.6vw, 24px); margin: 18px 0 26px; }
+  .q-opponents { display: flex; flex-wrap: wrap; justify-content: center; gap: clamp(14px, 2.4vw, 40px); margin-bottom: 36px; }
+  .q-opponent { appearance: none; background: none; border: none; color: var(--paper); cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 0; font: inherit; }
+  .q-opponent-card { display: block; width: clamp(96px, 11vw, 190px); transform: rotate(var(--r)); transition: transform 0.35s cubic-bezier(.2,.7,.2,1), filter 0.35s ease; filter: drop-shadow(0 16px 26px rgba(10,6,20,0.45)); }
+  .q-opponent-card img { width: 100%; display: block; border-radius: 12px; }
+  .q-opponent:hover .q-opponent-card, .q-opponent:focus-visible .q-opponent-card { transform: rotate(0deg) translateY(-10px) scale(1.04); }
+  .q-opponent-name { font-family: var(--font-display); font-size: clamp(28px, 2.6vw, 44px); line-height: 1; }
+
+  /* hand picker */
+  .q-pick-screen { padding-bottom: 130px !important; }
+  .q-pick-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(clamp(96px, 11vw, 170px), 1fr)); gap: clamp(10px, 1.2vw, 18px); width: 100%; max-width: 1300px; }
+  .q-pick { position: relative; appearance: none; border: none; background: none; padding: 0; cursor: pointer; aspect-ratio: 595.28 / 841.9; border-radius: 12px; transition: transform 0.25s ease, opacity 0.25s ease, box-shadow 0.25s ease; }
+  .q-pick .gcard { width: 100%; height: 100%; }
+  .q-pick:hover { transform: translateY(-4px); }
+  .q-pick.selected { transform: translateY(-6px); box-shadow: 0 0 0 3px #fff, 0 16px 30px rgba(10,6,20,0.45); }
+  .q-pick.disabled { opacity: 0.35; }
+  .q-pick-badge { position: absolute; top: -10px; right: -10px; width: 30px; height: 30px; border-radius: 50%; background: #fff; color: #1b1626; font-weight: 700; font-size: 14px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(0,0,0,0.35); }
+  .q-pick-bar {
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 700;
+    display: flex; align-items: center; justify-content: center; gap: 18px;
+    padding: 16px 20px calc(16px + env(safe-area-inset-bottom));
+    background: linear-gradient(180deg, rgba(18,13,30,0), rgba(18,13,30,0.92) 40%);
+  }
+  .q-pick-count { font-size: 15px; color: var(--paper-2); min-width: 64px; text-align: center; }
+  .q-pick-count b { color: #fff; font-size: 22px; }
+  .q-pick-bar .primary { min-width: 0; }
+
+  /* intro */
+  .q-intro { min-height: 70vh; justify-content: center; }
+
+  /* the table */
+  .q-table { position: fixed; inset: 0; overflow: hidden; }
+  .q-opp-hand, .q-player-hand, .q-player-hand[class] {
+    position: fixed; left: 0; right: 0; height: calc(var(--fan-w) * 1.414 * 0.62); margin: 0; max-width: none;
+  }
+  .q-player-hand, .q-player-hand[class] { bottom: 0; z-index: 30; }
+  .q-player-hand.locked .fan-card-wrap { pointer-events: none; }
+  .q-player-hand.locked .fan-card-wrap .gcard { filter: brightness(0.75); }
+  .q-opp-hand { top: 0; transform: scaleY(-1); z-index: 20; pointer-events: none; }
+  .q-opp-card { cursor: default; }
+  .q-back {
+    width: 100%; aspect-ratio: 595.28 / 841.9; border-radius: calc(var(--fan-w) * 0.1); padding: 4px;
+    background: conic-gradient(from 180deg at 50% 50%, #ffd9e6, #d9f2ff, #e2ffd9, #fff6c2, #f0d9ff, #ffd9e6);
+    box-shadow: 0 8px 20px rgba(10,6,20,0.4);
+  }
+  .q-back .back-card-face { border-radius: calc(var(--fan-w) * 0.08); }
+  .q-hand-card { cursor: pointer; }
+
+  .q-score { position: fixed; left: 22px; top: 50%; transform: translateY(-50%); z-index: 40; display: flex; flex-direction: column; gap: 14px; }
+  .q-score-row { display: flex; flex-direction: column; gap: 6px; }
+  .q-score-name { font-family: var(--font-display); font-size: 28px; line-height: 1; }
+  .q-pips { display: flex; gap: 6px; }
+  .q-pip { width: 14px; height: 14px; border-radius: 50%; box-shadow: inset 0 0 0 1.5px rgba(255,255,255,0.5); }
+  .q-pip.won { background: var(--lamp); box-shadow: 0 0 12px rgba(242,200,120,0.6); }
+  .q-pip.fresh { animation: pipIn 0.6s 1.9s cubic-bezier(.2,1.6,.4,1) both; }
+  .q-opp-portrait { display: none; }
+
+  .q-centre {
+    position: fixed; left: 0; right: 0;
+    top: calc(var(--fan-w) * 1.414 * 0.62); bottom: calc(var(--fan-w) * 1.414 * 0.62);
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px;
+    z-index: 25; pointer-events: none; padding: 8px 16px;
+  }
+  .q-centre > * { pointer-events: auto; }
+  .q-task { text-align: center; }
+  .q-task-round { font-size: 12px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: var(--paper-2); }
+  .q-task-main { font-family: var(--font-display); font-size: clamp(34px, 4.4vw, 68px); line-height: 1; margin: 4px 0; text-shadow: 0 4px 24px rgba(15,8,30,0.5); }
+  .q-task-rule { font-size: 13px; color: var(--paper-2); }
+  .q-slots { display: flex; gap: clamp(16px, 3vw, 48px); margin: 6px 0; --qs: clamp(92px, min(11vw, 22vh), 220px); }
+  .q-slot {
+    position: relative; width: var(--qs); aspect-ratio: 595.28 / 841.9; border-radius: 14px;
+    border: 2px dashed rgba(255,255,255,0.35); background: rgba(255,255,255,0.04);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .q-slot span { font-family: var(--font-display); font-size: clamp(22px, 2vw, 32px); color: rgba(255,255,255,0.4); }
+  .q-slot.filled { border-color: transparent; background: none; }
+  .q-card-in { position: absolute; inset: 0; perspective: 900px; }
+  .q-card-in .gcard { width: 100%; height: 100%; }
+  .q-played-you .q-card-in { animation: slideFromBottom 0.7s cubic-bezier(.2,.7,.2,1) both; }
+  .q-played-opp .q-card-in { animation: slideFromTop 0.7s 0.1s cubic-bezier(.2,.7,.2,1) both; }
+  .q-flip { position: relative; width: 100%; height: 100%; transform-style: preserve-3d; transform: rotateY(180deg); }
+  .q-played-opp .q-flip { animation: flipOver 0.8s 1s cubic-bezier(.3,.7,.3,1) forwards; }
+  .q-face { position: absolute; inset: 0; backface-visibility: hidden; -webkit-backface-visibility: hidden; }
+  .q-face .gcard { width: 100%; height: 100%; }
+  .q-rear { transform: rotateY(180deg); }
+  .q-rear .q-back { height: 100%; border-radius: 14px; }
+  .q-slot.winner { animation: winnerGlow 0.8s 1.9s ease both; }
+  .q-slot.loser .q-card-in { animation-name: slideFromBottom; }
+  .q-slot.loser { animation: loserDim 0.8s 1.9s ease both; }
+  .q-played-opp.loser { animation: loserDim 0.8s 1.9s ease both; }
+  .q-verdict {
+    font-family: var(--font-display); font-size: clamp(40px, 5vw, 80px); line-height: 1; text-align: center;
+    animation: verdictIn 0.7s 1.8s cubic-bezier(.2,1.4,.4,1) both;
+    text-shadow: 0 6px 40px rgba(15,8,30,0.6);
+  }
+  .q-verdict.win { color: #fff; text-shadow: 0 0 40px rgba(242,200,120,0.55); }
+  .q-verdict.loss { color: rgba(255,255,255,0.85); }
+  .q-reaction { margin: 0; animation: fadeUp 0.6s 2.4s ease both !important; max-width: 360px; }
+  .q-next { animation: fadeUp 0.6s 2.7s ease both; }
+  .q-play { transition: opacity 0.2s ease; }
+
+  /* round announcement */
+  .q-announce {
+    position: fixed; inset: 0; z-index: 800; cursor: pointer;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 20px;
+    background: radial-gradient(ellipse at center, rgba(18,13,30,0.72), rgba(18,13,30,0.94));
+    animation: announceOut 0.5s 2.2s ease forwards;
+  }
+  .q-announce-round { font-size: clamp(14px, 1.3vw, 18px); font-weight: 600; letter-spacing: 0.3em; text-transform: uppercase; color: var(--lamp); animation: fadeUp 0.6s 0.1s ease both; }
+  .q-announce-main { font-family: var(--font-display); font-size: clamp(72px, 12vw, 190px); line-height: 0.95; margin: 14px 0; animation: titleIn 0.8s 0.25s cubic-bezier(.2,.7,.2,1) both; text-wrap: balance; }
+  .q-announce-rule { font-size: clamp(15px, 1.3vw, 19px); color: var(--paper-2); animation: fadeUp 0.6s 0.6s ease both; }
+
+  /* match result */
+  .q-result { position: relative; min-height: 100vh; justify-content: center; gap: 4px; }
+  .q-result-glow { position: fixed; left: 50%; top: 45%; width: 90vmin; height: 90vmin; transform: translate(-50%, -50%); pointer-events: none; z-index: -1; background: radial-gradient(circle, rgba(255,255,255,0.08), rgba(255,255,255,0) 65%); }
+  .q-result-playerWin .q-result-glow { background: radial-gradient(circle, rgba(242,200,120,0.22), rgba(242,200,120,0) 62%); animation: glowPulse 4s ease-in-out infinite; }
+  .q-result-title { font-family: var(--font-display); font-weight: 400; font-size: clamp(76px, 13vw, 200px); line-height: 0.9; margin: 22px 0 18px; animation: titleIn 0.9s 0.1s cubic-bezier(.2,.7,.2,1) both; text-shadow: 0 8px 60px rgba(15,8,30,0.5); }
+  .q-result-playerWin .q-result-title { text-shadow: 0 0 60px rgba(242,200,120,0.4); }
+  .q-result-score { display: flex; align-items: center; gap: 26px; margin: 0 0 34px; animation: fadeUp 0.7s 0.4s ease both; }
+  .q-result-score > div { display: flex; flex-direction: column; align-items: center; }
+  .q-result-num { font-size: clamp(48px, 5vw, 76px); font-weight: 600; line-height: 1; }
+  .q-result-who { font-size: 13px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--paper-2); margin-top: 6px; }
+  .q-result-dash { width: 28px; height: 2px; background: var(--paper-3); }
+  .q-result-talk { width: 100%; max-width: 470px; margin-bottom: 20px; }
+  .q-result-actions { display: flex; flex-direction: column; align-items: center; gap: 12px; margin-top: 8px; }
+  .q-hands-left { font-size: 13px; color: var(--paper-3); margin-top: 22px; }
+
+  /* prize */
+  .q-reward { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; padding: 90px 20px 60px; text-align: center; }
+  .q-reward-hint { font-size: clamp(16px, 1.4vw, 20px); color: var(--paper-2); animation: fadeUp 0.6s ease both; }
+  .q-reward-card { cursor: pointer; width: min(66vw, 280px); }
+  .q-reward-card .q-flip { transition: transform 1s cubic-bezier(.3,.7,.3,1); }
+  .q-reward.flipped .q-reward-card .q-flip { transform: rotateY(0deg); }
+  .q-reward-info { max-width: 460px; opacity: 0; transform: translateY(10px); transition: opacity 0.6s 0.8s ease, transform 0.6s 0.8s ease; pointer-events: none; }
+  .q-reward.flipped .q-reward-info { opacity: 1; transform: none; pointer-events: auto; }
+  .q-reward.flipped .q-reward-hint { opacity: 0; transition: opacity 0.3s ease; }
+  .q-reward:not(.flipped) .q-reward-card { animation: prizeBob 2.4s ease-in-out infinite; }
+
+  @keyframes slideFromBottom { from { transform: translate(var(--fx, 0px), 55vh) rotate(-8deg); } to { transform: none; } }
+  @keyframes slideFromTop { from { transform: translateY(-55vh) rotate(8deg); } to { transform: none; } }
+  @keyframes flipOver { from { transform: rotateY(180deg); } to { transform: rotateY(0deg); } }
+  @keyframes verdictIn { from { opacity: 0; transform: scale(0.7); } to { opacity: 1; transform: none; } }
+  @keyframes winnerGlow { to { box-shadow: 0 0 0 3px var(--lamp), 0 0 50px rgba(242,200,120,0.5); transform: translateY(-6px) scale(1.04); } }
+  @keyframes loserDim { to { opacity: 0.45; transform: scale(0.96); } }
+  @keyframes pipIn { from { transform: scale(0); } to { transform: none; } }
+  @keyframes announceOut { to { opacity: 0; visibility: hidden; } }
+  @keyframes prizeBob { 0%, 100% { transform: translateY(0) rotate(-1deg); } 50% { transform: translateY(-8px) rotate(1deg); } }
+
+  @media (min-width: 900px) {
+    .q-score { left: 40px; }
+    .q-score-name { font-size: 34px; }
+    .q-opp-portrait { display: block; position: fixed; right: -1.5vw; top: 50%; transform: translateY(-50%); z-index: 22; }
+    .q-opp-portrait .portrait { width: clamp(150px, 13vw, 250px); transform: rotate(8deg); }
+    .q-reward-card { width: auto; height: min(62vh, 560px); }
+    .q-reward { flex-direction: row; gap: 5vw; }
+    .q-reward-info { text-align: left; }
+    .q-reward .q-result-actions { align-items: flex-start; }
+    .q-reward-hint { position: fixed; top: 110px; left: 0; right: 0; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .q-card-in, .q-flip, .q-verdict, .q-reaction, .q-next, .q-announce *, .q-result-title, .q-result-score, .q-slot, .q-pip.fresh, .q-reward-card { animation-duration: 0.01s !important; animation-delay: 0s !important; }
+  }
+
+  .q-centre { z-index: 35; }
+  .q-hand-card.selected .gcard, .q-hand-card:hover .gcard { transform: translateY(-20%) scale(1.03); }
+  .q-slots { --qs: clamp(88px, min(10.5vw, 18vh), 200px); }
+  .q-player-hand, .q-opp-hand { transition: transform 0.6s cubic-bezier(.2,.7,.2,1); }
+  .phase-reveal .q-player-hand { transform: translateY(38%); }
+  .phase-reveal .q-opp-hand { transform: scaleY(-1) translateY(38%); }
+  .phase-reveal .q-task-rule { display: none; }
+
+  .in-duel .top-bar { display: none; }
+  .q-pick-bar .primary { white-space: nowrap; padding: 14px 26px; }
+  @media (max-width: 899px) {
+    .q-score { top: calc(var(--fan-w) * 1.414 * 0.62 + 8px); left: 0; right: 0; transform: none; flex-direction: row; justify-content: center; gap: 28px; }
+    .q-score-row { flex-direction: row; align-items: center; gap: 8px; }
+    .q-score-name { font-size: 22px; }
+    .q-pip { width: 11px; height: 11px; }
+    .q-centre { top: calc(var(--fan-w) * 1.414 * 0.62 + 40px); }
+  }
+
 </style>
 </head>
 <body>
@@ -2033,6 +2219,9 @@ function syncFloatingCards() {
 }
 
 function enhanceStage() {
+  document.body.classList.toggle("no-scroll", !!stage.querySelector("#outfitBoard, .q-table"));
+  document.body.classList.toggle("in-duel", !!stage.querySelector(".q-table"));
+  if (!stage.querySelector(".q-table")) quartettClearTimer();
   syncFloatingCards();
   const speeches = [...stage.querySelectorAll(".speech")];
   if (speeches.length === 0) return;
@@ -4162,35 +4351,302 @@ function quartettConfirmHand() {
     reveal: null,
     rewardCard: null,
     status: "active",
+    phase: "intro",
   };
-  renderQuartettMatch();
+  renderQuartettIntro();
 }
 
-function renderQuartettPickScreen() {
+// ---- Quartett presentation ---------------------------------------------------
+// The match plays as a duel at a table: the opponent's hand (face down)
+// fans across the top of the screen, mirroring yours along the bottom. Each
+// round opens with its task announced large, both cards slide to the
+// middle, hers turns over, and only then is the round called.
+
+let quartettTimer = null;
+function quartettClearTimer() { if (quartettTimer) { clearTimeout(quartettTimer); quartettTimer = null; } }
+
+// "BLACK — Higher rarity wins ties" -> { main: "Black", rule: "Higher rarity wins ties" }
+function quartettSplitLabel(label) {
+  const parts = String(label).split(" — ");
+  const rule = parts.slice(1).join(" — ");
+  return { main: titleCase(parts[0]), rule: rule ? rule.charAt(0).toUpperCase() + rule.slice(1) : "" };
+}
+
+function quartettPipsHTML(wins, fresh) {
+  return Array.from({ length: QUARTETT_WIN_TARGET }, (_, i) =>
+    `<span class="q-pip ${i < wins ? "won" : ""} ${fresh && i === wins - 1 ? "fresh" : ""}"></span>`).join("");
+}
+
+function quartettBackHTML() { return `<div class="q-back"><div class="back-card-face"></div></div>`; }
+
+function renderQuartettEntry() {
+  quartettClearTimer();
+  quartettRefreshSessionWindow();
+  const remaining = quartettSessionsRemaining();
   const eligible = quartettPlayerEligibleCards();
-  const count = quartettDraftSelection.length;
-  const tilesHTML = eligible.map((card) => {
-    const selected = quartettDraftSelection.includes(card.id);
-    const disabled = !selected && count >= QUARTETT_HAND_SIZE;
+  const canPlay = remaining > 0 && eligible.length >= QUARTETT_HAND_SIZE;
+  const statusLine = eligible.length < QUARTETT_HAND_SIZE
+    ? "You don't have enough cards in your collection yet."
+    : `${remaining} of ${QUARTETT_MAX_SESSIONS_PER_MONTH} hands left this month.`;
+
+  const opponentTilesHTML = Object.keys(QUARTETT_OPPONENTS).map((id, i) => {
+    const opp = QUARTETT_OPPONENTS[id];
     return `
-      <div class="quartett-pick-tile ${selected ? "selected" : ""} ${disabled ? "disabled" : ""}"
-           onclick="quartettToggleDraftCard(${card.id})">
-        ${gcardHTML(card)}
-      </div>
-    `;
+      <button class="q-opponent" style="--r:${((i % 2 ? 1 : -1) * (2 + (i % 3))).toFixed(0)}deg" onclick="startQuartettMatch('${id}')">
+        <span class="q-opponent-card"><img src="${opp.portrait}" alt=""></span>
+        <span class="q-opponent-name">${opp.name}</span>
+      </button>`;
   }).join("");
 
   stage.innerHTML = `
-    <div class="center-col screen-pad">
-      <div class="soul-name">Choose Your Hand</div>
-      <div class="speech narration-line">Pick ${QUARTETT_HAND_SIZE} cards to bring to the table.</div>
-      <div class="quartett-pick-count">${count} / ${QUARTETT_HAND_SIZE} selected</div>
-      <div class="quartett-pick-grid">${tilesHTML}</div>
-      <button class="primary" ${count === QUARTETT_HAND_SIZE ? "" : "disabled"} onclick="quartettConfirmHand()">Confirm Hand</button>
-      <button class="ghost" style="margin-top:10px;" onclick="quartettDraftSelection = []; renderCafe();">Leave</button>
+    <div class="center-col screen-pad q-entry">
+      <div class="soul-name">Quartett</div>
+      <p class="q-entry-sub">${statusLine}</p>
+      ${!canPlay && remaining <= 0 ? sceneHTML(QUARTETT_LOCKED_LINE, null) : ""}
+      ${canPlay ? `<p class="q-entry-ask">Who's at the table tonight?</p><div class="q-opponents">${opponentTilesHTML}</div>` : ""}
+      <button class="ghost" onclick="renderCafe()">Leave</button>
     </div>
   `;
   updateTopBar("", true);
+}
+
+function renderQuartettPickScreen() {
+  quartettClearTimer();
+  const eligible = quartettPlayerEligibleCards();
+  const count = quartettDraftSelection.length;
+  const tilesHTML = eligible.map((card) => {
+    const order = quartettDraftSelection.indexOf(card.id);
+    const selected = order >= 0;
+    const disabled = !selected && count >= QUARTETT_HAND_SIZE;
+    return `
+      <button class="q-pick ${selected ? "selected" : ""} ${disabled ? "disabled" : ""}" onclick="quartettToggleDraftCard(${card.id})" aria-pressed="${selected}">
+        ${gcardHTML(card)}
+        ${selected ? `<span class="q-pick-badge">${order + 1}</span>` : ""}
+      </button>`;
+  }).join("");
+  const opp = QUARTETT_OPPONENTS[quartettSelectedOpponentId];
+
+  stage.innerHTML = `
+    <div class="center-col screen-pad q-pick-screen">
+      <div class="soul-name">Choose your hand</div>
+      <p class="q-entry-sub">Pick ${QUARTETT_HAND_SIZE} cards to bring to the table${opp ? ` against ${opp.name}` : ""}. You'll play five of them.</p>
+      <div class="q-pick-grid">${tilesHTML}</div>
+    </div>
+    <div class="q-pick-bar">
+      <button class="ghost" onclick="quartettDraftSelection = []; renderCafe();">Leave</button>
+      <div class="q-pick-count"><b>${count}</b> of ${QUARTETT_HAND_SIZE}</div>
+      <button class="primary" ${count === QUARTETT_HAND_SIZE ? "" : "disabled"} onclick="quartettConfirmHand()">To the table</button>
+    </div>
+  `;
+  updateTopBar("", true);
+}
+
+// The table itself. `phase` decides what sits in the middle:
+//   intro    -- she says a line or two before the first deal
+//   announce -- the round's task, large, over a dimmed table
+//   choose   -- pick a card from your hand
+//   reveal   -- both cards slide in, hers turns over, the round is called
+function renderQuartettMatch() {
+  const match = quartettMatch;
+  if (!match) { renderQuartettEntry(); return; }
+  quartettClearTimer();
+  if (!match.phase) match.phase = "announce";
+  if (match.reveal) match.phase = "reveal";
+  applyStyleMetrics();
+
+  const opp = QUARTETT_OPPONENTS[match.opponentId];
+  const call = match.calls[match.currentRound];
+  const task = quartettSplitLabel(call.label);
+  const phase = match.phase;
+  const reveal = match.reveal;
+
+  // Your hand (bottom), shaped exactly like the styling hand.
+  const unplayed = match.playerHand.filter((id) => !match.playerPlayed.includes(id));
+  const interactive = phase === "choose";
+  const handHTML = unplayed.map((id, i) => {
+    const card = quartettFindCard(id);
+    const selected = match.selectedCardId === id;
+    return `
+      <div class="fan-card-wrap q-hand-card ${selected ? "selected" : ""}" style="transform:${fanTransform(i, unplayed.length)}; z-index:${selected ? 900 : 100 - Math.abs(i - (unplayed.length - 1) / 2)};"
+           ${interactive ? `onclick="quartettSelectCard(${id})" ondblclick="quartettSelectCard(${id}); quartettPlaySelectedCard()"` : ""}>
+        ${gcardHTML(card)}
+      </div>`;
+  }).join("");
+
+  // Her hand (top): the same fan, mirrored, backs only.
+  const oppLeft = match.opponentHand.length - match.opponentPlayed.length;
+  const oppHandHTML = Array.from({ length: oppLeft }, (_, i) =>
+    `<div class="fan-card-wrap q-opp-card" style="transform:${fanTransform(i, oppLeft)};">${quartettBackHTML()}</div>`).join("");
+
+  // Centre of the table
+  let centre = "";
+  const banner = `
+    <div class="q-task">
+      <div class="q-task-round">Round ${match.currentRound + 1} of ${QUARTETT_ROUNDS}</div>
+      <div class="q-task-main">${task.main}</div>
+      ${task.rule ? `<div class="q-task-rule">${task.rule}</div>` : ""}
+    </div>`;
+
+  if (phase === "choose") {
+    centre = `
+      ${banner}
+      <div class="q-slots">
+        <div class="q-slot"><span>You</span></div>
+        <div class="q-slot"><span>${opp.name}</span></div>
+      </div>
+      <button class="primary q-play" ${match.selectedCardId ? "" : "disabled"} onclick="quartettPlaySelectedCard()">${match.selectedCardId ? "Play this card" : "Choose a card"}</button>`;
+  } else if (phase === "reveal") {
+    const verdict = reveal.result === "A" ? "You take the round" : reveal.result === "B" ? `${opp.name} takes the round` : "A draw";
+    const reactionLine = reveal.result === "A" ? quartettPickLine(opp.lines.roundPlayerWins)
+      : reveal.result === "B" ? quartettPickLine(opp.lines.roundOpponentWins)
+      : quartettPickLine(opp.lines.roundDraw);
+    const matchOver = match.playerRoundWins >= QUARTETT_WIN_TARGET || match.opponentRoundWins >= QUARTETT_WIN_TARGET || match.currentRound >= QUARTETT_ROUNDS - 1;
+    const fromX = reveal.fromX || 0;
+    centre = `
+      ${banner}
+      <div class="q-slots">
+        <div class="q-slot filled q-played-you ${reveal.result === "A" ? "winner" : reveal.result === "B" ? "loser" : ""}" style="--fx:${fromX}px">
+          <div class="q-card-in">${gcardHTML(quartettFindCard(reveal.playerCardId))}</div>
+        </div>
+        <div class="q-slot filled q-played-opp ${reveal.result === "B" ? "winner" : reveal.result === "A" ? "loser" : ""}">
+          <div class="q-card-in">
+            <div class="q-flip">
+              <div class="q-face q-front">${gcardHTML(quartettFindCard(reveal.opponentCardId))}</div>
+              <div class="q-face q-rear">${quartettBackHTML()}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="q-verdict ${reveal.result === "A" ? "win" : reveal.result === "B" ? "loss" : "draw"}">${verdict}</div>
+      <div class="q-reaction speech is-tinted" style="--tint:${SPEAKER_TINTS[match.opponentId] || "rgba(0,0,0,0.9)"}"><span class="speaker">${opp.name}</span>\u201C${reactionLine}\u201D</div>
+      <button class="primary q-next" onclick="quartettAdvanceRound()">${matchOver ? "See how it ended" : "Next round"}</button>`;
+  }
+
+  const announce = phase === "announce" ? `
+    <div class="q-announce" onclick="quartettBeginChoosing()">
+      <div class="q-announce-round">Round ${match.currentRound + 1}</div>
+      <div class="q-announce-main">${task.main}</div>
+      ${task.rule ? `<div class="q-announce-rule">${task.rule}</div>` : ""}
+    </div>` : "";
+
+  const fresh = phase === "reveal";
+  stage.innerHTML = `
+    <div class="q-table phase-${phase}">
+      <div class="q-opp-hand">${oppHandHTML}</div>
+      <aside class="q-score">
+        <div class="q-score-row"><span class="q-score-name">${opp.name}</span><span class="q-pips">${quartettPipsHTML(match.opponentRoundWins, fresh && reveal.result === "B")}</span></div>
+        <div class="q-score-row"><span class="q-score-name">You</span><span class="q-pips">${quartettPipsHTML(match.playerRoundWins, fresh && reveal.result === "A")}</span></div>
+      </aside>
+      <div class="q-opp-portrait"><div class="portrait"><img src="${opp.portrait}" alt="${opp.name}"></div></div>
+      <div class="q-centre">${centre}</div>
+      <div class="hand-fan q-player-hand ${interactive ? "" : "locked"}">${handHTML}</div>
+      ${announce}
+    </div>
+  `;
+  updateTopBar("", true);
+
+  if (phase === "announce") quartettTimer = setTimeout(quartettBeginChoosing, 2600);
+}
+
+function quartettBeginChoosing() {
+  quartettClearTimer();
+  if (!quartettMatch || quartettMatch.phase !== "announce") return;
+  quartettMatch.phase = "choose";
+  renderQuartettMatch();
+}
+
+// A short exchange before the first deal, in her voice.
+function renderQuartettIntro() {
+  quartettClearTimer();
+  const match = quartettMatch;
+  const opp = QUARTETT_OPPONENTS[match.opponentId];
+  const lines = opp.lines.intro && opp.lines.intro.length ? quartettPickLine(opp.lines.intro) : [];
+  stage.innerHTML = `
+    <div class="center-col screen-pad q-intro">
+      <div class="soul-name">Quartett</div>
+      ${sceneHTML(lines, null)}
+      <button class="primary" onclick="quartettMatch.phase = 'announce'; renderQuartettMatch();">Deal</button>
+    </div>
+  `;
+  updateTopBar("", true);
+}
+
+function renderQuartettReveal() { renderQuartettMatch(); }
+
+function renderQuartettResult() {
+  quartettClearTimer();
+  const match = quartettMatch;
+  const opp = QUARTETT_OPPONENTS[match.opponentId];
+  const remaining = quartettSessionsRemaining();
+  let title, lines;
+  if (match.status === "playerWin") { title = "You win"; lines = quartettPickLine(opp.lines.matchPlayerWin); }
+  else if (match.status === "opponentWin") { title = `${opp.name} wins`; lines = quartettPickLine(opp.lines.matchPlayerLoss); }
+  else { title = "A draw"; lines = quartettPickLine(opp.lines.matchDraw); }
+
+  const nextButtons = match.rewardCard
+    ? `<button class="primary" onclick="renderQuartettReward()">Turn over your prize</button>`
+    : `${match.status === "playerWin" ? `<p class="q-entry-sub">She has nothing left you don't already own.</p>` : ""}
+       ${remaining > 0 ? `<button class="primary" onclick="startQuartettMatch('${match.opponentId}')">Play again</button>` : ""}
+       <button class="ghost" onclick="quartettReturnToCafe()">Back to the café</button>`;
+
+  stage.innerHTML = `
+    <div class="center-col screen-pad q-result q-result-${match.status}">
+      <div class="q-result-glow" aria-hidden="true"></div>
+      <div class="moment-badge">Quartett · ${opp.name}</div>
+      <h2 class="q-result-title">${title}</h2>
+      <div class="q-result-score">
+        <div><span class="q-result-num">${match.playerRoundWins}</span><span class="q-result-who">You</span></div>
+        <span class="q-result-dash"></span>
+        <div><span class="q-result-num">${match.opponentRoundWins}</span><span class="q-result-who">${opp.name}</span></div>
+      </div>
+      <div class="q-result-talk">${sceneHTML(lines, null)}</div>
+      <div class="q-result-actions">${nextButtons}</div>
+      <p class="q-hands-left">${remaining} of ${QUARTETT_MAX_SESSIONS_PER_MONTH} hands left this month.</p>
+    </div>
+  `;
+  updateTopBar("", true);
+}
+
+// The prize: face down, large. Tap to turn it over, then tilt it around.
+function renderQuartettReward() {
+  quartettClearTimer();
+  const match = quartettMatch;
+  const card = match.rewardCard;
+  const remaining = quartettSessionsRemaining();
+  const rarity = (card.rarity || "Basic").toLowerCase();
+  const foil = card.rarity === "Iconic" || card.rarity === "Legendary";
+  stage.innerHTML = `
+    <div class="q-reward">
+      <p class="q-reward-hint">Your prize. Tap to turn it over.</p>
+      <div class="tilt-stage q-reward-stage" id="tiltStage">
+        <div class="tilt-card q-reward-card rarity-${rarity}" id="tiltCard" onclick="quartettFlipReward()">
+          <div class="q-flip">
+            <div class="q-face q-front">${gcardHTML(card)}</div>
+            <div class="q-face q-rear">${quartettBackHTML()}</div>
+          </div>
+          ${foil ? `<div class="tilt-foil" aria-hidden="true"></div>` : ""}
+          <div class="tilt-glow" aria-hidden="true"></div>
+        </div>
+      </div>
+      <div class="q-reward-info">
+        <div class="card-viewer-rarity">${card.rarity || ""}</div>
+        <h3 class="card-viewer-name">${titleCase(card.name)}</h3>
+        <p class="card-viewer-lore">${card.lore ? `\u201C${card.lore}\u201D` : ""}</p>
+        <p class="q-entry-sub">Added to your closet.</p>
+        <div class="q-result-actions">
+          ${remaining > 0 ? `<button class="primary" onclick="startQuartettMatch('${match.opponentId}')">Play again</button>` : ""}
+          <button class="ghost" onclick="quartettReturnToCafe()">Back to the café</button>
+        </div>
+      </div>
+    </div>
+  `;
+  updateTopBar("", true);
+  initCardTilt(document.getElementById("tiltStage"), document.getElementById("tiltCard"));
+}
+
+function quartettFlipReward() {
+  const el = document.querySelector(".q-reward");
+  if (el) el.classList.add("flipped");
 }
 
 function quartettSelectCard(id) {
@@ -4214,13 +4670,23 @@ function quartettPlaySelectedCard() {
   else if (result === "B") match.opponentRoundWins += 1;
 
   match.roundHistory[match.currentRound] = { call, playerCardId, opponentCardId, result };
-  match.reveal = { playerCardId, opponentCardId, result };
-  renderQuartettReveal();
+  // Where the card sat in your fan, so it can slide from there to the table.
+  const handEl = document.querySelector(`.q-hand-card.selected`);
+  const slotEl = document.querySelector(".q-slot");
+  let fromX = 0;
+  if (handEl && slotEl) {
+    const h = handEl.getBoundingClientRect(), t = slotEl.getBoundingClientRect();
+    fromX = Math.round((h.left + h.width / 2) - (t.left + t.width / 2));
+  }
+  match.reveal = { playerCardId, opponentCardId, result, fromX };
+  match.phase = "reveal";
+  renderQuartettMatch();
 }
 
 function quartettAdvanceRound() {
   const match = quartettMatch;
   match.reveal = null;
+  match.phase = "announce";
   match.currentRound += 1;
   const done = match.playerRoundWins >= QUARTETT_WIN_TARGET || match.opponentRoundWins >= QUARTETT_WIN_TARGET || match.currentRound >= QUARTETT_ROUNDS;
   if (done) { quartettFinishMatch(); return; }
@@ -4271,126 +4737,6 @@ function renderQuartettCallsHTML(match) {
   }).join("");
 }
 
-function renderQuartettEntry() {
-  quartettRefreshSessionWindow();
-  const remaining = quartettSessionsRemaining();
-  const eligible = quartettPlayerEligibleCards();
-  const canPlay = remaining > 0 && eligible.length >= QUARTETT_HAND_SIZE;
-  const statusLine = eligible.length < QUARTETT_HAND_SIZE
-    ? "You don't have enough cards in your collection yet."
-    : `${remaining} of ${QUARTETT_MAX_SESSIONS_PER_MONTH} hands left this month.`;
-
-  const opponentTilesHTML = Object.keys(QUARTETT_OPPONENTS).map((id) => {
-    const opp = QUARTETT_OPPONENTS[id];
-    return `
-      <div class="quartett-opponent-tile" onclick="startQuartettMatch('${id}')">
-        <div class="quartett-opponent-portrait"><img src="${opp.portrait}" alt="${opp.name}"></div>
-        <div class="quartett-opponent-name">${opp.name}</div>
-      </div>
-    `;
-  }).join("");
-
-  stage.innerHTML = `
-    <div class="center-col screen-pad">
-      <div class="soul-name">Quartett — Night Café</div>
-      <div class="speech narration-line">${statusLine}</div>
-      ${!canPlay && remaining <= 0 ? sceneHTML(QUARTETT_LOCKED_LINE, null) : ""}
-      ${canPlay ? `<div class="speech narration-line">Who's at the table tonight?</div><div class="quartett-opponent-grid">${opponentTilesHTML}</div>` : ``}
-      <button class="ghost" style="margin-top:10px;" onclick="renderCafe()">Leave</button>
-    </div>
-  `;
-  updateTopBar("", true);
-}
-
-function renderQuartettMatch() {
-  const match = quartettMatch;
-  if (!match) { renderQuartettEntry(); return; }
-  if (match.reveal) { renderQuartettReveal(); return; }
-
-  const unplayedHand = match.playerHand.filter((id) => !match.playerPlayed.includes(id));
-  const handHTML = unplayedHand.map((id) => {
-    const card = quartettFindCard(id);
-    const selected = match.selectedCardId === id;
-    return `<div class="quartett-hand-tile ${selected ? "selected" : ""}" onclick="quartettSelectCard(${id})">${gcardHTML(card)}</div>`;
-  }).join("");
-
-  stage.innerHTML = `
-    <div class="center-col screen-pad">
-      <div class="soul-name">Quartett vs. ${match.opponentName}</div>
-      <div class="quartett-score">YOU ${match.playerRoundWins} — ${match.opponentRoundWins} ${match.opponentName.toUpperCase()}</div>
-      <div class="quartett-calls">${renderQuartettCallsHTML(match)}</div>
-      <div class="speech narration-line">${match.opponentName}'s hand: ${match.opponentHand.length - match.opponentPlayed.length} cards left, face down.</div>
-      <div class="quartett-hand-row">${handHTML}</div>
-      <button class="primary" ${match.selectedCardId ? "" : "disabled"} onclick="quartettPlaySelectedCard()">Play Card</button>
-    </div>
-  `;
-  updateTopBar("", true);
-}
-
-function renderQuartettReveal() {
-  const match = quartettMatch;
-  const opponentLines = QUARTETT_OPPONENTS[match.opponentId].lines;
-  const reveal = match.reveal;
-  const call = match.calls[match.currentRound];
-  const resultText = reveal.result === "A" ? "YOU WIN THE ROUND" : reveal.result === "B" ? `${match.opponentName.toUpperCase()} WINS THE ROUND` : "DRAW";
-  const reactionLine = reveal.result === "A" ? quartettPickLine(opponentLines.roundPlayerWins)
-    : reveal.result === "B" ? quartettPickLine(opponentLines.roundOpponentWins)
-    : quartettPickLine(opponentLines.roundDraw);
-  const matchOver = match.playerRoundWins >= QUARTETT_WIN_TARGET || match.opponentRoundWins >= QUARTETT_WIN_TARGET || match.currentRound >= QUARTETT_ROUNDS - 1;
-
-  stage.innerHTML = `
-    <div class="center-col screen-pad">
-      <div class="soul-name">Round ${match.currentRound + 1}: ${call.label}</div>
-      <div class="quartett-reveal-row">
-        <div class="quartett-reveal-card">${gcardHTML(quartettFindCard(reveal.playerCardId))}<div class="quartett-reveal-tag">YOU</div></div>
-        <div class="quartett-reveal-card">${gcardHTML(quartettFindCard(reveal.opponentCardId))}<div class="quartett-reveal-tag">${match.opponentName.toUpperCase()}</div></div>
-      </div>
-      <div class="speech" style="text-align:center; font-weight:600;">${resultText}</div>
-      <div class="speech narration-line">${match.opponentName.toUpperCase()}: "${reactionLine}"</div>
-      <div class="quartett-score">YOU ${match.playerRoundWins} — ${match.opponentRoundWins} ${match.opponentName.toUpperCase()}</div>
-      <button class="primary" onclick="quartettAdvanceRound()">${matchOver ? "See Result" : "Next Round"}</button>
-    </div>
-  `;
-  updateTopBar("", true);
-}
-
-function renderQuartettResult() {
-  const match = quartettMatch;
-  const opponentLines = QUARTETT_OPPONENTS[match.opponentId].lines;
-  const remaining = quartettSessionsRemaining();
-  let headline, lines;
-  if (match.status === "playerWin") { headline = "YOU WIN"; lines = quartettPickLine(opponentLines.matchPlayerWin); }
-  else if (match.status === "opponentWin") { headline = `${match.opponentName.toUpperCase()} WINS`; lines = quartettPickLine(opponentLines.matchPlayerLoss); }
-  else { headline = "DRAW"; lines = quartettPickLine(opponentLines.matchDraw); }
-
-  const rewardHTML = match.rewardCard
-    ? `<div class="speech narration-line">New card: <b>${match.rewardCard.name}</b></div><div class="shop-mystery-card">${gcardHTML(match.rewardCard)}</div>`
-    : (match.status === "playerWin" ? `<div class="speech narration-line">She has nothing left you don't already own.</div>` : "");
-
-  stage.innerHTML = `
-    <div class="center-col screen-pad">
-      <div class="soul-name">${headline}</div>
-      ${sceneHTML(lines, null)}
-      <div class="quartett-score">YOU ${match.playerRoundWins} — ${match.opponentRoundWins} ${match.opponentName.toUpperCase()}</div>
-      ${rewardHTML}
-      <div class="speech narration-line">${remaining} of ${QUARTETT_MAX_SESSIONS_PER_MONTH} hands left this month.</div>
-      ${remaining > 0 ? `<button class="primary" onclick="startQuartettMatch('${match.opponentId}')">Play Again</button>` : ``}
-      <button class="ghost" style="margin-top:10px;" onclick="quartettReturnToCafe()">Return to Café</button>
-    </div>
-  `;
-  updateTopBar("", true);
-}
-
-// Shared "repeat pool with an occasional once-per-year rare bonus" mechanic,
-// used by the Café Attic, Glass House, and Royal Garden repeat events. This
-// was previously three separately hand-written copies of the same shape --
-// which is exactly why the same "forgets to cap itself once nothing's left
-// to award" bug had to be fixed in all three places instead of one. Each
-// caller supplies its own pool, its own selection strategy (so each
-// location's exact original random-number behavior is preserved), its own
-// once-per-year state accessors, its own reward eligibility filter, and its
-// own two renderers -- so each location keeps its own look and any extra
-// buttons (e.g. Glass House's Cultivate button).
 function pickUniform(pool) { return pool[Math.floor(Math.random() * pool.length)]; }
 function pickWeighted(pool) {
   const totalWeight = pool.reduce((sum, e) => sum + e.weight, 0);
