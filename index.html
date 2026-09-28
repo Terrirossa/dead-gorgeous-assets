@@ -1480,6 +1480,114 @@
   .result-piece-row { padding-top: 38px; }
   .new-cards-grid, .new-cards-grid[class] { max-width: 1400px; }
 
+  /* ============================================================
+     INTERFACE v2 — part 4: step-by-step dialogue, cast of four,
+     discovery moments
+     ============================================================ */
+  .step-hidden, .step-gone, .step-held { display: none !important; }
+  .speech.step-gone { display: none !important; }
+
+  /* the display face is never set in capitals */
+  h1, h2, .soul-name, .cast-name, .map-tile-label, .moment-title, .ach-row-name,
+  .soul-detail-name, .soul-row-name, .overlay-head h3, .deck-header h3 { text-transform: none !important; letter-spacing: 0 !important; }
+  .ach-row.unlocked .ach-row-name { font-family: var(--font-display); font-weight: 400; font-size: 30px; line-height: 1.05; color: #fff; margin-bottom: 10px; }
+  .ach-row { padding: 16px 18px; }
+  .ach-row.locked { font-size: 18px; letter-spacing: 0.3em; display: flex; align-items: center; justify-content: center; min-height: 90px; color: var(--paper-3); }
+  .ach-row-reqs span { font-size: 11.5px; padding: 4px 10px; color: var(--paper-2); background: rgba(255,255,255,0.07); }
+  .ach-row-lore { font-style: italic; color: var(--paper-2); font-size: 13px; }
+
+  /* ---------- cast of four (e.g. all four at the Night Café) ---------- */
+  .cast-4 { gap: 6px; }
+  .cast-4 .portrait { width: 78px; }
+  .cast-4 .cast-name { font-size: 22px; }
+  @media (min-width: 1181px) {
+    .cast-multi.cast-4 .cast-member:nth-child(1) { grid-column: 1; grid-row: 1; align-self: start; justify-self: end; margin-top: 3vh; }
+    .cast-multi.cast-4 .cast-member:nth-child(2) { grid-column: 1; grid-row: 1; align-self: end; justify-self: start; flex-direction: column-reverse; margin-bottom: 2vh; }
+    .cast-multi.cast-4 .cast-member:nth-child(3) { grid-column: 3; grid-row: 1; align-self: start; justify-self: start; margin-top: 3vh; }
+    .cast-multi.cast-4 .cast-member:nth-child(4) { grid-column: 3; grid-row: 1; align-self: end; justify-self: end; flex-direction: column-reverse; margin-bottom: 2vh; }
+    .cast-multi.cast-4 .cast-member:nth-child(2) .cast-name,
+    .cast-multi.cast-4 .cast-member:nth-child(4) .cast-name { margin: 22px 0 0; }
+    .cast-multi.cast-4 .portrait { width: clamp(170px, 14vw, 280px); }
+    .cast-multi.cast-4 .cast-name { font-size: clamp(44px, 3.8vw, 72px); }
+    .cast-multi.cast-4 .cast-member:nth-child(1) .portrait { transform: rotate(-5deg); }
+    .cast-multi.cast-4 .cast-member:nth-child(2) .portrait { transform: rotate(4deg); }
+    .cast-multi.cast-4 .cast-member:nth-child(3) .portrait { transform: rotate(5deg); }
+    .cast-multi.cast-4 .cast-member:nth-child(4) .portrait { transform: rotate(-3deg); }
+  }
+  .cast .cast-member:nth-child(4) .portrait img { animation-duration: 7.8s; animation-delay: -1.3s; }
+
+  /* ---------- Discovery moments (set / aesthetic discovered) ---------- */
+  .cast-member { transition: opacity 0.6s ease, transform 0.6s cubic-bezier(.2,.7,.2,1); }
+  .cast-member.cast-away { opacity: 0; transform: translateY(14px); }
+  .moment-overlay {
+    backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+    position: fixed; inset: 0; z-index: 2000;
+    display: flex; align-items: center; justify-content: center;
+    padding: 30px 18px; overflow-y: auto;
+    background:
+      radial-gradient(ellipse at 50% 42%, rgba(242,200,120,0.16), rgba(12,8,22,0) 60%),
+      rgba(12,8,22,0.9);
+    animation: momentFade 0.5s ease both;
+  }
+  .moment {
+    position: relative; width: 100%; max-width: 1100px;
+    display: flex; flex-direction: column; align-items: center; text-align: center;
+    margin: auto;
+  }
+  .moment-glow {
+    position: absolute; left: 50%; top: 40%; width: 70vmin; height: 70vmin; transform: translate(-50%, -50%);
+    background: radial-gradient(circle, rgba(242,200,120,0.18), rgba(242,200,120,0) 65%);
+    pointer-events: none; animation: glowPulse 4s ease-in-out infinite;
+  }
+  .moment-badge {
+    position: relative; display: inline-flex; align-items: center; gap: 8px;
+    padding: 9px 18px; border-radius: 999px; background: #fff; color: #1b1626;
+    font-size: 12px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase;
+    animation: fadeUp 0.6s 0.05s ease both;
+  }
+  .moment-badge .ico { width: 15px; height: 15px; color: #c9962f; }
+  .moment-title {
+    position: relative; font-family: var(--font-display); font-weight: 400;
+    font-size: clamp(60px, 11vw, 150px); line-height: 0.92; margin: 22px 0 12px; color: #fff;
+    text-wrap: balance; text-shadow: 0 6px 50px rgba(242,200,120,0.28);
+    animation: titleIn 0.9s 0.1s cubic-bezier(.2,.7,.2,1) both;
+  }
+  .moment-sub, .moment-lore { position: relative; color: var(--paper-2); font-size: clamp(15px, 1.3vw, 19px); margin: 0 0 8px; animation: fadeUp 0.7s 0.3s ease both; max-width: 620px; }
+  .moment-lore { font-style: italic; color: var(--paper); }
+  .moment-cards { position: relative; display: flex; align-items: flex-end; justify-content: center; gap: 40px; flex-wrap: wrap; margin: 30px 0 26px; }
+  .moment-fan { display: flex; justify-content: center; }
+  .moment-card {
+    width: clamp(110px, 12vw, 190px); aspect-ratio: 595.28 / 841.9; margin: 0 -8px;
+    transform: translateY(var(--y)) rotate(var(--r));
+    filter: drop-shadow(0 20px 30px rgba(0,0,0,0.45));
+    animation: cardDeal 0.7s var(--d, 0s) cubic-bezier(.2,.7,.2,1) both;
+  }
+  .moment-card .gcard { width: 100%; height: 100%; }
+  .moment-reward { display: flex; flex-direction: column; align-items: center; gap: 12px; animation: fadeUp 0.7s var(--d, 0.5s) ease both; }
+  .moment-reward .moment-card { margin: 0; transform: none; animation: none; box-shadow: 0 0 0 3px var(--lamp), 0 0 60px rgba(242,200,120,0.45); border-radius: 12px; }
+  .moment-reward-label { display: inline-flex; align-items: center; gap: 6px; color: var(--lamp); font-size: 12px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; }
+  .moment-reward-label .ico { width: 14px; height: 14px; }
+  .moment-reqs {
+    position: relative; list-style: none; padding: 0; margin: 0 0 28px;
+    display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; max-width: 860px;
+    animation: fadeUp 0.7s 0.6s ease both;
+  }
+  .moment-reqs li {
+    display: inline-flex; align-items: center; gap: 7px; text-align: left;
+    padding: 8px 14px; border-radius: 999px; font-size: 14px; color: var(--paper);
+    background: rgba(255,255,255,0.07); box-shadow: inset 0 0 0 1px var(--panel-line);
+  }
+  .moment-reqs .ico { width: 15px; height: 15px; color: var(--lamp); }
+  .moment > .primary { position: relative; animation: fadeUp 0.7s 0.8s ease both; }
+
+  @keyframes momentFade { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes titleIn { from { opacity: 0; transform: scale(0.94); filter: blur(8px); } to { opacity: 1; transform: none; filter: none; } }
+  @keyframes cardDeal { from { opacity: 0; transform: translateY(40px) rotate(0deg); } to { opacity: 1; transform: translateY(var(--y)) rotate(var(--r)); } }
+  @keyframes glowPulse { 0%, 100% { opacity: 0.7; } 50% { opacity: 1; } }
+  @media (prefers-reduced-motion: reduce) {
+    .moment-overlay, .moment-badge, .moment-title, .moment-sub, .moment-lore, .moment-card, .moment-reward, .moment-reqs, .moment > .primary, .moment-glow { animation: none !important; }
+  }
+
 </style>
 </head>
 <body>
@@ -1856,6 +1964,101 @@ function evaluateAestheticAchievements(pieces) {
 
 const stage = document.getElementById("stage");
 
+/* ---------------- CONVERSATION PRESENTATION ----------------
+   Every screen renders into #stage. After each render this observer makes
+   sure any conversation on it (a) shows the characters who are present as
+   cards, and (b) plays out line by line instead of appearing all at once --
+   without each of the ~40 scene renderers having to do it themselves. */
+function enhanceStage() {
+  const speeches = [...stage.querySelectorAll(".speech")];
+  if (speeches.length === 0) return;
+  autoCast(speeches);
+  stepDialogue(speeches);
+}
+
+function autoCast(speeches) {
+  // Screens that already place characters themselves are left alone.
+  if (stage.querySelector(".soul-scene, .result-scene, .story-screen, .cast, .style-client, .portrait:not(.token)")) return;
+  const lines = speeches.map((el) => ({ who: el.dataset.who || "", t: el.textContent }));
+  const keys = inferPortraitKeys(lines);
+  if (keys.length === 0) return;
+  const html = castHTML(keys);
+  if (!html) return;
+  const wrap = document.createElement("div");
+  wrap.innerHTML = html;
+  const cast = wrap.firstElementChild;
+  const token = stage.querySelector(".portrait.token");
+  if (token) { token.replaceWith(cast); return; }
+  const col = speeches[0].closest(".center-col") || speeches[0].parentElement;
+  col.insertBefore(cast, col.firstChild);
+}
+
+let stepAdvance = null;
+function stepDialogue(speeches) {
+  stepAdvance = null;
+  // The Studio conversation already steps itself; one line needs no stepping.
+  if (speeches.length < 2 || speeches[0].dataset.stepped || stage.querySelector(".talk-continue")) return;
+  speeches[0].dataset.stepped = "1";
+  const last = speeches[speeches.length - 1];
+  const held = new Set();
+  for (let el = last.nextElementSibling; el; el = el.nextElementSibling) held.add(el);
+  stage.querySelectorAll("button").forEach((b) => { if (!b.closest(".speech")) held.add(b); });
+  held.forEach((el) => el.classList.add("step-held"));
+  speeches.forEach((el, i) => { if (i > 0) el.classList.add("step-hidden"); });
+
+  const next = document.createElement("button");
+  next.className = "primary talk-continue step-next";
+  next.setAttribute("aria-label", "Continue");
+  next.textContent = "\u2026";
+  last.after(next);
+
+  let shown = 1;
+  const WINDOW = 3; // keep the latest three lines, like the Studio conversation
+  // Characters step onto the scene when they first speak or are named,
+  // rather than all standing there before anyone has said anything.
+  const members = [...stage.querySelectorAll(".cast-member[data-key]")];
+  const revealCast = () => {
+    if (members.length === 0) return;
+    const lines = speeches.slice(0, shown).map((el) => ({ who: el.dataset.who || "", t: el.textContent }));
+    const present = new Set(inferPortraitKeys(lines));
+    members.forEach((m) => m.classList.toggle("cast-away", !present.has(m.dataset.key)));
+  };
+  const layout = () => {
+    revealCast();
+    speeches.forEach((el, i) => {
+      el.classList.remove("is-past", "is-past-2", "step-gone");
+      if (i >= shown) return;
+      const age = shown - 1 - i;
+      if (age >= WINDOW) el.classList.add("step-gone");
+      else if (age === 2) el.classList.add("is-past-2");
+    });
+  };
+  stepAdvance = () => {
+    if (shown >= speeches.length) return;
+    speeches[shown].classList.remove("step-hidden");
+    shown++;
+    layout();
+    if (shown >= speeches.length) {
+      next.remove();
+      held.forEach((el) => el.classList.remove("step-held"));
+      stepAdvance = null;
+    }
+  };
+  next.addEventListener("click", stepAdvance);
+  layout();
+}
+
+new MutationObserver(enhanceStage).observe(stage, { childList: true });
+
+// Space / Enter / right arrow advance any conversation (keyboard & Steam Deck).
+document.addEventListener("keydown", (e) => {
+  if (!["Enter", " ", "ArrowRight"].includes(e.key)) return;
+  const active = document.activeElement;
+  if (active && active !== document.body && active.matches("button, a, input, select, textarea")) return;
+  const btn = stage.querySelector(".talk-continue:not(.step-held)");
+  if (btn) { e.preventDefault(); btn.click(); }
+});
+
 function shuffle(arr) {
   const a = [...arr];
   for (let i = a.length - 1; i > 0; i--) {
@@ -1903,6 +2106,12 @@ const ICONS = {
 function icon(name, cls) {
   return `<svg class="ico ico-${name}${cls ? " " + cls : ""}" viewBox="0 0 24 24" aria-hidden="true" focusable="false">${ICONS[name] || ""}</svg>`;
 }
+// Blackletter is unreadable in capitals, so anything shown in the display
+// face goes through titleCase() ("FLOWER OFFERING" -> "Flower Offering").
+function titleCase(str) {
+  return String(str || "").toLowerCase().replace(/(^|[\s\-\u2019'(])(\p{L})/gu, (m, a, b) => a + b.toUpperCase());
+}
+
 // Mooncoin amount, e.g. coins(10) → [moon] 10
 function coins(n) { return `<span class="coin">${icon("moon")}${n}</span>`; }
 
@@ -5407,14 +5616,14 @@ const SPEAKER_TINTS = {
 function dialogueLineHTML(line, speakerName, role, extraClass) {
   const extra = extraClass ? ` ${extraClass}` : "";
   if (line.who === "NARRATION") {
-    return `<div class="speech narration-line${extra}">${line.t}</div>`;
+    return `<div class="speech narration-line${extra}" data-who="NARRATION">${line.t}</div>`;
   }
   const isYou = line.who === "YOU";
   const speakerLabel = isYou ? "You" : (speakerName || properCase(line.who));
   const tint = !isYou && !speakerName && role === "other" ? SPEAKER_TINTS[(line.who || "").toLowerCase()] : null;
   const cls = isYou ? " is-you" : (tint ? " is-tinted" : "");
   return `
-    <div class="speech${cls}${extra}"${tint ? ` style="--tint:${tint}"` : ""}>
+    <div class="speech${cls}${extra}" data-who="${isYou ? "YOU" : (line.who || "")}"${tint ? ` style="--tint:${tint}"` : ""}>
       <span class="speaker">${speakerLabel}</span>
       ${line.t}
     </div>
@@ -5457,42 +5666,59 @@ function sceneHTML(lines, speakerName) {
 
 
 
+// Every character who can appear in a scene: the four clients plus the
+// secondary cast. Keyed by the lower-case speaker id used in dialogue lines.
+function characterPortraits() {
+  const map = {};
+  CLIENTS.forEach((c) => { if (c.portrait) map[c.name.split(/[ ,]/)[0].toLowerCase()] = c.portrait; });
+  Object.assign(map, SECONDARY_PORTRAITS);
+  return map;
+}
+function characterOrder() {
+  return [...CLIENTS.map((c) => c.name.split(/[ ,]/)[0].toLowerCase()), ...SECONDARY_PORTRAIT_ORDER];
+}
+
+// Scans a scene's lines for who is present: anyone who speaks, plus anyone
+// narration names (e.g. "You recognize the bike before you see Ivy.").
+// A YOU/other-character line merely mentioning someone doesn't count.
 function inferPortraitKeys(lines) {
+  const portraits = characterPortraits();
+  const order = characterOrder();
   const present = new Set();
   (lines || []).forEach((l) => {
     const who = (l.who || "").toLowerCase();
-    if (SECONDARY_PORTRAITS[who]) present.add(who);
-    // Narration often introduces a present-but-not-yet-speaking character by
-    // name (e.g. "She's Juliette." / "Juliette does not react.") -- catch
-    // those too, so she isn't left out of a scene she's clearly standing in.
-    // Scoped to narration only: a YOU/other-character line just mentioning
-    // someone in passing (e.g. "Maya said...") shouldn't pull in a portrait
-    // for someone who isn't actually there.
+    if (portraits[who]) present.add(who);
     if (who === "narration") {
       const text = (l.t || "").toLowerCase();
-      SECONDARY_PORTRAIT_ORDER.forEach((k) => { if (text.includes(k)) present.add(k); });
+      order.forEach((k) => { if (new RegExp(`\\b${k}\\b`).test(text)) present.add(k); });
     }
   });
-  return SECONDARY_PORTRAIT_ORDER.filter((k) => present.has(k));
+  return order.filter((k) => present.has(k));
 }
 
-// Renders one portrait per named character actually speaking in `lines`
-// (side by side if more than one), or the location's fallback glyph if
-// nobody named is present (e.g. a pure-narration or not-yet-met scene).
+function castHTML(keys) {
+  const portraits = characterPortraits();
+  keys = keys.filter((k) => portraits[k]);
+  if (keys.length === 0) return "";
+  const multi = keys.length > 1;
+  const rowClass = `cast ${multi ? `cast-multi cast-${Math.min(keys.length, 4)}` : "cast-solo"}`;
+  const nameOf = (k) => k.charAt(0).toUpperCase() + k.slice(1);
+  return `<div class="${rowClass}">${keys.map((k) => `
+    <figure class="cast-member" data-key="${k}">
+      <figcaption class="cast-name">${nameOf(k)}</figcaption>
+      <div class="portrait"><img src="${portraits[k]}" alt="${nameOf(k)}"></div>
+    </figure>`).join("")}</div>`;
+}
+
+// Renders one portrait per named character present in `lines`, or the
+// location's glyph if nobody named is there (pure narration).
 function portraitHTML(lines, fallbackEmoji, fallbackBg) {
   const keys = inferPortraitKeys(lines);
   if (keys.length === 0) {
     const glyph = { "☕": "cup", "🗄️": "cabinet", "🌿": "leaf", "🪟": "window", "🏰": "castle", "🌹": "rose" }[fallbackEmoji] || "sparkle";
     return `<div class="portrait token">${icon(glyph)}</div>`;
   }
-  const multi = keys.length > 1;
-  const rowClass = `cast ${multi ? `cast-multi cast-${Math.min(keys.length, 3)}` : "cast-solo"}`;
-  const nameOf = (k) => k.charAt(0).toUpperCase() + k.slice(1);
-  return `<div class="${rowClass}">${keys.map((k) => `
-    <figure class="cast-member">
-      <figcaption class="cast-name">${nameOf(k)}</figcaption>
-      <div class="portrait"><img src="${SECONDARY_PORTRAITS[k]}" alt="${nameOf(k)}"></div>
-    </figure>`).join("")}</div>`;
+  return castHTML(keys);
 }
 
 function renderSoul() {
@@ -6193,7 +6419,7 @@ function renderAchievementsListHTML() {
     const reqsHTML = a.requirementsText.map((r) => `<span>${r}</span>`).join("");
     return `
       <div class="ach-row unlocked">
-        <div class="ach-row-name">${a.name}</div>
+        <div class="ach-row-name">${titleCase(a.name)}</div>
         <div class="ach-row-reqs">${reqsHTML}</div>
         <div class="ach-row-lore">"${a.lore}"</div>
       </div>
@@ -6801,23 +7027,33 @@ function setOwnedCount(setId) {
   return { owned: owned.length, total: setCards.length };
 }
 
+// Fanned row of cards for the discovery moments. Cards spread from the
+// middle, each tilted a little further out, with the reward card (if any)
+// set apart and lit.
+function fanRowHTML(cards, rewardCard) {
+  const n = cards.length;
+  const items = cards.map((c, i) => {
+    const off = i - (n - 1) / 2;
+    return `<div class="moment-card" style="--r:${(off * 6).toFixed(1)}deg; --y:${(Math.abs(off) * 10).toFixed(0)}px; --d:${(0.25 + i * 0.08).toFixed(2)}s">${gcardHTML(c)}</div>`;
+  }).join("");
+  const reward = rewardCard
+    ? `<div class="moment-reward" style="--d:${(0.35 + n * 0.08).toFixed(2)}s"><span class="moment-reward-label">${icon("sparkle")} New for your closet</span><div class="moment-card is-reward">${gcardHTML(rewardCard)}</div></div>`
+    : "";
+  return `<div class="moment-fan">${items}</div>${reward}`;
+}
+
 function showSetDiscoveryPopup(setName, setId, piecesUsed, rewardCard) {
   const { owned, total } = setOwnedCount(setId);
   const overlay = document.createElement("div");
-  overlay.className = "set-discovery-overlay";
-  const piecesHTML = piecesUsed.map((p) => `<div class="set-piece-thumb">${gcardHTML(p)}<span>${p.name}</span></div>`).join("");
+  overlay.className = "set-discovery-overlay moment-overlay";
   overlay.innerHTML = `
-    <div class="set-discovery-card">
-      <div class="set-discovery-badge">SET DISCOVERED</div>
-      <h2>${setName}</h2>
-      <p class="set-discovery-count">${owned} of ${total} pieces in your closet</p>
-      <div class="set-piece-row">${piecesHTML}</div>
-      <div class="set-discovery-rewards">
-        <div>+20 to this outfit's score</div>
-        ${rewardCard ? `<div>A new piece for your closet</div>` : ""}
-      </div>
-      ${rewardCard ? `<div class="new-card-item" style="width:120px; margin:10px auto;">${gcardHTML(rewardCard)}</div>` : ""}
-      <button class="primary" onclick="closeSetDiscoveryOverlay(this)">Nice.</button>
+    <div class="moment" role="dialog" aria-label="Set discovered">
+      <div class="moment-glow" aria-hidden="true"></div>
+      <div class="moment-badge">${icon("sparkle")} Set discovered</div>
+      <h2 class="moment-title">${titleCase(setName)}</h2>
+      <p class="moment-sub">${owned} of ${total} pieces in your closet · +20 to this outfit</p>
+      <div class="moment-cards">${fanRowHTML(piecesUsed, rewardCard)}</div>
+      <button class="primary" onclick="closeSetDiscoveryOverlay(this)">Wonderful</button>
     </div>
   `;
   document.body.appendChild(overlay);
@@ -6843,14 +7079,17 @@ function showNextAchievementPopup() {
   discoveredAestheticAchievements.add(id);
 
   const overlay = document.createElement("div");
-  overlay.className = "set-discovery-overlay";
-  const reqsHTML = ach.requirementsText.map((r) => `<p>${icon("check")} ${r}</p>`).join("");
+  overlay.className = "set-discovery-overlay moment-overlay";
+  const reqsHTML = ach.requirementsText.map((r) => `<li>${icon("check")}<span>${r}</span></li>`).join("");
+  const worn = outfit.filter(Boolean);
   overlay.innerHTML = `
-    <div class="set-discovery-card">
-      <div class="set-discovery-badge">ACHIEVEMENT DISCOVERED</div>
-      <h2>${ach.name}</h2>
-      <div class="ach-popup-reqs">${reqsHTML}</div>
-      <p class="ach-popup-lore">"${ach.lore}"</p>
+    <div class="moment" role="dialog" aria-label="Achievement discovered">
+      <div class="moment-glow" aria-hidden="true"></div>
+      <div class="moment-badge">${icon("sparkle")} Aesthetic discovered</div>
+      <h2 class="moment-title">${titleCase(ach.name)}</h2>
+      <p class="moment-lore">\u201C${ach.lore}\u201D</p>
+      ${worn.length > 0 ? `<div class="moment-cards">${fanRowHTML(worn, null)}</div>` : ""}
+      <ul class="moment-reqs">${reqsHTML}</ul>
       <button class="primary" onclick="this.closest('.set-discovery-overlay').remove(); showNextAchievementPopup();">Continue</button>
     </div>
   `;
