@@ -1285,6 +1285,201 @@
     .result-grid { grid-template-columns: minmax(0,1fr); }
   }
 
+  /* ============================================================
+     INTERFACE v2 — part 3: wide result, souls overlay, sizing,
+     floating cards
+     ============================================================ */
+
+  /* The stage never clips: rotated cards may lean past its edge. */
+  .stage { overflow-x: visible; }
+
+  /* ---------- Floating cards (conversation, locations, result, souls) ---------- */
+  @keyframes cardFloat {
+    0%, 100% { transform: translate3d(0, 0, 0) rotate(0deg); }
+    50% { transform: translate3d(0, -7px, 0) rotate(0.7deg); }
+  }
+  .soul-scene .portrait img,
+  .cast .portrait img,
+  .result-scene .portrait img,
+  .souls-portrait .portrait img {
+    animation: cardFloat 6.5s ease-in-out infinite;
+    will-change: transform;
+  }
+  .cast .cast-member:nth-child(2) .portrait img { animation-duration: 7.4s; animation-delay: -2.4s; }
+  .cast .cast-member:nth-child(3) .portrait img { animation-duration: 6.9s; animation-delay: -4.1s; }
+
+  /* ---------- Shared panel pieces ---------- */
+  .panel {
+    background: var(--panel); border-radius: 18px; padding: 16px 18px;
+    box-shadow: inset 0 0 0 1px var(--panel-line); text-align: left;
+  }
+  .panel h4, .result-pieces h4 {
+    display: flex; align-items: baseline; gap: 10px;
+    font-size: 12px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--paper-3); margin: 0 0 12px;
+  }
+  .panel-aside { margin-left: auto; font-size: 14px; letter-spacing: 0; text-transform: none; font-style: italic; color: var(--paper-2); font-weight: 500; }
+  .panel-empty { margin: 0; color: var(--paper-2); font-size: 14px; }
+  .chip-row { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chip { padding: 7px 16px; border-radius: 999px; font-size: 14px; box-shadow: inset 0 0 0 1px rgba(255,255,255,0.45); }
+  .fact { display: flex; flex-direction: column; gap: 2px; padding: 9px 0; border-top: 1px solid var(--panel-line); font-size: 14px; }
+  .fact:first-of-type { border-top: none; padding-top: 0; }
+  .fact-q { color: var(--paper-3); }
+  .fact-a { color: var(--paper); }
+
+  /* segmented tabs */
+  .segmented { display: inline-flex; padding: 4px; border-radius: 999px; background: rgba(255,255,255,0.08); box-shadow: inset 0 0 0 1px var(--panel-line); }
+  .segmented button { border: none; background: none; color: var(--paper); font: 500 14px var(--font-ui); padding: 8px 20px; border-radius: 999px; cursor: pointer; }
+  .segmented button.active { background: #fff; color: #1b1626; }
+
+  /* ============ RESULT (wide) ============ */
+  .result-scene, .result-scene[class] {
+    display: flex; flex-direction: column; align-items: center; text-align: center;
+    padding: 84px 6px 60px; min-height: 100vh; width: 100%;
+  }
+  .result-top { display: flex; flex-direction: column; align-items: center; width: 100%; }
+  .result-top .portrait-col { display: none; }
+  .result-hero { display: flex; flex-direction: column; align-items: center; }
+  .result .reaction { display: inline-flex; align-items: center; gap: 6px; letter-spacing: 0.14em; }
+  .result .reaction .ico { color: var(--lamp); width: 16px; height: 16px; }
+  .result-grid { max-width: 560px; }
+  .result-pieces { width: 100%; max-width: 560px; margin: 8px 0 12px; text-align: left; }
+  .result-piece-row { display: flex; gap: 12px; overflow-x: auto; padding: 26px 2px 8px; scrollbar-width: none; }
+  .result-piece { position: relative; margin: 0; flex: 0 0 auto; width: 132px; }
+  .result-piece-card { position: relative; aspect-ratio: 595.28 / 841.9; }
+  .result-piece-card .gcard { width: 100%; height: 100%; }
+  .piece-pts {
+    position: absolute; top: -12px; right: -8px;
+    background: #000; color: #fff; font-weight: 600; font-size: 17px; line-height: 1;
+    padding: 8px 12px; border-radius: 999px; box-shadow: 0 6px 16px rgba(0,0,0,0.35);
+  }
+  .result-piece.is-best .result-piece-card { box-shadow: 0 0 0 3px var(--lamp), 0 0 40px rgba(242,200,120,0.35); border-radius: 12px; }
+  .best-label {
+    position: absolute; top: -24px; left: 0; right: 0; text-align: center;
+    font-size: 11px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--lamp);
+    display: flex; align-items: center; justify-content: center; gap: 4px;
+  }
+  .best-label .ico { width: 13px; height: 13px; }
+  .result-scene > .primary { margin-top: 6px; }
+
+  /* ============ SOULS OVERLAY ============ */
+  .overlay-shell { max-width: 1480px; margin: 0 auto; }
+  .overlay-head { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; margin-bottom: 24px; }
+  .overlay-head h3 { font-family: var(--font-display); font-weight: 400; font-size: clamp(40px, 5vw, 72px); line-height: 1; margin: 0; }
+  .overlay-head .deck-close { margin-left: auto; }
+  .souls-layout { display: flex; flex-direction: column; gap: 18px; }
+  .souls-nav { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; scrollbar-width: none; }
+  .soul-row {
+    display: flex; align-items: center; gap: 12px; flex: 0 0 auto;
+    background: none; border: none; color: var(--paper); cursor: pointer; text-align: left;
+    padding: 8px 14px 8px 8px; border-radius: 16px; font: inherit;
+    transition: background 0.2s ease;
+  }
+  .soul-row:hover { background: rgba(255,255,255,0.06); }
+  .soul-row.active { background: rgba(255,255,255,0.1); box-shadow: inset 0 0 0 1px rgba(255,255,255,0.35); }
+  .soul-thumb {
+    width: 52px; height: 62px; border-radius: 10px; flex-shrink: 0;
+    background-size: 190% auto; background-position: 50% 30%; background-repeat: no-repeat;
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,0.15);
+  }
+  .soul-row-text { display: flex; flex-direction: column; gap: 4px; }
+  .soul-row-name { font-family: var(--font-display); font-size: 26px; line-height: 1; }
+  .soul-row-note { font-size: 12px; color: var(--paper-3); }
+  .soul-row .heart { width: 13px; height: 11px; }
+  .souls-portrait { display: flex; justify-content: center; }
+  .souls-portrait .portrait { width: 200px; transform: rotate(-3deg); margin: 0; }
+  .souls-detail { display: flex; flex-direction: column; gap: 14px; }
+  .soul-detail-head { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; }
+  .soul-detail-name { font-family: var(--font-display); font-size: clamp(56px, 7vw, 104px); line-height: 0.95; }
+  .soul-detail-head .heart { width: 24px; height: 21px; }
+  .best-row { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 10px; }
+  .best-card { aspect-ratio: 595.28 / 841.9; }
+  .best-card .gcard { width: 100%; height: 100%; }
+  .ach-list { max-width: none; display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; }
+  .ach-counter { text-align: left; margin: -8px 0 18px; }
+
+  /* ============ Bigger cards where they were too small ============ */
+  .shuffle-deck { --bw: 150px; width: calc(var(--bw) * 1.35); height: calc(var(--bw) * 1.75); margin: 18px auto 30px; }
+  .back-card { width: var(--bw); border-radius: calc(var(--bw) * 0.11); }
+  .shuffle-deck.split .back-card:nth-child(even) { transform: translate(calc(var(--bw) * -0.62), -8px) rotate(-16deg); }
+  .shuffle-deck.split .back-card:nth-child(odd)  { transform: translate(calc(var(--bw) * 0.62), -8px) rotate(16deg); }
+
+  .new-cards-grid, .new-cards-grid[class] {
+    display: flex; flex-wrap: wrap; justify-content: center; gap: 14px;
+    max-width: 1200px; width: 100%; margin: 10px auto 26px;
+  }
+  .new-cards-grid > * { width: calc(33.33% - 10px); flex: 0 0 auto; }
+
+  .quartett-pick-tile, .quartett-hand-tile { width: 100px; }
+  .quartett-pick-grid, .quartett-pick-grid[class] { max-width: 1200px; gap: 12px; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .soul-scene .portrait img, .cast .portrait img, .result-scene .portrait img, .souls-portrait .portrait img { animation: none !important; }
+  }
+
+  /* ---------- Desktop ---------- */
+  @media (min-width: 900px) {
+    .stage { max-width: none; }
+
+    /* result: portrait | hero | panels, then the worn pieces across */
+    .result-scene, .result-scene[class] { display: flex; padding: 100px 4vw 50px; }
+    .result-top {
+      display: grid; align-items: start; text-align: left;
+      grid-template-columns: clamp(200px, 18vw, 340px) minmax(0, 1fr) minmax(0, 1.25fr);
+      column-gap: 3.2vw; max-width: 1760px;
+    }
+    .result-top .portrait-col { display: block; position: static; }
+    .result-top .portrait { width: 100%; transform: rotate(-6deg); margin: 0; }
+    .result-hero { align-items: flex-start; padding-top: 8px; }
+    .result-hero h2 { text-align: left; font-size: clamp(64px, 6.4vw, 120px); }
+    .result-hero .narration-line { text-align: left; padding: 0; max-width: 440px; }
+    .result-grid, .result-grid[class] { max-width: none; margin: 0; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 14px; }
+    .result-pieces {
+      max-width: 1760px; margin: 34px 0 10px; padding: 18px 22px 22px;
+      background: var(--panel); border-radius: 22px; box-shadow: inset 0 0 0 1px var(--panel-line);
+    }
+    .result-piece-row { gap: 18px; justify-content: flex-start; padding-top: 30px; }
+    .result-piece { width: clamp(150px, 12.5vw, 240px); }
+    .piece-pts { font-size: 22px; padding: 9px 14px; }
+    .result-scene > .breakdown-hint { margin: 10px auto 18px; }
+
+    /* souls: list | portrait | profile */
+    .deck-overlay#soulsOverlay { padding: 34px 44px 50px; }
+    .souls-layout {
+      display: grid; gap: 28px; align-items: start;
+      grid-template-columns: minmax(230px, 300px) minmax(0, 0.9fr) minmax(0, 1.2fr);
+    }
+    .souls-nav {
+      flex-direction: column; gap: 4px; overflow: visible;
+      background: var(--panel); border-radius: 22px; padding: 10px; box-shadow: inset 0 0 0 1px var(--panel-line);
+    }
+    .soul-row { padding: 8px 12px 8px 8px; }
+    .souls-portrait { position: sticky; top: 30px; padding-top: 16px; }
+    .souls-portrait .portrait { width: min(100%, 420px); }
+
+    /* bigger cards */
+    .shuffle-deck { --bw: clamp(170px, 24vh, 280px); }
+    .new-cards-grid > * { width: clamp(150px, 15vw, 250px); }
+    .quartett-pick-tile, .quartett-hand-tile { width: clamp(110px, 9.5vw, 180px); }
+    .quartett-opponent-tile { width: 150px; }
+    .quartett-opponent-portrait { width: 130px; height: 130px; }
+    .quartett-opponent-name { font-size: 15px; }
+    .quartett-reveal-card { width: clamp(160px, 14vw, 240px); }
+    .deck-grid, .deck-grid[class] { max-width: 1400px; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 18px; }
+  }
+
+  .result-hero .narration-line, .result-hero .narration-line[class] { margin-left: 0; margin-right: 0; }
+  @media (min-width: 900px) {
+    .result-scene, .result-scene[class] { padding-top: 84px; }
+    .result-top { grid-template-columns: clamp(190px, 16vw, 320px) minmax(0, 1fr) minmax(0, 1.25fr); }
+    .result-piece { width: clamp(130px, 9.5vw, 210px); }
+    .result-pieces { margin-top: 26px; }
+  }
+
+  .best-label { top: -30px; justify-content: flex-start; }
+  .result-piece-row { padding-top: 38px; }
+  .new-cards-grid, .new-cards-grid[class] { max-width: 1400px; }
+
 </style>
 </head>
 <body>
@@ -1760,8 +1955,7 @@ function startRound() {
   // in a row (everything of one kind sitting in the discard pile), which is
   // exactly what caused unfair hands like five pairs of shoes with no tops
   // available to draw at all.
-  const jokerIds = new Set(JOKER_CARDS.map((c) => c.id));
-  deckPile = liveDeck.filter((c) => !jokerIds.has(c.id)).map((c) => c.id);
+  deckPile = liveDeck.map((c) => c.id); // Joker cards included -- see drawInitialHand()
   discardPile = [];
   const handIds = drawInitialHand(deckPile);
   deckPile = deckPile.filter((id) => !handIds.includes(id));
@@ -1810,13 +2004,21 @@ function drawBalancedHand(pool, targetSize = HAND_SIZE) {
 // this hand; whatever's left is filled with the normal balanced wearable draw.
 function drawInitialHand(pool) {
   const keyIdSet = new Set(KEY_CARDS.map((k) => k.id));
-  const rawSample = shuffle(pool).slice(0, HAND_SIZE);
+  const jokerIdSet = new Set(JOKER_CARDS.map((j) => j.id));
+  // Joker cards: one is always in the running, plus one more per Joker
+  // bought from the Vendor (up to all three). They're drawn with the same
+  // raw-sample odds as Keys -- roughly one hand in five with a single Joker
+  // -- and capped at one per starting hand. Tap one in hand to pick any card.
+  const jokersInPlay = new Set(JOKER_CARDS.slice(0, 1 + Math.min(ownedJokerCount, JOKER_CARDS.length - 1)).map((j) => j.id));
+  const samplePool = pool.filter((id) => !jokerIdSet.has(id) || jokersInPlay.has(id));
+  const rawSample = shuffle(samplePool).slice(0, HAND_SIZE);
   const reservedKeys = rawSample.filter((id) => keyIdSet.has(id));
+  const reservedJokers = rawSample.filter((id) => jokerIdSet.has(id)).slice(0, 1);
 
-  const wearablePool = pool.filter((id) => !keyIdSet.has(id));
-  const wearableHand = drawBalancedHand(wearablePool, HAND_SIZE - reservedKeys.length);
+  const wearablePool = pool.filter((id) => !keyIdSet.has(id) && !jokerIdSet.has(id));
+  const wearableHand = drawBalancedHand(wearablePool, HAND_SIZE - reservedKeys.length - reservedJokers.length);
 
-  return [...reservedKeys, ...wearableHand];
+  return [...reservedKeys, ...reservedJokers, ...wearableHand];
 }
 
 // Sets up a one-off special styling round (Valery's Solstice job, or one half
@@ -1832,8 +2034,7 @@ function startSpecialRound(virtualClient, brief, jobMeta) {
   specialJob = { ...jobMeta, virtualClient };
   storyBeatsRemaining = STORY_BEATS_PER_JOB; // same rule as a normal job -- see startRound()
 
-  const jokerIds = new Set(JOKER_CARDS.map((c) => c.id));
-  deckPile = liveDeck.filter((c) => !jokerIds.has(c.id)).map((c) => c.id);
+  deckPile = liveDeck.map((c) => c.id); // Joker cards included -- see drawInitialHand()
   discardPile = [];
   const handIds = drawInitialHand(deckPile);
   deckPile = deckPile.filter((id) => !handIds.includes(id));
@@ -5882,70 +6083,101 @@ function setSoulsTab(tab) {
   renderSoulsOverlay();
 }
 
+let selectedSoul = 0; // index into CLIENTS, or a secondary key ("helena", ...)
+
+function selectSoul(key) {
+  selectedSoul = key;
+  renderSoulsOverlay();
+}
+
 function renderSoulsOverlay() {
   const overlay = document.getElementById("soulsOverlay");
-  const tabsHTML = `
-    <div class="deck-sort-row">
-      <button class="sort-btn ${soulsTab === "souls" ? "active" : ""}" onclick="setSoulsTab('souls')">Souls</button>
-      <button class="sort-btn ${soulsTab === "achievements" ? "active" : ""}" onclick="setSoulsTab('achievements')">Achievements</button>
-    </div>
-  `;
   const title = soulsTab === "achievements" ? "Achievements" : "Souls you've met";
   const bodyHTML = soulsTab === "achievements" ? renderAchievementsListHTML() : renderSoulsListHTML();
 
   overlay.innerHTML = `
-    <div class="deck-header">
-      <h3>${title}</h3>
-      <button class="deck-close" onclick="closeSouls()" aria-label="Close">${icon("close")}</button>
+    <div class="overlay-shell">
+      <div class="overlay-head">
+        <h3>${title}</h3>
+        <div class="segmented" role="tablist">
+          <button role="tab" class="${soulsTab === "souls" ? "active" : ""}" onclick="setSoulsTab('souls')">Souls</button>
+          <button role="tab" class="${soulsTab === "achievements" ? "active" : ""}" onclick="setSoulsTab('achievements')">Achievements</button>
+        </div>
+        <button class="deck-close" onclick="closeSouls()" aria-label="Close">${icon("close")}</button>
+      </div>
+      ${bodyHTML}
     </div>
-    ${tabsHTML}
-    ${bodyHTML}
   `;
 }
 
-// Unchanged from the original openSouls() — just extracted into its own
-// function so it can sit alongside the new Achievements tab.
+// Everyone you've met: the four clients (always), plus any secondary
+// character once you've actually met her. Secondary characters aren't
+// clients, so they have no hearts, preferences or outfits yet.
+function metSouls() {
+  const list = CLIENTS.map((c, i) => ({ key: i, name: c.name.split(",")[0], portrait: c.portrait, client: true }));
+  const met = { helena: metHelena, juliette: metJuliette, maya: metMaya, octavia: metOctavia, valery: metValery };
+  SECONDARY_PORTRAIT_ORDER.forEach((k) => {
+    if (met[k]) list.push({ key: k, name: k.charAt(0).toUpperCase() + k.slice(1), portrait: SECONDARY_PORTRAITS[k], client: false });
+  });
+  return list;
+}
+
 function renderSoulsListHTML() {
-  const items = CLIENTS.map((c, i) => {
-    const rel = relationships[i] || 0;
+  const souls = metSouls();
+  const current = souls.find((x) => x.key === selectedSoul) || souls[0];
+  selectedSoul = current.key;
+
+  const listHTML = souls.map((x) => `
+    <button class="soul-row ${x.key === current.key ? "active" : ""}" onclick="selectSoul(${typeof x.key === "number" ? x.key : `'${x.key}'`})">
+      <span class="soul-thumb" style="background-image:url('${x.portrait}')"></span>
+      <span class="soul-row-text">
+        <span class="soul-row-name">${x.name}</span>
+        ${x.client ? `<span class="hearts">${heartsHTML(relationships[x.key] || 0)}</span>` : `<span class="soul-row-note">Not a client</span>`}
+      </span>
+    </button>`).join("");
+
+  let detailHTML;
+  if (current.client) {
+    const i = current.key;
     const profile = soulProfiles[i] || { visits: 0, facts: [], discovered: [] };
-    // Discovered hidden preferences (see finishStyling()'s discovery rule) —
-    // "???" until she's worn something you learn she loves, per the
-    // briefing doc's "Character Profile Behaviour". Never reveals how many
-    // are still unknown.
-    const discoveredLabels = (profile.discovered || []).map((k) => k.split(":").slice(1).join(":")).sort();
-    const preferencesHTML = `<div class="soul-fact"><b>Preferences</b><span>${discoveredLabels.length > 0 ? discoveredLabels.join(" · ") : "???"}</span></div>`;
+    // Discovered hidden preferences only -- never reveals how many are
+    // still unknown (briefing doc, "Character Profile Behaviour").
+    const discovered = (profile.discovered || []).map((k) => k.split(":").slice(1).join(":")).sort();
+    const prefsHTML = discovered.length > 0
+      ? `<div class="chip-row">${discovered.map((d) => `<span class="chip">${d}</span>`).join("")}</div>`
+      : `<p class="panel-empty">??? Style her and watch what she loves.</p>`;
     const factsHTML = profile.facts.length > 0
-      ? profile.facts.map((f) => `<div class="soul-fact"><b>${f.q}</b><span>${f.a}</span></div>`).join("")
-      : `<div class="soul-fact-empty">Nothing learned yet — ask them something next time you meet.</div>`;
-    const bestOutfitHTML = profile.bestScore !== null
-      ? `
-        <div class="soul-best-outfit">
-          <b>Best outfit so far — ${profile.bestScore} points</b>
-          <div class="soul-best-outfit-cards">
-            ${profile.bestPieces.map((id) => {
-              const card = findCard(id);
-              return card ? `<div class="new-card-item" style="width:60px;">${gcardHTML(card)}</div>` : "";
-            }).join("")}
-          </div>
-        </div>
-      `
-      : "";
-    return `
-      <div class="soul-profile-card">
-        <div class="soul-profile-head">
-          <div class="portrait ${c.portrait ? "" : "no-image"}" style="width:56px;height:auto;aspect-ratio:615/864;${c.portrait ? "" : `background:${c.color};`}">${c.portrait ? `<img src="${c.portrait}" alt="${c.name}">` : ""}</div>
-          <div>
-            <div class="soul-name" style="font-size:16px;">${c.name}</div>
-            <div class="hearts">${heartsHTML(rel)}</div>
-          </div>
-        </div>
-        <div class="soul-facts">${preferencesHTML}${factsHTML}</div>
-        ${bestOutfitHTML}
+      ? profile.facts.map((f) => `<div class="fact"><span class="fact-q">${f.q}</span><span class="fact-a">${f.a}</span></div>`).join("")
+      : `<p class="panel-empty">Nothing learned yet. Ask her something next time you meet.</p>`;
+    const bestHTML = profile.bestScore !== null && profile.bestScore !== undefined
+      ? `<div class="best-row">${(profile.bestPieces || []).map((id) => { const card = findCard(id); return card ? `<div class="best-card">${gcardHTML(card)}</div>` : ""; }).join("")}</div>`
+      : `<p class="panel-empty">No outfit yet.</p>`;
+    detailHTML = `
+      <div class="soul-detail-head">
+        <div class="soul-detail-name">${current.name}</div>
+        <div class="hearts">${heartsHTML(relationships[i] || 0)}</div>
       </div>
+      <section class="panel"><h4>Preferences</h4>${prefsHTML}</section>
+      <section class="panel">
+        <h4>Best outfit so far${profile.bestScore !== null && profile.bestScore !== undefined ? `<span class="panel-aside">${profile.bestScore} points</span>` : ""}</h4>
+        ${bestHTML}
+      </section>
+      <section class="panel"><h4>What you've learned</h4>${factsHTML}</section>
     `;
-  }).join("");
-  return `<div class="souls-list">${items}</div>`;
+  } else {
+    detailHTML = `
+      <div class="soul-detail-head"><div class="soul-detail-name">${current.name}</div></div>
+      <section class="panel"><p class="panel-empty">You've met her around After City, but she hasn't come to the Studio.</p></section>
+    `;
+  }
+
+  return `
+    <div class="souls-layout">
+      <nav class="souls-nav">${listHTML}</nav>
+      <div class="souls-portrait"><div class="portrait"><img src="${current.portrait}" alt="${current.name}"></div></div>
+      <div class="souls-detail">${detailHTML}</div>
+    </div>
+  `;
 }
 
 // Achievements tab: locked rows render only "???????", per the doc's
@@ -5968,7 +6200,7 @@ function renderAchievementsListHTML() {
     `;
   }).join("");
   return `
-    <div class="ach-counter">Discovered ${discoveredCount} / ${total}</div>
+    <div class="ach-counter">Discovered ${discoveredCount} of ${total}</div>
     <div class="ach-list">${rows}</div>
   `;
 }
@@ -6475,6 +6707,25 @@ function renderResult(client, score, wantResults, relDelta, moonCoinsEarned, bre
     const verdict = bits.length > 0 ? bits.join(" · ") : "no match, no bonus";
     return `<p><b>${d.piece.name}</b><br>${verdict}</p>`;
   }).join("");
+  const bestId = breakdown.bestPiece ? breakdown.bestPiece.id : null;
+  const piecesRowHTML = breakdown.pieceDetails.length > 0 ? `
+    <section class="result-pieces">
+      <h4>How each piece performed</h4>
+      <div class="result-piece-row">
+        ${breakdown.pieceDetails.map((d) => {
+          const pts = d.briefPts + d.rarityPts;
+          const best = d.piece.id === bestId;
+          return `
+            <figure class="result-piece${best ? " is-best" : ""}" title="${d.piece.name}">
+              ${best ? `<figcaption class="best-label">${icon("sparkle")} Best piece</figcaption>` : ""}
+              <div class="result-piece-card">
+                ${gcardHTML(d.piece)}
+                <span class="piece-pts">${pts > 0 ? "+" : ""}${pts}</span>
+              </div>
+            </figure>`;
+        }).join("")}
+      </div>
+    </section>` : "";
   const itemHTML = `<div class="result-box"><h4>How each piece performed</h4>${itemRows}</div>`;
 
   const bestPieceHTML = breakdown.bestPiece
@@ -6516,23 +6767,24 @@ function renderResult(client, score, wantResults, relDelta, moonCoinsEarned, bre
   const firstName = client.name.split(",")[0];
   stage.innerHTML = `
     <div class="result-scene result">
-      <div class="portrait-col">${client.portrait ? `<div class="portrait"><img src="${client.portrait}" alt="${firstName}"></div>` : ""}</div>
-      <div class="result-main">
-        <div class="reaction">${reaction.charAt(0) + reaction.slice(1).toLowerCase()}</div>
-        <h2>${headline}</h2>
-        <div class="score"><span class="score-num">${score}</span><span class="score-label">match</span></div>
-        <div class="speech narration-line">${line}</div>
+      <div class="result-top">
+        <div class="portrait-col">${client.portrait ? `<div class="portrait"><img src="${client.portrait}" alt="${firstName}"></div>` : ""}</div>
+        <div class="result-hero">
+          <div class="reaction">${reaction.charAt(0) + reaction.slice(1).toLowerCase()}${score >= 100 ? ` ${icon("sparkle")}` : ""}</div>
+          <h2>${headline}</h2>
+          <div class="score"><span class="score-num">${score}</span><span class="score-label">match</span></div>
+          <div class="speech narration-line">${line}</div>
+        </div>
         <div class="result-grid">
           ${wantHTML}
-          ${discoveryHTML}
           ${bondHTML}
+          ${discoveryHTML}
           ${breakdownHTML}
-          ${itemHTML}
-          ${bestPieceHTML}
         </div>
-        <p class="breakdown-hint">${breakdown.playerChoice ? "No hard requirements this time. The whole score comes from her hidden preferences, at +15 each (capped at +60)." : "Each matched brief attribute is worth 25. One piece can only satisfy each attribute once, so wear more pieces that reinforce the ask to climb higher."}</p>
-        <button class="primary" onclick="advanceMonth()">Next client</button>
       </div>
+      ${piecesRowHTML}
+      <p class="breakdown-hint">${breakdown.playerChoice ? "No hard requirements this time. The whole score comes from her hidden preferences, at +15 each (capped at +60)." : "Each matched brief attribute is worth 25. One piece can only satisfy each attribute once, so wear more pieces that reinforce the ask to climb higher."}</p>
+      <button class="primary" onclick="advanceMonth()">Next client</button>
     </div>
   `;
   updateTopBar("", true);
