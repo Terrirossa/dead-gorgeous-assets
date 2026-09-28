@@ -1588,6 +1588,52 @@
     .moment-overlay, .moment-badge, .moment-title, .moment-sub, .moment-lore, .moment-card, .moment-reward, .moment-reqs, .moment > .primary, .moment-glow { animation: none !important; }
   }
 
+  /* ============ CARD VIEWER (tap a card in the deck) ============ */
+  .card-detail-backdrop { background: rgba(12,8,22,0.82); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); animation: momentFade 0.35s ease both; }
+  .card-viewer {
+    position: fixed; inset: 0; z-index: 2101; pointer-events: none;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 22px;
+    padding: 70px 20px 30px; overflow-y: auto;
+  }
+  .card-viewer > * { pointer-events: auto; }
+  .tilt-stage { perspective: 1100px; padding: 24px; animation: viewerIn 0.5s cubic-bezier(.2,.7,.2,1) both; }
+  .tilt-card {
+    position: relative; width: min(72vw, 300px); aspect-ratio: 595.28 / 841.9;
+    border-radius: 16px; transform-style: preserve-3d;
+    transition: transform 0.6s cubic-bezier(.2,.7,.2,1), box-shadow 0.6s ease;
+    box-shadow: 0 30px 60px rgba(0,0,0,0.5), 0 8px 18px rgba(0,0,0,0.35);
+    will-change: transform;
+  }
+  .tilt-card.is-tilting { transition: transform 0.12s ease-out, box-shadow 0.3s ease; box-shadow: 0 40px 80px rgba(0,0,0,0.55), 0 10px 22px rgba(0,0,0,0.35); }
+  .tilt-card .gcard { width: 100%; height: 100%; }
+  .tilt-glow, .tilt-foil { position: absolute; inset: 0; border-radius: inherit; pointer-events: none; opacity: var(--ga, 0); transition: opacity 0.4s ease; }
+  .tilt-glow { background: radial-gradient(circle at var(--gx, 50%) var(--gy, 50%), rgba(255,255,255,0.38), rgba(255,255,255,0) 55%); mix-blend-mode: soft-light; }
+  .tilt-foil {
+    background: linear-gradient(115deg, rgba(255,0,150,0) 20%, rgba(255,120,200,0.35) 38%, rgba(120,220,255,0.35) 50%, rgba(255,240,150,0.35) 62%, rgba(255,0,150,0) 80%);
+    background-size: 250% 250%; background-position: var(--gx, 50%) var(--gy, 50%);
+    mix-blend-mode: color-dodge;
+  }
+  .rarity-legendary.tilt-card, .rarity-iconic.tilt-card { box-shadow: 0 0 0 1px rgba(242,200,120,0.5), 0 30px 70px rgba(0,0,0,0.5), 0 0 60px rgba(242,200,120,0.18); }
+  .card-viewer-info { width: 100%; max-width: 420px; text-align: center; animation: fadeUp 0.6s 0.15s ease both; }
+  .card-viewer-rarity { font-size: 12px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--lamp); margin-bottom: 4px; }
+  .card-viewer-name { font-family: var(--font-display); font-weight: 400; font-size: clamp(44px, 5vw, 76px); line-height: 0.95; margin: 0 0 16px; color: #fff; }
+  .card-viewer-info .chip-row { justify-content: center; margin-bottom: 16px; }
+  .card-viewer-info .chip { font-size: 13px; padding: 6px 13px; display: inline-flex; gap: 6px; align-items: baseline; }
+  .card-viewer-info .chip em { font-style: normal; font-size: 11px; color: var(--paper-3); }
+  .card-viewer-set { display: inline-flex; align-items: center; gap: 6px; color: var(--lamp); font-size: 14px; margin: 0 0 12px; }
+  .card-viewer-set .ico { width: 14px; height: 14px; }
+  .card-viewer-lore { font-style: italic; font-size: 16px; line-height: 1.5; color: var(--paper-2); margin: 0; }
+  .card-viewer-close { position: fixed; top: 22px; right: 22px; }
+  @keyframes viewerIn { from { opacity: 0; transform: translateY(24px) scale(0.92); } to { opacity: 1; transform: none; } }
+  @media (min-width: 900px) {
+    .card-viewer { flex-direction: row; gap: 5vw; padding: 60px 6vw; }
+    .tilt-card { width: auto; height: min(78vh, 720px); }
+    .card-viewer-info { text-align: left; }
+    .card-viewer-info .chip-row { justify-content: flex-start; }
+    .card-viewer-close { top: 34px; right: 44px; }
+  }
+  @media (prefers-reduced-motion: reduce) { .tilt-stage, .card-viewer-info { animation: none !important; } }
+
 </style>
 </head>
 <body>
@@ -1969,7 +2015,25 @@ const stage = document.getElementById("stage");
    sure any conversation on it (a) shows the characters who are present as
    cards, and (b) plays out line by line instead of appearing all at once --
    without each of the ~40 scene renderers having to do it themselves. */
+// The Studio conversation re-renders the whole screen on every click, which
+// would restart each card's float animation from zero (a visible jerk). To
+// keep it seamless, every float is locked to one shared clock: its delay is
+// set so the animation is exactly where it would be had it never restarted.
+const FLOAT_CLOCK_START = performance.now();
+function syncFloatingCards() {
+  const t = (performance.now() - FLOAT_CLOCK_START) / 1000;
+  stage.querySelectorAll(".portrait img").forEach((img) => {
+    const cs = getComputedStyle(img);
+    if (cs.animationName !== "cardFloat") return;
+    const dur = parseFloat(cs.animationDuration) || 6.5;
+    const base = img.dataset.floatBase !== undefined ? parseFloat(img.dataset.floatBase) : (parseFloat(cs.animationDelay) || 0);
+    img.dataset.floatBase = base;
+    img.style.animationDelay = `${(base - (t % dur)).toFixed(3)}s`;
+  });
+}
+
 function enhanceStage() {
+  syncFloatingCards();
   const speeches = [...stage.querySelectorAll(".speech")];
   if (speeches.length === 0) return;
   autoCast(speeches);
@@ -6635,16 +6699,73 @@ function closeDeck() {
 function openCardDetail(id) {
   const card = findCard(id);
   const detail = document.getElementById("cardDetail");
+  const rarity = (card.rarity || "Basic").toLowerCase();
+  const foil = card.rarity === "Iconic" || card.rarity === "Legendary";
+  const chips = [
+    ["Kind", card.category], ["Style", card.style], ["Style 2", card.style2],
+    ["Fit", card.fit], ["Colour", card.color],
+  ].filter(([, v]) => v).map(([k, v]) => `<span class="chip"><em>${k}</em>${v}</span>`).join("");
+  const setName = card.set && SET_NAMES[card.set] ? SET_NAMES[card.set] : null;
   detail.innerHTML = `
     <div class="card-detail-backdrop" onclick="closeCardDetail()"></div>
-    <div class="card-detail-panel">
-      <div class="card-detail-card">${gcardHTML(card)}</div>
-      <div class="card-detail-lore">${card.lore || "No lore recorded for this piece yet."}</div>
-      <button class="deck-close" onclick="closeCardDetail()" aria-label="Close">${icon("close")}</button>
+    <div class="card-viewer" role="dialog" aria-label="${card.name}">
+      <div class="tilt-stage" id="tiltStage">
+        <div class="tilt-card rarity-${rarity}" id="tiltCard">
+          ${gcardHTML(card)}
+          ${foil ? `<div class="tilt-foil" aria-hidden="true"></div>` : ""}
+          <div class="tilt-glow" aria-hidden="true"></div>
+        </div>
+      </div>
+      <div class="card-viewer-info">
+        <div class="card-viewer-rarity">${card.rarity || ""}</div>
+        <h3 class="card-viewer-name">${titleCase(card.name)}</h3>
+        <div class="chip-row">${chips}</div>
+        ${setName ? `<p class="card-viewer-set">${icon("sparkle")} Part of the ${setName}</p>` : ""}
+        <p class="card-viewer-lore">${card.lore ? `\u201C${card.lore}\u201D` : "No lore recorded for this piece yet."}</p>
+      </div>
+      <button class="deck-close card-viewer-close" onclick="closeCardDetail()" aria-label="Close">${icon("close")}</button>
     </div>
   `;
   detail.classList.add("open");
+  initCardTilt(document.getElementById("tiltStage"), document.getElementById("tiltCard"));
 }
+
+// 3D tilt: the card leans toward the pointer and a soft light follows it.
+// Updates are batched per animation frame, and the card eases back to flat
+// when the pointer leaves. Works with mouse, pen and touch (drag a finger
+// across the card on the Steam Deck). Off when reduced motion is requested.
+function initCardTilt(stageEl, cardEl) {
+  if (!stageEl || !cardEl) return;
+  if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  let frame = null, px = 0.5, py = 0.5;
+  const MAX = 14; // degrees
+  const apply = () => {
+    frame = null;
+    const rx = (0.5 - py) * MAX * 2;
+    const ry = (px - 0.5) * MAX * 2;
+    cardEl.style.transform = `rotateX(${rx.toFixed(2)}deg) rotateY(${ry.toFixed(2)}deg) scale3d(1.03, 1.03, 1.03)`;
+    cardEl.style.setProperty("--gx", `${(px * 100).toFixed(1)}%`);
+    cardEl.style.setProperty("--gy", `${(py * 100).toFixed(1)}%`);
+    cardEl.style.setProperty("--ga", "1");
+  };
+  stageEl.addEventListener("pointermove", (e) => {
+    const r = cardEl.getBoundingClientRect();
+    px = Math.min(1, Math.max(0, (e.clientX - r.left) / r.width));
+    py = Math.min(1, Math.max(0, (e.clientY - r.top) / r.height));
+    cardEl.classList.add("is-tilting");
+    if (!frame) frame = requestAnimationFrame(apply);
+  });
+  stageEl.addEventListener("pointerleave", () => {
+    if (frame) { cancelAnimationFrame(frame); frame = null; }
+    cardEl.classList.remove("is-tilting");
+    cardEl.style.transform = "";
+    cardEl.style.setProperty("--ga", "0");
+  });
+}
+
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape" && document.getElementById("cardDetail")?.classList.contains("open")) closeCardDetail();
+});
 
 function closeCardDetail() {
   const detail = document.getElementById("cardDetail");
