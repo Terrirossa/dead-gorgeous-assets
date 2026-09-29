@@ -27,7 +27,7 @@ const CLIENTS = [
       {
         dialogue: [
           { who: "MARGO", t: "Black. Fitted. Nothing apologetic." },
-          { who: "YOU", t: "Good morning to you too." },
+          { who: "YOU", t: "Good morning to you too.", skipAfterStage: true },
           { who: "MARGO", t: "Was that unclear?" },
         ],
         want: [req("color", "Black"), req("fit", "Fitted")],
@@ -586,34 +586,9 @@ const CLIENT_STAGES = {
   3: HOLLY_STAGES,   // Holly
 };
 
-const FALLBACK_STAGE = [{ who: "CLIENT", t: "(This client's Studio dialogue hasn't been ported from the bible yet.)" }];
+const FALLBACK_STAGE = null; // no stage left: the visit is just the job
 
-const QUESTIONS = {
-  0: [
-    { id: "m1", prompt: "You know a lot about clothes.",
-      answer: "\u201CI made costumes. Theatre, mostly.\u201D" }, // [bible]
-    { id: "m2", prompt: "What do you actually grow in your garden?",
-      answer: "\u201CNightshade. Belladonna. Foxglove. ...Good to know, isn't it.\u201D" }, // [bible]
-  ],
-  1: [
-    { id: "j1", prompt: "What did you do before all this?",
-      answer: "\u201CI was a botanist. I had a very small greenhouse. I remember every leaf of it.\u201D" }, // [voice]
-    { id: "j2", prompt: "Your plants shouldn't grow here, should they?",
-      answer: "\u201CNo. They do it anyway. I've stopped asking why.\u201D" }, // [voice]
-  ],
-  2: [
-    { id: "i1", prompt: "What's the deal with your bike?",
-      answer: "\u201CShe's got moods. Best not to stare at her too long.\u201D" }, // [voice]
-    { id: "i2", prompt: "You deliver to the Royal Quarter?",
-      answer: "\u201CSometimes. The routes get... inventive up there.\u201D" }, // [voice]
-  ],
-  3: [
-    { id: "h1", prompt: "Were you a soldier?",
-      answer: "\u201CSomething like that.\u201D" }, // [voice]
-    { id: "h2", prompt: "Who's Isolde?",
-      answer: "\u201C...Nobody you need to worry about.\u201D" }, // [voice] — hard boundary, per her story arc
-  ],
-};
+
 
 const AESTHETIC_ACHIEVEMENTS = [
   {
@@ -1899,3 +1874,429 @@ const VALERY_VIRTUAL = {
 };
 
 const VALERY_SOLSTICE_BRIEF = { want: [req("style", "Elegant"), req("style", "Classic")] };
+
+/* ===========================================================================
+   STUDIO SCHEDULING
+   Stages (numbered 1-20 as in the bible) used to play strictly one per visit,
+   which put e.g. "You must love Flower Fest" in August and had Margo quote
+   Juniper before Juniper had said it. Each visit now plays the earliest stage
+   whose conditions are met:
+     season -- only in these seasons (spring/summer/autumn/winter)
+     after  -- only once these stages have been seen. A bare number is the
+               same character; a letter prefix is another character
+               (M = Margo, J = Juniper, I = Ivy, H = Holly).
+     trigger -- never scheduled; played when something happens in play.
+     flag   -- only once this story moment has been witnessed (storyFlags).
+   A stage also never plays more than 3 visits ahead of its number, so late
+   stages can't jump the queue while an early one waits for its season.
+   If nothing is ready, the visit is just the job.
+   =========================================================================== */
+const STAGE_RULES = {
+  0: { // Margo
+    2: { after: [1] }, 5: { season: ["spring"] }, 6: { after: ["J8"] }, 7: { after: [6] },
+    8: { after: [7] }, 10: { after: [6], flag: "gardenWalkSeen" }, 11: { after: [2] }, 13: { after: [4] },
+    14: { after: [13] }, 15: { after: [14] }, 16: { after: [15] }, 17: { after: [8] },
+    18: { after: [10], flag: "gardenRitualSeen" }, 19: { after: [18] }, 20: { after: [19] },
+  },
+  1: { // Juniper
+    2: { after: [1] }, 5: { after: [3] }, 6: { season: ["spring"] },
+    7: { season: ["spring"], after: ["M5"] }, 9: { after: [8, "M6"] }, 10: { after: [8] },
+    11: { season: ["summer"] }, 12: { after: [11] }, 14: { after: [13] }, 15: { after: [14] },
+    16: { after: [15] }, 17: { after: ["M18"] }, 18: { after: [17] }, 19: { season: ["winter"] },
+    20: { after: [17] },
+  },
+  2: { // Ivy
+    2: { after: [1] }, 4: { after: [3] }, 5: { after: [4] }, 8: { after: [7] }, 9: { after: [8] },
+    10: { after: [9] }, 12: { after: [11] }, 13: { season: ["summer"] }, 14: { season: ["summer"] },
+    16: { after: [15] }, 17: { after: [5] }, 18: { after: [17] }, 19: { after: [18] }, 20: { after: [19] },
+  },
+  3: { // Holly
+    2: { after: [1] }, 6: { after: [5] }, 7: { after: [6] }, 8: { after: [7] }, 10: { after: [9] },
+    11: { after: [10] }, 12: { after: [11] }, 13: { after: [12] }, 14: { after: [13] }, 15: { after: [14] },
+    // 17 is the bible's mandatory first-armour scene: it plays on the result
+    // screen the first time an Armour card is worn by Holly.
+    17: { trigger: "armourOnHolly" }, 18: { after: [17] }, 19: { after: [18] }, 20: { after: [12] },
+  },
+};
+
+// Stages in which she states what she wants to wear. Those visits use this
+// brief instead of a separate brief conversation, so she isn't asked twice.
+// usesBrief: the authored brief this stage replaces (so it isn't asked again).
+// Hard requirements follow the deck-balanced tiers of the briefing document;
+// scarce colours stay hints (softDirection), never hard requirements.
+const STAGE_ASKS = {
+  0: {
+    3: { want: [req("style", "Elegant"), req("fit", "Fitted")], softDirection: "Nothing beige." },
+    5: { want: [req("style", "Elegant"), req("color", "Black")], softDirection: "No pink." },
+    9: { want: [req("fit", "Fitted"), req("color", "Black"), req("style", "Elegant")] },
+  },
+  1: {
+    1: { want: [req("style", "Romantic"), req("fit", "Relaxed")], softDirection: "Green, if you have it.", usesBrief: 0 },
+    7: { want: [req("style", "Romantic"), req("fit", "Fitted")], softDirection: "No pink." },
+    11: { want: [req("color", "White"), req("style", "Elegant")] },
+  },
+  2: {
+    6: { want: [req("style", "Daring"), req("style", "Cool")], softDirection: "Boots, ideally." },
+    11: { want: [req("color", "Black"), req("style", "Cool")], softDirection: "A jacket, ideally." },
+    13: { want: [req("style", "Classic"), req("style", "Elegant")] },
+  },
+  3: {
+    3: { want: [req("color", "White"), req("style", "Minimal")] },
+    9: { want: [req("color", "Blue"), req("style", "Classic")] },
+    16: { want: [req("style", "Romantic"), req("fit", "Fitted")] },
+  },
+};
+
+// Optional per-character result reactions: REACTION_LINES[client][tier]
+// with tier = "perfect" | "loved" | "meh" | "ouch", each a list of lines
+// ("{name}" is replaced). Empty for now -- the neutral lines in index.html
+// are used until these are written.
+// DRAFT (written by Claude for review -- approve, rewrite or delete).
+const REACTION_LINES = {
+  0: { // Margo
+    perfect: ["Margo says nothing for a long moment. Then: \u201CDon't let it go to your head.\u201D"],
+    loved: ["Margo straightens a cuff that didn't need straightening. It's approval."],
+    meh: ["\u201CAdequate,\u201D Margo says, which from her is almost a threat."],
+    ouch: ["Margo looks at the mirror, then at you. \u201CBeige would have been kinder.\u201D"],
+  },
+  1: { // Juniper
+    perfect: ["Juniper turns slowly, like something growing toward light. \u201COh. That's me.\u201D"],
+    loved: ["Juniper smiles at her reflection as if it were a seedling doing well."],
+    meh: ["\u201CIt's fine,\u201D Juniper says. \u201CFine is a perfectly good word for weeds too.\u201D"],
+    ouch: ["Juniper tilts her head. \u201CIt's lovely. I think it's lovely on someone else.\u201D"],
+  },
+  2: { // Ivy
+    perfect: ["Ivy whistles, low. \u201COkay. Okay, I'd chase me.\u201D"],
+    loved: ["Ivy checks herself in the mirror twice. She'd deny the second time."],
+    meh: ["\u201CRideable,\u201D Ivy says. \u201CNot memorable. Rideable.\u201D"],
+    ouch: ["Ivy looks at the mirror. \u201CShe's going to laugh at me.\u201D She doesn't say who."],
+  },
+  3: { // Holly
+    perfect: ["Holly looks at her reflection the way she'd look at well-made armour. \u201CThis will do,\u201D she says, and means much more."],
+    loved: ["Holly gives one short nod. From Holly, that's a standing ovation."],
+    meh: ["\u201CServiceable,\u201D Holly says."],
+    ouch: ["Holly regards the mirror. \u201CI have been sent into battle better dressed.\u201D"],
+  },
+};
+
+/* ---------------- YEAR TWO BRIEFS ----------------
+   DRAFT (written by Claude for review). Used after each character's twelve
+   authored briefs and trust job. season / months (0 = January): only
+   offered then, and preferred while they apply; hard requirements follow the deck-balanced tiers, scarce colours
+   stay hints (softDirection). */
+const YEAR_TWO_BRIEFS = {
+  0: [ // Margo
+    { dialogue: [{ who: "MARGO", t: "Something I can kneel in." }, { who: "YOU", t: "Kneel?" }, { who: "MARGO", t: "In soil. Don't make that face." }],
+      want: [req("color", "Black"), req("fit", "Regular")] },
+    { dialogue: [{ who: "MARGO", t: "Tight." }, { who: "YOU", t: "You never ask for tight." }, { who: "MARGO", t: "I'm told I'm allowed one bad decision a year." }],
+      want: [req("fit", "Tight"), req("style", "Elegant")] },
+    { dialogue: [{ who: "MARGO", t: "You chose well last month." }, { who: "YOU", t: "Was that—" }, { who: "MARGO", t: "Don't. Do it again." }],
+      want: [rarityReq(), req("style", "Elegant")] },
+    { dialogue: [{ who: "MARGO", t: "Make me look like I've never been afraid of anything." }, { who: "YOU", t: "Have you?" }, { who: "MARGO", t: "Once. Make it convincing." }],
+      want: [req("style", "Bold"), req("fit", "Fitted")] },
+    { months: [11, 0], dialogue: [{ who: "MARGO", t: "Something with a collar I can hide in." }, { who: "YOU", t: "From whom?" }, { who: "MARGO", t: "Everyone. It's the Solstice." }],
+      want: [req("style", "Classic"), req("color", "Black")], softDirection: "Something warm, if you have it." },
+    { months: [10, 11], dialogue: [{ who: "MARGO", t: "White." }, { who: "YOU", t: "You?" }, { who: "MARGO", t: "It's nearly Dead Day. Some of us remember properly." }],
+      want: [req("color", "White"), req("style", "Classic")] },
+  ],
+  1: [ // Juniper
+    { dialogue: [{ who: "JUNIPER", t: "Something with pockets." }, { who: "YOU", t: "For what?" }, { who: "JUNIPER", t: "Seeds. Possibly a snail. Don't ask about the snail." }],
+      want: [req("fit", "Relaxed"), req("style", "Classic")], softDirection: "Cosy, if you have it." },
+    { dialogue: [{ who: "JUNIPER", t: "Ivy's taking me somewhere fast tonight." }, { who: "YOU", t: "On the bike?" }, { who: "JUNIPER", t: "I've been told to hold on and not scream. I'll manage one of those." }],
+      want: [req("style", "Daring"), req("fit", "Fitted")] },
+    { dialogue: [{ who: "JUNIPER", t: "Margo says I dress like a compost heap." }, { who: "YOU", t: "That's harsh." }, { who: "JUNIPER", t: "From her it's a compliment. Make it an elegant compost heap." }],
+      want: [req("style", "Elegant"), req("style", "Classic")] },
+    { dialogue: [{ who: "JUNIPER", t: "I want to look like I know things." }, { who: "YOU", t: "You do know things." }, { who: "JUNIPER", t: "Yes, but nobody believes a cardigan." }],
+      want: [req("style", "Classic"), req("style", "Minimal")] },
+    { months: [3, 4], dialogue: [{ who: "JUNIPER", t: "It's Flower Fest." }, { who: "YOU", t: "Pink?" }, { who: "JUNIPER", t: "Something that looks like it's hiding from pink." }],
+      want: [req("style", "Minimal"), req("color", "White")], softDirection: "No pink." },
+    { season: ["winter"], dialogue: [{ who: "JUNIPER", t: "Keep me warm. The garden doesn't close for me." }, { who: "YOU", t: "I thought it closed for everyone." }, { who: "JUNIPER", t: "It does." }],
+      want: [req("style", "Romantic"), req("fit", "Regular")], softDirection: "Cosy, if you have it." },
+  ],
+  2: [ // Ivy
+    { dialogue: [{ who: "IVY", t: "Rain tonight." }, { who: "YOU", t: "It's not raining." }, { who: "IVY", t: "Not here." }],
+      want: [req("style", "Cool"), req("fit", "Regular")] },
+    { dialogue: [{ who: "IVY", t: "Holly says I look like a stolen motorbike." }, { who: "YOU", t: "Is that bad?" }, { who: "IVY", t: "She meant it nicely. I think. Make it worse." }],
+      want: [req("style", "Daring"), req("style", "Bold")] },
+    { dialogue: [{ who: "IVY", t: "Job at the Castle. Back entrance." }, { who: "YOU", t: "Is there a back entrance?" }, { who: "IVY", t: "There is now." }],
+      want: [req("style", "Classic"), req("color", "Black")] },
+    { dialogue: [{ who: "IVY", t: "Something Juniper would pick." }, { who: "YOU", t: "You want to look like Juniper?" }, { who: "IVY", t: "I want to see her face." }],
+      want: [req("style", "Romantic"), req("fit", "Relaxed")] },
+    { dialogue: [{ who: "IVY", t: "Don't make me look like a courier." }, { who: "YOU", t: "You are a courier." }, { who: "IVY", t: "Not tonight." }],
+      want: [req("style", "Elegant"), req("fit", "Tight")] },
+    { months: [5, 6], dialogue: [{ who: "IVY", t: "Solstice deliveries. White, apparently." }, { who: "YOU", t: "Mandatory?" }, { who: "IVY", t: "Mandatory. I'm going to look like a pillow." }],
+      want: [req("color", "White"), req("style", "Cool")] },
+  ],
+  3: [ // Holly
+    { dialogue: [{ who: "HOLLY", t: "Blue. Ribbons, if you have any." }, { who: "YOU", t: "For Isolde?" }, { who: "HOLLY", t: "For no one." }],
+      want: [req("color", "Blue"), req("style", "Romantic")] },
+    { dialogue: [{ who: "HOLLY", t: "Ivy wants me to sing." }, { who: "YOU", t: "In public?" }, { who: "HOLLY", t: "In a bar. I have declined twice. I will lose." }],
+      want: [req("style", "Cool"), req("fit", "Fitted")] },
+    { dialogue: [{ who: "HOLLY", t: "Something that does not clank." }, { who: "YOU", t: "Did something clank?" }, { who: "HOLLY", t: "Everything clanks. Eventually." }],
+      want: [req("style", "Minimal"), req("fit", "Fitted")] },
+    { dialogue: [{ who: "HOLLY", t: "Juniper asked me to help in the garden." }, { who: "YOU", t: "In those clothes?" }, { who: "HOLLY", t: "In whatever you give me. Choose accordingly." }],
+      want: [req("fit", "Relaxed"), req("style", "Minimal")] },
+    { dialogue: [{ who: "HOLLY", t: "Gold, perhaps." }, { who: "YOU", t: "You hate gold." }, { who: "HOLLY", t: "Someone I knew wore it well." }],
+      want: [req("style", "Romantic"), req("style", "Classic")], softDirection: "Gold, if there is any." },
+    { months: [11, 0], dialogue: [{ who: "HOLLY", t: "Silver. For the Winter Solstice." }, { who: "YOU", t: "You'll be at the Castle?" }, { who: "HOLLY", t: "Outside it." }],
+      want: [req("style", "Classic"), req("color", "White")], softDirection: "Silver, if there is any." },
+  ],
+};
+
+/* ---------------- THE GARDEN CIRCLE ----------------
+   So Margo's stage 10 ("I saw the Garden Circle last night") and stage 18
+   ("I saw what happened in the garden") refer to something the player has
+   actually seen. Both play at the Nightgarden.
+   GARDEN_CIRCLE_CAFE_LINES is the bible's own Garden Circle scene (verbatim). */
+const GARDEN_CIRCLE_CAFE_LINES = [
+  { who: "MARGO", t: "You're late." },
+  { who: "JUNIPER", t: "The plant wasn't finished." },
+  { who: "MARGO", t: "Plants are never finished." },
+  { who: "YOU", t: "Garden Circle?" },
+  { who: "MARGO", t: "No." },
+  { who: "JUNIPER", t: "Yes." },
+  { who: "MARGO", t: "We discussed this." },
+  { who: "JUNIPER", t: "You discussed it." },
+  { who: "YOU", t: "What actually happens there?" },
+  { who: "MARGO", t: "Gardening." },
+  { who: "JUNIPER", t: "Mostly." },
+  { who: "MARGO", t: "Juniper." },
+];
+// DRAFT (written by Claude for review).
+const GARDEN_WALK_LINES = [
+  { who: "NARRATION", t: "It's past midnight when you reach the Nightgarden gate." },
+  { who: "NARRATION", t: "It's open. It's never open." },
+  { who: "NARRATION", t: "Women are walking in, one at a time. No lanterns." },
+  { who: "NARRATION", t: "The last one is small, and dressed entirely in black." },
+  { who: "NARRATION", t: "She doesn't look back." },
+  { who: "NARRATION", t: "The gate closes behind her. Nobody touches it." },
+];
+// DRAFT (written by Claude for review).
+const GARDEN_RITUAL_LINES = [
+  { who: "NARRATION", t: "The gate is open again. This time, you follow." },
+  { who: "NARRATION", t: "They stand in a circle between the beds. Margo. Juniper. Others you don't know." },
+  { who: "NARRATION", t: "Nobody speaks." },
+  { who: "NARRATION", t: "Then every flower in the garden turns to face them." },
+  { who: "NARRATION", t: "Slowly. Like heads turning at a name." },
+  { who: "NARRATION", t: "Juniper sees you. Her eyes widen, just slightly." },
+  { who: "NARRATION", t: "You leave before Margo does." },
+];
+
+/* ---------------- FRIENDSHIP ----------------
+   Hearts now gate how personal the Studio conversations get, and each Core
+   Soul gives one unique card at four hearts (bible: "Exclusive card
+   reward ... unique, cannot be sold or randomly destroyed").
+   TALK_HEARTS: hearts needed before a "Talk" stage of that number opens,
+   following the bible's EARLY / MID / HIGH / VERY HIGH / FINAL arc. */
+const TALK_HEARTS = [
+  { upTo: 5, hearts: 0 },     // EARLY
+  { upTo: 10, hearts: 1.5 },  // MID
+  { upTo: 15, hearts: 2.5 },  // HIGH
+  { upTo: 19, hearts: 3.5 },  // VERY HIGH
+  { upTo: 20, hearts: 4.5 },  // FINAL
+];
+const FRIENDSHIP_GIFT_HEARTS = 4;
+
+// Attributes as listed in the bible. No card art yet: add a fullArt URL to
+// each once the SVGs exist (until then they use the placeholder template).
+const FRIENDSHIP_CARDS = {
+  0: { id: 901, name: "Nightshade Corset", category: "Top", fit: "Fitted", style: "Elegant", style2: "Bold", color: "Black",
+       rarity: "Legendary", unique: true, storyCard: true, lore: "Margo made it. She will not say for whom." },
+  1: { id: 902, name: "Moonroot Wrap Top", category: "Top", fit: "Fitted", style: "Romantic", color: "Green",
+       rarity: "Legendary", unique: true, storyCard: true, lore: "Dyed with something Juniper grew. Don't ask what." },
+  2: { id: 903, name: "Night Rider Boots", category: "Shoes", fit: "Regular", style: "Daring", color: "Black",
+       rarity: "Legendary", unique: true, storyCard: true, lore: "Scuffed on roads that aren't on any map." },
+  3: { id: 904, name: "Isolde's Blue Ribbon Dress", category: "Dress", fit: "Regular", style: "Romantic", style2: "Classic", color: "Blue",
+       rarity: "Legendary", unique: true, storyCard: true, lore: "Blue ribbons. Holly doesn't remember why she kept it." },
+};
+
+// DRAFT (written by Claude for review): the moment each gift is given.
+const FRIENDSHIP_GIFT_LINES = {
+  0: [{ who: "MARGO", t: "I made this. Years ago." }, { who: "YOU", t: "For me?" }, { who: "MARGO", t: "For whoever wouldn't ruin it. Don't prove me wrong." }],
+  1: [{ who: "JUNIPER", t: "I grew the dye." }, { who: "YOU", t: "From what?" }, { who: "JUNIPER", t: "You don't want to know. It's very pretty, though." }],
+  2: [{ who: "IVY", t: "Found these on a route that doesn't exist." }, { who: "YOU", t: "They're yours?" }, { who: "IVY", t: "They're yours now. Don't let anyone else wear them." }],
+  3: [{ who: "HOLLY", t: "Keep this." }, { who: "YOU", t: "Whose was it?" }, { who: "HOLLY", t: "Hers. I don't know how I know that." }],
+};
+
+/* ===========================================================================
+   CORE FOUR AT THE NIGHT CAFÉ -- bible "Night Café encounters", verbatim.
+   Each character's five encounters play in order, at most one Core Four
+   encounter per month. Conditions: hearts (minimum friendship), after
+   (stages seen, as in STAGE_RULES), season.
+   =========================================================================== */
+const CORE_CAFE_ENCOUNTERS = {
+  0: [ // Margo
+    { lines: [
+      { who: "MARGO", t: "If you're about to ask whether you can join me, don't." },
+      { who: "YOU", t: "Okay." },
+      { who: "MARGO", t: "Sit down." }] },
+    { after: [6], lines: [
+      { who: "YOU", t: "Garden Circle business?" },
+      { who: "MARGO", t: "No." },
+      { who: "JUNIPER", t: "Yes." },
+      { who: "MARGO", t: "Juniper." }] },
+    { after: [18], lines: [
+      { who: "MARGO", t: "If one more person hands me a rose, I'm setting something on fire." },
+      { who: "YOU", t: "Witch fire?" },
+      { who: "MARGO", t: "You're becoming irritatingly comfortable." }] },
+    { hearts: 2, lines: [
+      { who: "YOU", t: "You come here often." },
+      { who: "MARGO", t: "I like watching people make poor decisions." },
+      { who: "YOU", t: "Drinking?" },
+      { who: "MARGO", t: "Clothing." }] },
+    { hearts: 3, lines: [
+      { who: "NARRATION", t: "Margo silently pushes a drink toward you." },
+      { who: "YOU", t: "What's this?" },
+      { who: "MARGO", t: "You looked tired." },
+      { who: "YOU", t: "That's sweet." },
+      { who: "MARGO", t: "Give it back." }] },
+  ],
+  1: [ // Juniper
+    { lines: [
+      { who: "YOU", t: "Is that plant allowed in here?" },
+      { who: "JUNIPER", t: "Nobody has stopped it yet." }] },
+    { lines: [
+      { who: "YOU", t: "What are you reading?" },
+      { who: "JUNIPER", t: "A gardening book." },
+      { who: "YOU", t: "Useful?" },
+      { who: "JUNIPER", t: "Completely wrong." }] },
+    { after: [8], lines: [
+      { who: "YOU", t: "Where's Margo?" },
+      { who: "JUNIPER", t: "Garden Circle." },
+      { who: "YOU", t: "You're not going?" },
+      { who: "JUNIPER", t: "I was asked to leave." },
+      { who: "YOU", t: "What did you do?" },
+      { who: "JUNIPER", t: "Experiment." }] },
+    { hearts: 2, lines: [
+      { who: "NARRATION", t: "Juniper slides a tiny flower toward you." },
+      { who: "YOU", t: "Is it safe?" },
+      { who: "JUNIPER", t: "Probably." },
+      { who: "YOU", t: "Probably?!" },
+      { who: "JUNIPER", t: "It's progress." }] },
+    { hearts: 3, lines: [
+      { who: "YOU", t: "You saved me a seat?" },
+      { who: "JUNIPER", t: "No." },
+      { who: "NARRATION", t: "You sit." },
+      { who: "JUNIPER", t: "I saved you tea." }] },
+  ],
+  2: [ // Ivy
+    { lines: [
+      { who: "IVY", t: "You're in my seat." },
+      { who: "YOU", t: "There's no name on it." },
+      { who: "IVY", t: "Check underneath." },
+      { who: "NARRATION", t: "You do." },
+      { who: "IVY", t: "Can't believe that worked." }] },
+    { after: [3], lines: [
+      { who: "YOU", t: "Where's the bike?" },
+      { who: "IVY", t: "Outside." },
+      { who: "YOU", t: "Alone?" },
+      { who: "IVY", t: "She's a big girl." }] },
+    { hearts: 1.5, lines: [
+      { who: "IVY", t: "You going out?" },
+      { who: "YOU", t: "Maybe." },
+      { who: "IVY", t: "Don't follow anyone wearing a silver mask." },
+      { who: "YOU", t: "Why?" },
+      { who: "IVY", t: "See you tomorrow." }] },
+    { hearts: 2, lines: [
+      { who: "NARRATION", t: "Ivy arrives soaking wet." },
+      { who: "YOU", t: "It's not raining." },
+      { who: "IVY", t: "Here." }] },
+    { hearts: 3, lines: [
+      { who: "NARRATION", t: "Ivy puts a key on the table." },
+      { who: "YOU", t: "What's that?" },
+      { who: "IVY", t: "Nothing." },
+      { who: "YOU", t: "It's a key." },
+      { who: "IVY", t: "Very observant. Don't lose it." }] },
+  ],
+  3: [ // Holly
+    { lines: [
+      { who: "YOU", t: "Didn't expect to see you here." },
+      { who: "HOLLY", t: "Why?" },
+      { who: "YOU", t: "You don't seem like a bar person." },
+      { who: "HOLLY", t: "Neither do you. Yet here we are." }] },
+    { lines: [
+      { who: "NARRATION", t: "Holly is staring suspiciously at a cocktail." },
+      { who: "YOU", t: "Problem?" },
+      { who: "HOLLY", t: "There is a flower in my drink." },
+      { who: "YOU", t: "Decoration." },
+      { who: "HOLLY", t: "Wasteful." }] },
+    { hearts: 1.5, lines: [
+      { who: "YOU", t: "What are you reading?" },
+      { who: "HOLLY", t: "Nothing." },
+      { who: "YOU", t: "That's a gossip sheet." },
+      { who: "NARRATION", t: "Holly folds it immediately." },
+      { who: "HOLLY", t: "Nothing." }] },
+    { season: ["winter"], lines: [
+      { who: "HOLLY", t: "Your window light is out." },
+      { who: "YOU", t: "Everyone keeps telling me." },
+      { who: "HOLLY", t: "Then perhaps listen." },
+      { who: "YOU", t: "Do you believe in frost creatures?" },
+      { who: "HOLLY", t: "I believe in locked doors." }] },
+    { hearts: 3, lines: [
+      { who: "NARRATION", t: "Holly quietly sits beside you." },
+      { who: "YOU", t: "Everything okay?" },
+      { who: "HOLLY", t: "Yes." },
+      { who: "YOU", t: "Want to talk?" },
+      { who: "HOLLY", t: "No." },
+      { who: "HOLLY", t: "Stay anyway." }] },
+  ],
+};
+
+// Bible "Multi-character Night Café scenes", verbatim.
+const CAFE_SOLSTICE_GROUP_LINES = [
+  { who: "IVY", t: "Royal Quarter route is closed next week." },
+  { who: "HOLLY", t: "Take another one." },
+  { who: "IVY", t: "Adds twenty minutes." },
+  { who: "HOLLY", t: "Take another one." },
+  { who: "IVY", t: "Holly—" },
+  { who: "HOLLY", t: "Take. Another. One." },
+  { who: "YOU", t: "What's happening next week?" },
+  { who: "IVY", t: "Solstice preparations." },
+  { who: "YOU", t: "And?" },
+  { who: "IVY", t: "And apparently Holly is afraid of bunting." },
+  { who: "HOLLY", t: "Leave it, Ivy." },
+];
+const CAFE_DEAD_DAY_GROUP_LINES = [
+  { who: "NARRATION", t: "The four women occupy the same table. Even Ivy is quiet." },
+  { who: "YOU", t: "Everyone's quiet." },
+  { who: "MARGO", t: "It happens." },
+  { who: "YOU", t: "Do you think about it?" },
+  { who: "MARGO", t: "Dying?" },
+  { who: "YOU", t: "Yeah." },
+  { who: "MARGO", t: "Less than you'd think." },
+  { who: "MARGO", t: "Living, though." },
+  { who: "NARRATION", t: "Margo looks away." },
+  { who: "MARGO", t: "That's harder." },
+  { who: "HOLLY", t: "Some things are easier to remember when nobody asks." },
+  { who: "JUNIPER", t: "And some disappear anyway." },
+  { who: "IVY", t: "Great. We're cheerful tonight." },
+  { who: "NARRATION", t: "No one laughs." },
+];
+
+// Bible "Year One Armor reveal", verbatim: a walk home in the autumn of
+// Year One, then Holly at her next job.
+const ARMOUR_SIGHTING_LINES = [
+  { who: "NARRATION", t: "The streets are almost empty." },
+  { who: "NARRATION", t: "Someone passes you." },
+  { who: "NARRATION", t: "Black coat." },
+  { who: "NARRATION", t: "Heavy boots." },
+  { who: "NARRATION", t: "Something silver underneath." },
+  { who: "YOU", t: "..." },
+  { who: "NARRATION", t: "You look again." },
+  { who: "NARRATION", t: "Metal plates overlap beneath the coat." },
+  { who: "YOU", t: "Is that armour?" },
+  { who: "NARRATION", t: "The stranger disappears around the corner." },
+];
+const ARMOUR_HOLLY_LINES = [
+  { who: "YOU", t: "Holly." },
+  { who: "HOLLY", t: "You're staring." },
+  { who: "YOU", t: "I saw someone wearing armour." },
+  { who: "NARRATION", t: "Holly's expression changes almost imperceptibly." },
+  { who: "HOLLY", t: "Did you." },
+  { who: "YOU", t: "That's all?" },
+  { who: "HOLLY", t: "What would you like me to say?" },
+  { who: "YOU", t: "That it's normal." },
+  { who: "HOLLY", t: "Would you believe me?" },
+  { who: "YOU", t: "No." },
+  { who: "HOLLY", t: "Good." },
+];

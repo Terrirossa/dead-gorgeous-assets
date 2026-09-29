@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-<title>Dead Gorgeous — Prototype</title>
+<title>Drop Dead Gorgeous</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&family=UnifrakturMaguntia&family=Figtree:wght@400;500;600&display=swap');
 
@@ -1950,6 +1950,93 @@
   .screen-pad > h2:first-child { font-size: clamp(56px, 7vw, 100px); line-height: 0.95; margin: 0 0 16px; text-shadow: 0 4px 30px rgba(15,8,30,0.5); }
   .screen-pad > .line { color: var(--paper); text-shadow: 0 2px 16px rgba(15,8,30,0.7); }
 
+  .job-label { margin: 14px 0 8px; font-size: 12px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: var(--paper-3); }
+
+  .year-end-title { font-family: var(--font-display); font-size: clamp(56px, 8vw, 130px); line-height: 0.95; margin-bottom: 28px; text-shadow: 0 6px 40px rgba(15,8,30,0.55); animation: titleIn 0.9s cubic-bezier(.2,.7,.2,1) both; }
+  .year-end-panel { display: flex; flex-direction: column; align-items: center; gap: 22px; animation: fadeUp 0.8s var(--d, 0s) ease both; max-width: 760px; }
+  .year-stats { display: flex; gap: 48px; }
+  .year-stats > div { display: flex; flex-direction: column; align-items: center; }
+  .year-stat-num { font-size: clamp(40px, 4vw, 60px); font-weight: 600; line-height: 1; }
+  .year-stat-label { font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--paper-2); margin-top: 6px; }
+  .year-souls { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; }
+  .year-soul { display: flex; align-items: center; gap: 10px; padding: 8px 14px 8px 8px; border-radius: 16px; background: var(--panel); box-shadow: inset 0 0 0 1px var(--panel-line); }
+  .year-soul-name { font-family: var(--font-display); font-size: 26px; line-height: 1; }
+  .year-soul .heart { width: 13px; height: 11px; }
+  .year-reward { display: inline-flex; align-items: center; gap: 8px; color: var(--lamp); font-size: 15px; margin: 0; text-align: center; }
+  .year-reward.muted { color: var(--paper-3); }
+  .year-closing { font-family: var(--font-display); font-size: 36px; margin: 0; }
+
+  .arrive-actions { display: flex; flex-direction: column; align-items: center; gap: 12px; margin-top: 18px; }
+  .arrive-note { font-size: 14px; color: var(--paper-2); margin: -2px 0 10px; display: inline-flex; align-items: center; gap: 8px; }
+  .arrive-note .heart { width: 14px; height: 12px; }
+  .gift-lines { width: 100%; max-width: 470px; margin: 18px 0 6px; }
+  .gift-card { width: min(60vw, 240px); cursor: pointer; }
+  .gift-card .q-flip { transition: transform 1s cubic-bezier(.3,.7,.3,1); }
+  .moment.flipped .gift-card .q-flip { transform: rotateY(0deg); }
+  .gift-hint { color: var(--paper-2); font-size: 14px; }
+  .moment.flipped .gift-hint { display: none; }
+  .gift-info { opacity: 0; max-height: 0; overflow: hidden; transition: opacity 0.6s 0.8s ease; display: flex; flex-direction: column; align-items: center; text-align: center; }
+  .moment.flipped .gift-info { opacity: 1; max-height: 400px; }
+
+  .q-modes { margin: 4px 0 12px; }
+  .q-mode-note { max-width: 520px; text-align: center; font-size: 14px; color: var(--paper-2); margin: 0 0 8px; line-height: 1.5; display: block; }
+  .q-mode-note.stakes { color: var(--paper); }
+  .q-mode-note b { color: #f3a5a5; font-weight: 600; }
+  .q-mode-note .ico { color: var(--lamp); }
+  .q-stakes-tag { font-size: 11px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: #f3a5a5; }
+  .q-forfeit { min-height: 100vh; justify-content: center; }
+  .q-forfeit-row { display: flex; flex-wrap: wrap; justify-content: center; gap: 14px; margin: 10px 0 26px; }
+  .q-forfeit-row .q-pick { width: clamp(100px, 11vw, 170px); }
+  .q-pick.burning { animation: burnAway 1.4s ease forwards; }
+  @keyframes burnAway {
+    0% { filter: none; transform: translateY(-6px); }
+    35% { filter: brightness(1.4) sepia(0.6) saturate(3) hue-rotate(-20deg); }
+    100% { filter: brightness(0) blur(6px); opacity: 0; transform: translateY(-40px) scale(0.9) rotate(-4deg); }
+  }
+
+  /* ---------- map signals ---------- */
+  .map-time { display: flex; align-items: center; gap: 14px; margin: 8px 0 10px; }
+  .map-time .map-month { margin: 0; }
+  .cal-dots { display: inline-flex; gap: 6px; }
+  .cal-dot { width: 9px; height: 9px; border-radius: 50%; box-shadow: inset 0 0 0 1.5px rgba(255,255,255,0.5); }
+  .cal-dot.done { background: rgba(255,255,255,0.5); box-shadow: none; }
+  .cal-dot.now { background: #fff; box-shadow: 0 0 10px rgba(255,255,255,0.6); }
+  .map-evening { display: inline-flex; align-items: center; gap: 12px; margin: 0 0 28px; padding: 8px 16px; border-radius: 999px; background: rgba(16,11,28,0.55); box-shadow: inset 0 0 0 1px var(--panel-line); font-size: 14px; color: var(--paper); }
+  .lanterns { display: inline-flex; gap: 4px; }
+  .lantern .ico { width: 18px; height: 18px; color: rgba(255,255,255,0.3); }
+  .lantern.lit .ico { color: var(--lamp); filter: drop-shadow(0 0 6px rgba(242,200,120,0.7)); }
+  .map-tile { position: relative; }
+  .map-tile-sub { font-size: 12px; color: var(--paper-2); letter-spacing: 0.02em; margin-top: -4px; }
+  .map-new {
+    position: absolute; top: 10px; right: 10px; padding: 4px 10px; border-radius: 999px;
+    background: var(--lamp); color: #1b1626; font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase;
+    box-shadow: 0 0 16px rgba(242,200,120,0.6); animation: newPulse 2.4s ease-in-out infinite;
+  }
+  .map-tile.status-new { box-shadow: inset 0 0 0 1.5px rgba(242,200,120,0.7), 0 14px 40px rgba(10,6,20,0.25); }
+  .map-tile.status-quiet .map-tile-label, .map-tile.status-closed .map-tile-label { opacity: 0.55; }
+  .map-tile.status-quiet .map-tile-icon, .map-tile.status-closed .map-tile-icon { opacity: 0.45; }
+  .map-tile.status-puzzle .map-tile-sub { color: var(--lamp); }
+  @keyframes newPulse { 0%, 100% { box-shadow: 0 0 10px rgba(242,200,120,0.4); } 50% { box-shadow: 0 0 22px rgba(242,200,120,0.85); } }
+  @media (prefers-reduced-motion: reduce) { .map-new { animation: none; } }
+
+  .milestones { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+  .milestones li { display: flex; align-items: center; gap: 12px; font-size: 14px; color: var(--paper-3); }
+  .milestones li.reached { color: var(--paper); }
+  .milestone-hearts .heart { width: 11px; height: 10px; }
+  .milestone-hearts { min-width: 72px; display: inline-flex; }
+
+  .gift-card { width: min(46vw, 200px) !important; aspect-ratio: 595.28 / 841.9; }
+  .gift-card .q-face > * { width: 100%; height: 100%; }
+  .gift-overlay .moment { padding: 20px 0; }
+  .gift-overlay .tilt-stage { padding: 10px; }
+  .moment.flipped .gift-lines { display: none; }
+  .q-forfeit .q-pick.selected { box-shadow: 0 0 0 3px #f3a5a5, 0 16px 30px rgba(10,6,20,0.45); }
+
+  .offer-rarity { font-size: 11px !important; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--lamp) !important; margin: 0 0 10px !important; }
+
+  .shop-offers { flex-wrap: wrap; }
+  @media (min-width: 900px) { .shop-offers { gap: 28px; } .offer { width: 200px; } .offer .shop-mystery-card { width: 170px; } }
+
 </style>
 </head>
 <body>
@@ -2143,7 +2230,6 @@ let clientRoundIndex = 0;
 let relationships = {};
 let soulProfiles = {};   // per-client: { visits, answered: [ids], facts: [{q,a}], discovered: ["color:Black", ...] }
 let roundIsFirstMeeting = false;
-let pendingQuestion = null;
 let currentBrief = null; // one entry from CLIENTS[key].briefs — chosen fresh each round via BRIEF_VISIT_INDICES
 // Set while a one-off special styling job (Valery's Solstice job, either half
 // of the Guard Ceremony) is running. Reusing the same 4-slot styling UI and
@@ -2226,6 +2312,8 @@ let quartettSelectedOpponentId = null; // set when the player picks an opponent,
 
 // Octavia (Nightgarden — not yet built)
 let metOctavia = false;
+// One-off story moments that other content depends on (see STAGE_RULES flag).
+let storyFlags = {};
 let octaviaEncounterCount = 0;
 let octaviaAmbientSeen = [];
 let octaviaLastAmbientYearMonth = null;
@@ -2273,6 +2361,7 @@ let glassHouseCultivationLastWateredYearMonth = null;
 
 // Story items / found objects (not yet awarded by anything this pass)
 let thornVeilOwned = false;
+let friendshipCardsOwned = []; // ids of FRIENDSHIP_CARDS given (unique, protected)
 let hasSilverBell = false;
 let hasFadedPhotograph = false;
 
@@ -2419,7 +2508,7 @@ function updateSceneBackground() {
 
 // Shown small on the title screen, so it's easy to confirm which version
 // the browser actually loaded (GitHub Pages and browsers cache aggressively).
-const BUILD_ID = "2026-09-29 · locations 1";
+const BUILD_ID = "2026-09-30 · café and economy 1";
 const stage = document.getElementById("stage");
 
 /* ---------------- CONVERSATION PRESENTATION ----------------
@@ -2500,6 +2589,7 @@ function wiggleStudioSpeaker() {
 let stepAdvance = null;
 function stepDialogue(speeches) {
   stepAdvance = null;
+  speeches = speeches.filter((el) => !el.classList.contains("is-past") && !el.classList.contains("is-past-2"));
   // The Studio conversation already steps itself; one line needs no stepping.
   if (speeches.length < 2 || speeches[0].dataset.stepped || stage.querySelector(".talk-continue")) return;
   speeches[0].dataset.stepped = "1";
@@ -2634,7 +2724,6 @@ function heartsHTML(n) {
 
 function startRound() {
   outfit = [null, null, null, null];
-  pendingQuestion = null;
   jokerUsesRemaining = 1 + ownedJokerCount;
   redrawAvailable = true;
   selectedHandId = null;
@@ -2642,6 +2731,7 @@ function startRound() {
 
   const key = currentClientKey();
   const profile = soulProfiles[key];
+  ensureStudioHistory(key);
   roundIsFirstMeeting = profile.visits === 0;
   profile.visits += 1; // lifetime visits — drives CLIENT_STAGES, never reset at Year 1→2
   // yearVisits drives which of the 9 authored briefs shows this visit and IS
@@ -2651,15 +2741,32 @@ function startRound() {
   // first-meeting greeting.
   profile.yearVisits = (profile.yearVisits || 0) + 1;
   const visitNumberThisYear = profile.yearVisits - 1; // 0-indexed visit about to happen, within the year
-  soulStep = 0;
   dialogueLineIndex = 0;
-  const briefs = CLIENTS[key].briefs;
-  // See BRIEF_VISIT_INDICES: only 9 of a client's 12 authored jobs are ever
-  // played in one year, spaced across the arc and always ending on the
-  // player-choice trust job. Visits past the 9th (shouldn't normally happen
-  // in a 36-job year, but safe to fall back) just replay the trust job.
-  const briefIndex = BRIEF_VISIT_INDICES[Math.min(visitNumberThisYear, BRIEF_VISIT_INDICES.length - 1)];
-  currentBrief = briefs[briefIndex];
+  // A visit opens with a choice: "Talk" (if she has something new to say and
+  // likes you enough to say it) or "Get to work". The job's brief is fixed
+  // now; a talk stage is only used up if the player actually talks.
+  currentStageIndex = null;
+  talkedThisVisit = false;
+  talkStageIndex = chooseStageForVisit(key, "talk");
+  const askIdx = chooseStageForVisit(key, "ask");
+  if (askIdx !== null) profile.stagesSeen.push(askIdx);
+  const chosen = chooseBriefForVisit(key, askIdx);
+  currentBrief = chosen.brief;
+  currentBriefSilent = chosen.silent;
+  soulStep = "arrive";
+  specialTalkLines = null;
+  // Bible: after the armour sighting, Holly's next job opens with it.
+  if (key === 3 && storyFlags.armourSightingSeen && !storyFlags.armourHollySeen) {
+    storyFlags.armourHollySeen = true;
+    specialTalkLines = ARMOUR_HOLLY_LINES;
+    talkedThisVisit = true;
+    soulStep = 0;
+  }
+  // The first meeting isn't a choice: she introduces herself.
+  if (profile.visits === 1) {
+    if (talkStageIndex === 0) beginTalk(false);
+    else soulStep = 3;
+  }
 
   // Redraw from the FULL unlocked pool every round, not a depleting carryover
   // -- otherwise categories can get temporarily exhausted for several rounds
@@ -2894,7 +3001,10 @@ function checkCollectionSetBonuses() {
 function rebuildLiveDeckFromUnlocked() {
   const unlocked = DECK.filter((c) => unlockedCardIds.has(c.id));
   const activeKeys = KEY_CARDS.filter((k) => activeKeyIds.has(k.id));
-  const storyWearables = thornVeilOwned ? [THORN_VEIL] : [];
+  const storyWearables = [
+    ...(thornVeilOwned ? [THORN_VEIL] : []),
+    ...Object.values(FRIENDSHIP_CARDS).filter((c) => friendshipCardsOwned.includes(c.id)),
+  ];
   liveDeck = [...unlocked, ...storyWearables, ...activeKeys, ...JOKER_CARDS];
   checkCollectionSetBonuses();
 }
@@ -2967,6 +3077,7 @@ function resetSecondaryContentState() {
   quartettSelectedOpponentId = null;
 
   metOctavia = false;
+  storyFlags = {};
   octaviaEncounterCount = 0;
   octaviaAmbientSeen = [];
   octaviaLastAmbientYearMonth = null;
@@ -3009,6 +3120,7 @@ function resetSecondaryContentState() {
   glassHouseCultivationLastWateredYearMonth = null;
 
   thornVeilOwned = false;
+  friendshipCardsOwned = [];
   hasSilverBell = false;
   hasFadedPhotograph = false;
 
@@ -3110,6 +3222,7 @@ function serializeGameState() {
 
     // Octavia
     metOctavia,
+    storyFlags,
     octaviaEncounterCount,
     octaviaAmbientSeen,
     octaviaLastAmbientYearMonth,
@@ -3157,6 +3270,7 @@ function serializeGameState() {
 
     // Found Objects / story wearables
     thornVeilOwned,
+    friendshipCardsOwned,
     hasSilverBell,
     hasFadedPhotograph,
 
@@ -3227,6 +3341,7 @@ function loadGame() {
   collectedSets = new Set(data.collectedSets || []);
   activeKeyIds = new Set(data.activeKeyIds || []);
   thornVeilOwned = !!data.thornVeilOwned;
+  friendshipCardsOwned = Array.isArray(data.friendshipCardsOwned) ? data.friendshipCardsOwned : [];
   rebuildLiveDeckFromUnlocked();
   deckPile = data.deckPile || liveDeck.map((c) => c.id);
   discardPile = data.discardPile || [];
@@ -3283,6 +3398,7 @@ function loadGame() {
   quartettMatch = null; // mid-match state is never persisted across save/load
 
   metOctavia = !!data.metOctavia;
+  storyFlags = data.storyFlags || {};
   octaviaEncounterCount = data.octaviaEncounterCount || 0;
   octaviaAmbientSeen = data.octaviaAmbientSeen || [];
   octaviaLastAmbientYearMonth = data.octaviaLastAmbientYearMonth ?? null;
@@ -3393,8 +3509,7 @@ function visitCafe() {
     // Café already always had a harmless flavor-only fallback before Maya
     // existed -- reuse it here instead of a blocking message, so a quick
     // visit still feels like the café rather than a locked door.
-    const snippet = CAFE_SNIPPETS[Math.floor(Math.random() * CAFE_SNIPPETS.length)];
-    renderCafeScreen([{ who: "NARRATION", t: snippet }], "Leave", "renderMap()");
+    renderCafeScreen([{ who: "NARRATION", t: nextCafeSnippet() }], "Leave", "renderMap()");
     return;
   }
   storyBeatsRemaining -= 1;
@@ -3807,6 +3922,32 @@ function renderOldQuarterObservation(key) {
   updateTopBar("", true);
 }
 
+// What each map location has waiting, so the map can say so:
+//   "new"    -- a story moment is ready (not just ambient flavour)
+//   "quiet"  -- tonight's visits are used up; only flavour until the next job
+//   "closed" -- closed for the season
+// The event lists' ambient entries (monthly small talk, filler) don't count.
+function firstNewEvent(events) {
+  const e = events.find((ev) => { try { return ev.eligible(); } catch (err) { return false; } });
+  return !!e && !e.ambient;
+}
+function locationStatus(key) {
+  const tonight = storyBeatsRemaining > 0;
+  if (key === "cafe") return !tonight ? "quiet" : firstNewEvent(buildCafeEvents()) ? "new" : "";
+  if (key === "garden") {
+    if (!nightgardenOpen()) return "closed";
+    return !tonight ? "quiet" : firstNewEvent(buildGardenEvents()) ? "new" : "";
+  }
+  if (key === "castle") {
+    if (restrictedPhase.castle < 4) return "";
+    if (!castleGateCharactersUnlocked) return "new";
+    return !tonight ? "quiet" : firstNewEvent(buildCastleEvents()) ? "new" : "";
+  }
+  if (key === "oldquarter") return currentMannequinPuzzle() && !windowSolved[currentSeasonKey()] ? "puzzle" : "";
+  return "";
+}
+const LOCATION_STATUS_LABEL = { new: "New", quiet: "Quiet tonight", closed: "Closed for the season", puzzle: "The window is waiting" };
+
 function renderMap() {
   // The map is the one stable "hub" screen -- no mid-job transient state to
   // worry about here, so this is the single autosave checkpoint that covers
@@ -3825,19 +3966,41 @@ function renderMap() {
     { key: "oldquarter", label: "Old Quarter", icon: "lantern", locked: false, action: "visitOldQuarter()" },
   ];
 
-  const tilesHTML = tiles.map((t) => `
-    <button class="map-tile ${t.locked ? "locked" : ""}"
+  const client = CLIENTS[currentClientKey()];
+  const nextName = client ? client.name.split(",")[0] : "";
+  const tilesHTML = tiles.map((t) => {
+    const status = t.locked ? "" : locationStatus(t.key);
+    const sub = t.key === "studio" ? `Next: ${nextName}` : (LOCATION_STATUS_LABEL[status] || "");
+    return `
+    <button class="map-tile ${t.locked ? "locked" : ""} status-${status || "none"}"
          onclick="${t.locked ? `lockedTile('${t.key}')` : t.action}">
+      ${status === "new" ? `<span class="map-new" aria-label="New">New</span>` : ""}
       <span class="map-tile-icon">${icon(t.locked ? "lock" : t.icon)}</span>
       <span class="map-tile-label">${t.label}</span>
-    </button>
-  `).join("");
+      ${sub ? `<span class="map-tile-sub">${sub}</span>` : ""}
+    </button>`;
+  }).join("");
+
+  // Time: the season, which of this month's three clients is next, and how
+  // many visits are left tonight before the next client.
+  const jobInMonth = positionInMonth(); // 0..2
+  const monthDots = [0, 1, 2].map((i) => `<span class="cal-dot ${i < jobInMonth ? "done" : i === jobInMonth ? "now" : ""}"></span>`).join("");
+  const lanterns = Array.from({ length: STORY_BEATS_PER_JOB }, (_, i) =>
+    `<span class="lantern ${i < storyBeatsRemaining ? "lit" : ""}">${icon("lantern")}</span>`).join("");
+  const seasonName = { spring: "Spring", summer: "Summer", autumn: "Autumn", winter: "Winter" }[currentSeasonName()];
+  const eveningText = storyBeatsRemaining > 0
+    ? `${storyBeatsRemaining} visit${storyBeatsRemaining === 1 ? "" : "s"} left tonight`
+    : "The night is spent. Your next client is waiting.";
 
   stage.innerHTML = `
     <div class="map-fullscreen-bg"></div>
     <div class="map-screen">
       <h2 class="map-title">Aftercity</h2>
-      <p class="map-month">${monthName}</p>
+      <div class="map-time">
+        <span class="map-month">${monthName} · ${seasonName}${currentYear > 1 ? ` · Year ${currentYear}` : ""}</span>
+        <span class="cal-dots" title="Clients this month">${monthDots}</span>
+      </div>
+      <div class="map-evening"><span class="lanterns">${lanterns}</span><span>${eveningText}</span></div>
       <div class="map-grid">${tilesHTML}</div>
       <div class="map-message">${mapMessage}</div>
     </div>
@@ -3858,6 +4021,34 @@ function lockedTile(key) {
 
 const JOKER_PRICE = 10;
 
+// A monthly shelf of three pieces -- one Uncommon, one Rare, one Iconic or
+// Legendary -- priced by rarity, so mooncoins always have something to go on
+// and choosing what to buy is a real decision.
+const SHOP_PRICES = { Basic: 2, Uncommon: 4, Rare: 8, Iconic: 14, Legendary: 20 };
+const SHOP_SLOTS = [["Uncommon"], ["Rare"], ["Iconic", "Legendary"]];
+let shopStock = [];
+let shopStockMonth = null;
+function refreshShopStock() {
+  const ym = yearMonthKey();
+  if (shopStockMonth === ym) { shopStock = shopStock.filter((id) => !unlockedCardIds.has(id)); return; }
+  shopStockMonth = ym;
+  const owned = unlockedCardIds;
+  shopStock = SHOP_SLOTS.map((rarities) => {
+    const pool = DECK.filter((c) => rarities.includes(c.rarity) && !owned.has(c.id));
+    return pool.length ? weightedSample(pool, 1)[0].id : null;
+  }).filter((id) => id !== null);
+}
+function buyShopCard(id) {
+  const card = DECK.find((c) => c.id === id);
+  const price = SHOP_PRICES[card.rarity] || 8;
+  if (!card || moonCoins < price || unlockedCardIds.has(id)) return;
+  moonCoins -= price;
+  unlockedCardIds.add(id);
+  rebuildLiveDeckFromUnlocked();
+  shopStock = shopStock.filter((x) => x !== id);
+  renderCardAcquiredScreen("Sold.", card, "Back to the map", false);
+}
+
 function pickShopItem() {
   const ownedIds = new Set(unlockedCardIds);
   const pool = DECK.filter((c) => SHOP_RARITIES.includes(c.rarity) && !ownedIds.has(c.id));
@@ -3875,17 +4066,19 @@ function unusualKeyEligible() {
 const UNUSUAL_KEY_PRICE = 10;
 
 function renderShop() {
-  if (currentShopItem === undefined || currentShopItem === null) currentShopItem = pickShopItem();
-  const item = currentShopItem;
-
-  const stockHTML = item
-    ? `
-      <div class="shop-mystery-card">${gcardHTML(item)}</div>
-      <p>\u201CSomething rare tonight. ${MYSTERY_PRICE} mooncoins and it's yours.\u201D</p>
-      <button class="primary" ${moonCoins >= MYSTERY_PRICE ? "" : "disabled"} onclick="buyMysteryCard()">Buy for ${coins(MYSTERY_PRICE)}</button>
-      ${moonCoins < MYSTERY_PRICE ? `<p class="offer-note">Not enough mooncoins yet.</p>` : ""}
-    `
-    : `<p>\u201CNothing left that you don't already own. Come back another time.\u201D</p>`;
+  refreshShopStock();
+  const stockHTML = shopStock.length
+    ? shopStock.map((id) => {
+        const card = DECK.find((c) => c.id === id);
+        const price = SHOP_PRICES[card.rarity] || 8;
+        return `
+          <div class="offer">
+            <div class="shop-mystery-card">${gcardHTML(card)}</div>
+            <p class="offer-rarity">${card.rarity}</p>
+            <button class="primary" ${moonCoins >= price ? "" : "disabled"} onclick="buyShopCard(${id})">Buy for ${coins(price)}</button>
+          </div>`;
+      }).join("")
+    : `<div class="offer"><p>\u201CNothing left this month that you don't already own.\u201D</p></div>`;
 
   // The Unusual Key unlocks the Night Café Back Room — that lock isn't built
   // yet, so for now the key just sits in the deck once bought (as designed;
@@ -3904,9 +4097,9 @@ function renderShop() {
       <div class="portrait token">${icon("hat")}</div>
       <div class="soul-name">The Vendor</div>
       ${dialogueLineHTML({ who: "VENDOR", t: "\u201COh — a customer. How rare.\u201D" }, "The Vendor")}
-      <div class="purse">You have ${coins(moonCoins)} mooncoins</div>
+      <div class="purse">You have ${coins(moonCoins)} mooncoins · new stock every month</div>
       <div class="shop-offers">
-        <div class="offer">${stockHTML}</div>
+        ${stockHTML}
         ${unusualKeyHTML ? `<div class="offer">${unusualKeyHTML}</div>` : ""}
         <div class="offer">
           <div class="shop-mystery-card">${gcardHTML(JOKER_CARDS[0])}</div>
@@ -4038,9 +4231,54 @@ function afterMayaAtticHint() {
 // else the very first visit it's eligible) > Maya first meeting > cross-doc
 // reactions > Maya's one-time Attic hint > Maya ambient (monthly cap) >
 // existing generic Café flavor as the final fallback.
+// The next Night Café encounter with one of the Core Four (bible, verbatim),
+// at most one per month, taking turns so no one hogs the café.
+function nextCoreCafeEncounter() {
+  if (storyFlags.coreCafeMonth === yearMonthKey()) return null;
+  const seen = storyFlags.coreCafeSeen || {};
+  const start = currentMonthIndex() % 4;
+  for (let n = 0; n < 4; n++) {
+    const k = (start + n) % 4;
+    const list = CORE_CAFE_ENCOUNTERS[k] || [];
+    const idx = seen[k] || 0;
+    const enc = list[idx];
+    if (!enc) continue;
+    if (enc.hearts && (relationships[k] || 0) < enc.hearts) continue;
+    if (enc.season && !enc.season.includes(currentSeasonName())) continue;
+    if (enc.after && !enc.after.every((ref) => { const [ck, ci] = parseStageRef(ref, k); return stageWasSeen(ck, ci); })) continue;
+    return { key: k, idx, lines: enc.lines };
+  }
+  return null;
+}
+function playCoreCafeEncounter() {
+  const enc = nextCoreCafeEncounter();
+  if (!enc) { renderMap(); return; }
+  storyFlags.coreCafeSeen = storyFlags.coreCafeSeen || {};
+  storyFlags.coreCafeSeen[enc.key] = enc.idx + 1;
+  storyFlags.coreCafeMonth = yearMonthKey();
+  renderCafeScreen(enc.lines, "Leave", "renderMap()");
+}
+
 function buildCafeEvents() {
   const ym = yearMonthKey();
   return [
+    {
+      // Bible: the four of them at one table, late in the year (Dead Day).
+      eligible: () => !storyFlags.cafeDeadDaySeen && currentMonthIndex() === 11,
+      run: () => { storyFlags.cafeDeadDaySeen = true; renderCafeScreen(CAFE_DEAD_DAY_GROUP_LINES, "Leave", "renderMap()"); },
+    },
+    {
+      // Bible: Ivy and Holly, the week before the Summer Solstice.
+      eligible: () => !storyFlags.cafeSolsticeSeen && currentMonthIndex() === 5 && positionInMonth() < 2,
+      run: () => { storyFlags.cafeSolsticeSeen = true; renderCafeScreen(CAFE_SOLSTICE_GROUP_LINES, "Leave", "renderMap()"); },
+    },
+    { eligible: () => !!nextCoreCafeEncounter(), run: playCoreCafeEncounter },
+    {
+      // The bible's Garden Circle café scene (early spring), once you know
+      // both of them are in it.
+      eligible: () => !storyFlags.gardenCircleCafeSeen && ["spring"].includes(currentSeasonName()) && currentMonthIndex() <= 3 && stageWasSeen(0, 5) && stageWasSeen(1, 7),
+      run: () => { storyFlags.gardenCircleCafeSeen = true; renderCafeScreen(GARDEN_CIRCLE_CAFE_LINES, "Leave", "renderMap()"); },
+    },
     { eligible: () => hasUnusualKey && !cafeBackDoorDiscovered, run: renderCafeBackDoorReveal },
     {
       eligible: () => !metMaya && mayaEligible(),
@@ -4067,7 +4305,7 @@ function buildCafeEvents() {
       },
     },
     {
-      eligible: () => metMaya && mayaLastAmbientYearMonth !== ym,
+      ambient: true, eligible: () => metMaya && mayaLastAmbientYearMonth !== ym,
       run: () => {
         const unseen = MAYA_AMBIENT.map((_, i) => i).filter((i) => !mayaAmbientSeen.includes(i));
         const pool = unseen.length > 0 ? unseen : MAYA_AMBIENT.map((_, i) => i);
@@ -4079,13 +4317,20 @@ function buildCafeEvents() {
       },
     },
     {
-      eligible: () => true,
+      ambient: true, eligible: () => true,
       run: () => {
-        const snippet = CAFE_SNIPPETS[Math.floor(Math.random() * CAFE_SNIPPETS.length)];
+        const snippet = nextCafeSnippet();
         renderCafeScreen([{ who: "NARRATION", t: snippet }], "Leave", "renderMap()");
       },
     },
   ];
+}
+
+// Draws café flavour lines without repeats until every one has been seen.
+let cafeSnippetBag = [];
+function nextCafeSnippet() {
+  if (cafeSnippetBag.length === 0) cafeSnippetBag = shuffle(CAFE_SNIPPETS.map((_, i) => i));
+  return CAFE_SNIPPETS[cafeSnippetBag.pop()];
 }
 
 function renderCafe() {
@@ -4310,7 +4555,10 @@ function afterAtticCoat() { cafeAtticStaffCoatSeen = true; renderMap(); }
    global DECK (see QUARTETT_OPPONENTS), not from the player's collection.
    =========================================================================== */
 
-const QUARTETT_MAX_SESSIONS_PER_MONTH = 5;
+// Two matches per season (was five per month, which made Quartett the main
+// source of new cards and undercut every other way of earning them).
+const QUARTETT_MAX_SESSIONS_PER_SEASON = 2;
+const QUARTETT_MAX_SESSIONS_PER_MONTH = QUARTETT_MAX_SESSIONS_PER_SEASON; // legacy name
 const QUARTETT_HAND_SIZE = 6;
 const QUARTETT_ROUNDS = 5;
 const QUARTETT_WIN_TARGET = 3;
@@ -4337,7 +4585,7 @@ function quartettPickLine(arr) { return arr[Math.floor(Math.random() * arr.lengt
 // -- Session cap -------------------------------------------------------------
 
 function quartettRefreshSessionWindow() {
-  const ym = yearMonthKey();
+  const ym = currentSeasonKey(); // the window is a season now
   if (quartettSessionsUsedYearMonth !== ym) {
     quartettSessionsUsedYearMonth = ym;
     quartettSessionsUsedCount = 0;
@@ -4585,6 +4833,7 @@ function quartettConfirmHand() {
   const calls = quartettGenerateCalls(playerHandCards, opponentHandCards);
 
   quartettMatch = {
+    mode: quartettMode,
     opponentId: quartettSelectedOpponentId,
     opponentName: opponent.name,
     matchMode: "casual",
@@ -4629,6 +4878,9 @@ function quartettPipsHTML(wins, fresh) {
 
 function quartettBackHTML() { return `<div class="q-back"><div class="back-card-face"></div></div>`; }
 
+let quartettMode = "friendly"; // "friendly" | "stakes"
+function setQuartettMode(mode) { quartettMode = mode; renderQuartettEntry(); }
+
 function renderQuartettEntry() {
   quartettClearTimer();
   quartettRefreshSessionWindow();
@@ -4637,7 +4889,7 @@ function renderQuartettEntry() {
   const canPlay = remaining > 0 && eligible.length >= QUARTETT_HAND_SIZE;
   const statusLine = eligible.length < QUARTETT_HAND_SIZE
     ? "You don't have enough cards in your collection yet."
-    : `${remaining} of ${QUARTETT_MAX_SESSIONS_PER_MONTH} hands left this month.`;
+    : `${remaining} of ${QUARTETT_MAX_SESSIONS_PER_SEASON} matches left this season.`;
 
   const opponentTilesHTML = Object.keys(QUARTETT_OPPONENTS).map((id, i) => {
     const opp = QUARTETT_OPPONENTS[id];
@@ -4653,7 +4905,15 @@ function renderQuartettEntry() {
       <div class="soul-name">Quartett</div>
       <p class="q-entry-sub">${statusLine}</p>
       ${!canPlay && remaining <= 0 ? sceneHTML(QUARTETT_LOCKED_LINE, null) : ""}
-      ${canPlay ? `<p class="q-entry-ask">Who's at the table tonight?</p><div class="q-opponents">${opponentTilesHTML}</div>` : ""}
+      ${canPlay ? `
+        <div class="segmented q-modes" role="tablist">
+          <button role="tab" class="${quartettMode === "friendly" ? "active" : ""}" onclick="setQuartettMode('friendly')">Friendly</button>
+          <button role="tab" class="${quartettMode === "stakes" ? "active" : ""}" onclick="setQuartettMode('stakes')">High stakes</button>
+        </div>
+        <p class="q-mode-note ${quartettMode}">${quartettMode === "stakes"
+          ? `${icon("sparkle")} Win and the prize is Rare or better. <b>Lose and you destroy one of the cards you brought, for good.</b>`
+          : "Win and she gives you a card. Lose and nothing happens."}</p>
+        <p class="q-entry-ask">Who's at the table tonight?</p><div class="q-opponents">${opponentTilesHTML}</div>` : ""}
       <button class="ghost" onclick="renderCafe()">Leave</button>
     </div>
   `;
@@ -4683,6 +4943,7 @@ function renderQuartettPickScreen() {
       <div class="q-pick-grid">${tilesHTML}</div>
     </div>
     <div class="q-pick-bar">
+      ${quartettMode === "stakes" ? `<span class="q-stakes-tag">High stakes</span>` : ""}
       <button class="ghost" onclick="quartettDraftSelection = []; renderCafe();">Leave</button>
       <div class="q-pick-count"><b>${count}</b> of ${QUARTETT_HAND_SIZE}</div>
       <button class="primary" ${count === QUARTETT_HAND_SIZE ? "" : "disabled"} onclick="quartettConfirmHand()">To the table</button>
@@ -4911,7 +5172,10 @@ function renderQuartettResult() {
   else if (match.status === "opponentWin") { title = `${opp.name} wins`; lines = quartettPickLine(opp.lines.matchPlayerLoss); }
   else { title = "A draw"; lines = quartettPickLine(opp.lines.matchDraw); }
 
-  const nextButtons = match.rewardCard
+  const mustDestroy = match.mode === "stakes" && match.status === "opponentWin" && !match.destroyedCardId;
+  const nextButtons = mustDestroy
+    ? `<button class="primary" onclick="renderQuartettForfeit()">Choose the card you lose</button>`
+    : match.rewardCard
     ? `<button class="primary" onclick="renderQuartettReward()">Turn over your prize</button>`
     : `${match.status === "playerWin" ? `<p class="q-entry-sub">She has nothing left you don't already own.</p>` : ""}
        ${remaining > 0 ? `<button class="primary" onclick="startQuartettMatch('${match.opponentId}')">Play again</button>` : ""}
@@ -4929,7 +5193,7 @@ function renderQuartettResult() {
       </div>
       <div class="q-result-talk">${sceneHTML(lines, null)}</div>
       <div class="q-result-actions">${nextButtons}</div>
-      <p class="q-hands-left">${remaining} of ${QUARTETT_MAX_SESSIONS_PER_MONTH} hands left this month.</p>
+      <p class="q-hands-left">${remaining} of ${QUARTETT_MAX_SESSIONS_PER_SEASON} matches left this season.</p>
     </div>
   `;
   updateTopBar("", true);
@@ -4970,6 +5234,54 @@ function renderQuartettReward() {
   `;
   updateTopBar("", true);
   initCardTilt(document.getElementById("tiltStage"), document.getElementById("tiltCard"));
+}
+
+// High stakes, lost: pick one of the cards you brought to destroy for good.
+let quartettForfeitChoice = null;
+function renderQuartettForfeit() {
+  const match = quartettMatch;
+  const opp = QUARTETT_OPPONENTS[match.opponentId];
+  const cards = match.playerHand.map(quartettFindCard);
+  stage.innerHTML = `
+    <div class="center-col screen-pad q-forfeit">
+      <div class="moment-badge">High stakes · ${opp.name}</div>
+      <div class="soul-name">The price</div>
+      <p class="q-entry-sub">Choose one of the cards you brought. It will be destroyed and gone from your collection for good.</p>
+      <div class="q-forfeit-row">
+        ${cards.map((c) => `
+          <button class="q-pick ${quartettForfeitChoice === c.id ? "selected" : ""}" onclick="quartettForfeitChoice = ${c.id}; renderQuartettForfeit();">${gcardHTML(c)}</button>`).join("")}
+      </div>
+      <button class="primary q-burn-btn" ${quartettForfeitChoice ? "" : "disabled"} onclick="quartettConfirmForfeit()">${quartettForfeitChoice ? `Destroy ${quartettFindCard(quartettForfeitChoice).name}` : "Choose a card"}</button>
+    </div>
+  `;
+  updateTopBar("", true);
+}
+function quartettConfirmForfeit() {
+  const match = quartettMatch;
+  const id = quartettForfeitChoice;
+  if (!match || !id) return;
+  const btn = document.querySelector(`.q-forfeit .q-pick.selected`);
+  if (btn) btn.classList.add("burning");
+  document.querySelectorAll(".q-forfeit button").forEach((b) => { b.disabled = true; });
+  setTimeout(() => {
+    unlockedCardIds.delete(id);
+    rebuildLiveDeckFromUnlocked();
+    match.destroyedCardId = id;
+    quartettForfeitChoice = null;
+    saveGame();
+    const card = quartettFindCard(id);
+    stage.innerHTML = `
+      <div class="center-col screen-pad q-forfeit">
+        <div class="soul-name">Gone</div>
+        <p class="q-entry-sub">${card.name} is no longer in your collection.</p>
+        <div class="q-result-actions">
+          ${quartettSessionsRemaining() > 0 ? `<button class="primary" onclick="startQuartettMatch('${match.opponentId}')">Play again</button>` : ""}
+          <button class="ghost" onclick="quartettReturnToCafe()">Back to the café</button>
+        </div>
+      </div>
+    `;
+    updateTopBar("", true);
+  }, 1400);
 }
 
 function quartettFlipReward() {
@@ -5033,8 +5345,11 @@ function quartettFinishMatch() {
   match.rewardCard = null;
   if (match.status === "playerWin") {
     const unowned = DECK.filter((c) => !unlockedCardIds.has(c.id));
-    if (unowned.length > 0) {
-      const awarded = unowned[Math.floor(Math.random() * unowned.length)];
+    const tier = match.mode === "stakes" ? ["Rare", "Iconic", "Legendary"] : ["Basic", "Uncommon", "Rare"];
+    const pool = unowned.filter((c) => tier.includes(c.rarity));
+    const from = pool.length > 0 ? pool : unowned;
+    if (from.length > 0) {
+      const awarded = from[Math.floor(Math.random() * from.length)];
       unlockedCardIds.add(awarded.id);
       rebuildLiveDeckFromUnlocked();
       match.rewardCard = awarded;
@@ -5195,6 +5510,16 @@ function afterOctaviaFirst() { metOctavia = true; octaviaEncounterCount = 1; ren
 
 function buildGardenEvents() {
   return [
+    {
+      // DRAFT scene: the Garden Circle walking in at midnight (before Margo's stage 10).
+      eligible: () => !storyFlags.gardenWalkSeen && stageWasSeen(0, 5) && stageWasSeen(1, 8),
+      run: () => { storyFlags.gardenWalkSeen = true; renderGardenScene(GARDEN_WALK_LINES, "Leave", "renderMap()"); },
+    },
+    {
+      // DRAFT scene: the ritual itself, for high friendship with Margo (before her stage 18).
+      eligible: () => !storyFlags.gardenRitualSeen && storyFlags.gardenWalkSeen && stageWasSeen(0, 16) && (relationships[0] || 0) >= 3,
+      run: () => { storyFlags.gardenRitualSeen = true; renderGardenScene(GARDEN_RITUAL_LINES, "Leave", "renderMap()"); },
+    },
     { eligible: () => !metOctavia, run: () => renderGardenScene(OCT_FIRST_SCENE, "Leave", "afterOctaviaFirst()") },
     { eligible: octaviaSacrificeEligible, run: () => renderGardenScene(OCT_SACRIFICE_INTRO_LINES, "Continue", "renderOctaviaSacrificePicker()") },
     {
@@ -5206,7 +5531,7 @@ function buildGardenEvents() {
       },
     },
     {
-      eligible: () => true,
+      ambient: true, eligible: () => true,
       run: () => {
         const unseen = OCTAVIA_AMBIENT.map((_, i) => i).filter((i) => !octaviaAmbientSeen.includes(i));
         const pool = unseen.length > 0 ? unseen : OCTAVIA_AMBIENT.map((_, i) => i);
@@ -5908,7 +6233,7 @@ function buildCastleEvents() {
       run: () => renderCastleScene([{ who: "NARRATION", t: "The two guards, same as always." }], "Is Juliette okay?", "askHelenaAboutJuliette(2)"),
     },
     {
-      eligible: () => helenaLastAmbientYearMonth !== ym,
+      ambient: true, eligible: () => helenaLastAmbientYearMonth !== ym,
       run: () => {
         const unseen = HELENA_AMBIENT.map((_, i) => i).filter((i) => !helenaAmbientSeen.includes(i));
         const pool = unseen.length > 0 ? unseen : HELENA_AMBIENT.map((_, i) => i);
@@ -5919,7 +6244,7 @@ function buildCastleEvents() {
       },
     },
     {
-      eligible: () => julietteLastAmbientYearMonth !== ym,
+      ambient: true, eligible: () => julietteLastAmbientYearMonth !== ym,
       run: () => {
         const unseen = JULIETTE_AMBIENT.map((_, i) => i).filter((i) => !julietteAmbientSeen.includes(i));
         const pool = unseen.length > 0 ? unseen : JULIETTE_AMBIENT.map((_, i) => i);
@@ -5930,7 +6255,7 @@ function buildCastleEvents() {
       },
     },
     {
-      eligible: () => metValery,
+      ambient: true, eligible: () => metValery,
       run: () => {
         const unseen = VALERY_AMBIENT.map((_, i) => i).filter((i) => !valeryAmbientSeen.includes(i));
         const pool = unseen.length > 0 ? unseen : VALERY_AMBIENT.map((_, i) => i);
@@ -5940,7 +6265,7 @@ function buildCastleEvents() {
       },
     },
     {
-      eligible: () => true,
+      ambient: true, eligible: () => true,
       run: () => renderCastleScene(
         [{ who: "NARRATION", t: "The two guards stand exactly where they always do." }],
         "Leave",
@@ -6196,7 +6521,7 @@ function buildRoyalGardenEvents() {
       eligible: () => valeryRoyalGardenWelcomeSeen && valeryMicroRequestSeason !== `${currentYear}-${currentSeasonName()}`,
       run: renderValeryMicroRequestIntro,
     },
-    { eligible: () => true, run: royalGardenAmbientVisit },
+    { ambient: true, eligible: () => true, run: royalGardenAmbientVisit },
   ];
 }
 
@@ -6320,10 +6645,7 @@ function updateTopBar(leftHTML, showInfo) {
   }
 }
 
-function unansweredQuestions(key) {
-  const profile = soulProfiles[key];
-  return (QUESTIONS[key] || []).filter((q) => !profile.answered.includes(q.id));
-}
+
 
 // The active brief's hard requirements as pill tags — "Your call" for a
 // player-choice (trust) job, which has no want array at all.
@@ -6474,44 +6796,53 @@ function renderSoul() {
   const stageSet = CLIENT_STAGES[key];
 
   let body;
-  if (stageSet && soulStep === 0) {
-    // A real, numbered exchange from the bible — one new stage per visit,
-    // stepped through one line at a time. The two lines before the current
-    // one stay visible (fading) so it reads as a conversation, not a ticker.
-    const profile = soulProfiles[key];
-    const stageIndex = Math.min(profile.visits - 1, stageSet.length - 1);
-    const stage = stageSet[stageIndex] || FALLBACK_STAGE;
+  if (soulStep === "arrive") {
+    const hearts = relationships[key] || 0;
+    const needed = talkStageIndex !== null ? heartsNeededForTalk(talkStageIndex) : null;
+    const canTalk = needed !== null && hearts >= needed;
+    const talkHTML = needed === null
+      ? `<p class="arrive-note">Nothing new to talk about today.</p>`
+      : canTalk
+        ? `<button class="primary" onclick="beginTalk()">Talk</button><p class="arrive-note">She has something on her mind.</p>`
+        : `<button class="primary" disabled>Talk</button><p class="arrive-note">She isn't ready to open up yet. ${heartsHTML(needed)}</p>`;
+    body = `
+      <div class="speech narration-line">${firstName} is waiting in the Studio.</div>
+      <div class="arrive-actions">
+        ${talkHTML}
+        <button class="${canTalk ? "ghost" : "primary"}" onclick="goToWork()">Get to work</button>
+      </div>
+    `;
+  } else if (stageSet && soulStep === 0 && currentStageLines()) {
+    // A real, numbered exchange from the bible, stepped through one line at
+    // a time. The two lines before the current one stay visible (fading) so
+    // it reads as a conversation, not a ticker.
+    const stage = currentStageLines();
     const from = Math.max(0, dialogueLineIndex - 2);
     const shown = stage.slice(from, dialogueLineIndex + 1).map((line, i, arr) => {
       const age = arr.length - 1 - i;
       return dialogueLineHTML(line, firstName, "primary", age === 1 ? "is-past" : age === 2 ? "is-past-2" : "");
     }).join("");
+    const lastLine = dialogueLineIndex >= stage.length - 1;
     body = `
       ${shown}
-      <button class="primary talk-continue" onclick="advanceDialogueLine()" aria-label="Continue">…</button>
-    `;
-  } else if (soulStep === 0) {
-    body = `${dialogueLineHTML({ who: "CLIENT", t: client.greeting }, firstName)}<button class="primary talk-continue" onclick="advanceSoul()" aria-label="Continue">…</button>`;
-  } else if (soulStep === 1) {
-    const available = unansweredQuestions(key);
-    const chips = available.map((q) => `<button class="ghost question-chip" onclick="askQuestion('${q.id}')">${q.prompt}</button>`).join("");
-    body = `
-      ${dialogueLineHTML({ who: "CLIENT", t: "\u201CAnything you'd like to ask before we start?\u201D" }, firstName)}
-      <div class="question-list">${chips}</div>
-      <button class="primary" onclick="skipQuestion()">Let's just get started</button>
-    `;
-  } else if (soulStep === 2) {
-    body = `
-      ${dialogueLineHTML({ who: "YOU", t: pendingQuestion.prompt }, firstName, "primary", "is-past")}
-      ${dialogueLineHTML({ who: "CLIENT", t: pendingQuestion.answer }, firstName)}
-      <button class="primary" onclick="proceedToBrief()">Continue</button>
+      ${lastLine
+        ? `<button class="primary" onclick="goToWork()">Get to work</button>`
+        : `<button class="primary talk-continue" onclick="advanceDialogueLine()" aria-label="Continue">…</button>`}
     `;
   } else {
-    const briefBody = briefDialogueHTML(currentBrief, firstName);
+    const stageLines = currentStageLines();
+    let talk;
+    if (currentBriefSilent) {
+      // A job she's asked for before: no repeated conversation.
+      talk = "";
+    } else {
+      const lines = currentBrief.dialogue.filter((l) => !(talkedThisVisit && l.skipAfterStage));
+      talk = lines.map((line) => dialogueLineHTML(line, firstName)).join("");
+    }
     const softDirectionHTML = currentBrief.softDirection
       ? `<div class="soft-direction">${currentBrief.softDirection}</div>`
       : "";
-    body = `${briefBody}<div class="want-tags">${wantTags}</div>${softDirectionHTML}<button class="primary" onclick="renderStyle()">Start styling</button>`;
+    body = `${talk}<div class="job-label">Today's job</div><div class="want-tags">${wantTags}</div>${softDirectionHTML}<button class="primary" onclick="renderStyle()">Start styling</button>`;
   }
 
   const portrait = client.portrait
@@ -6532,40 +6863,128 @@ function renderSoul() {
   updateTopBar("", true);
 }
 
-function advanceDialogueLine() {
+/* ---------------- STUDIO VISIT SCHEDULING ----------------
+   See STAGE_RULES / STAGE_ASKS in data-story.js. A visit = at most one stage
+   conversation + today's job. profile.stagesSeen (play order) and
+   profile.briefsHeard replace the old "stage = visit number" and "brief =
+   9-slot yearly schedule", which put stages out of season and made Year 2
+   replay Year 1's briefs word for word. */
+let currentStageIndex = null;   // 0-based stage playing this visit, or null
+let currentBriefSilent = false; // true: no separate brief conversation this visit
+
+function ensureStudioHistory(key) {
+  const p = soulProfiles[key];
+  const stages = CLIENT_STAGES[key] || [];
+  if (!Array.isArray(p.stagesSeen)) {
+    // Saves from before scheduling: every visit so far played the next stage.
+    p.stagesSeen = Array.from({ length: Math.min(p.visits || 0, stages.length) }, (_, i) => i);
+  }
+  if (!Array.isArray(p.briefsHeard)) {
+    // Year 1 used 9 fixed slots; Year 2 replayed the same 9.
+    const n = currentYear >= 2 ? BRIEF_VISIT_INDICES.length : Math.min(p.yearVisits || 0, BRIEF_VISIT_INDICES.length);
+    p.briefsHeard = BRIEF_VISIT_INDICES.slice(0, n);
+  }
+}
+
+// "J8" -> [1, 7]; 6 -> [key, 5]
+function parseStageRef(ref, key) {
+  if (typeof ref === "number") return [key, ref - 1];
+  const who = { M: 0, J: 1, I: 2, H: 3 }[ref.charAt(0)];
+  return [who, parseInt(ref.slice(1), 10) - 1];
+}
+function stageWasSeen(clientKey, idx) {
+  const p = soulProfiles[clientKey];
+  return !!p && Array.isArray(p.stagesSeen) && p.stagesSeen.includes(idx);
+}
+function stageReady(key, idx, visitIdx) {
+  const rule = ((STAGE_RULES[key] || {})[idx + 1]) || {};
+  if (rule.trigger) return false;
+  if (visitIdx < idx - 3) return false;
+  if (rule.season && !rule.season.includes(currentSeasonName())) return false;
+  if (rule.flag && !storyFlags[rule.flag]) return false;
+  return (rule.after || []).every((ref) => { const [k, i] = parseStageRef(ref, key); return stageWasSeen(k, i); });
+}
+// kind "ask": a stage in which she says what to wear (it becomes the job's
+// brief). kind "talk": any other stage (offered through "Talk").
+function isAskStage(key, idx) { return !!(STAGE_ASKS[key] && STAGE_ASKS[key][idx + 1]); }
+function chooseStageForVisit(key, kind) {
+  const p = soulProfiles[key];
+  const stages = CLIENT_STAGES[key] || [];
+  const visitIdx = p.visits - 1;
+  for (let i = 0; i < stages.length; i++) {
+    if (p.stagesSeen.includes(i) || isAskStage(key, i) !== (kind === "ask")) continue;
+    if (kind === "ask" && visitIdx < i - 1) continue; // an ask plays close to its own number
+    if (stageReady(key, i, visitIdx)) return i;
+  }
+  return null;
+}
+function heartsNeededForTalk(idx) {
+  const n = idx + 1;
+  const tier = TALK_HEARTS.find((t) => n <= t.upTo) || TALK_HEARTS[TALK_HEARTS.length - 1];
+  return tier.hearts;
+}
+
+function chooseBriefForVisit(key, stageIdx) {
+  const p = soulProfiles[key];
+  const ask = stageIdx !== null && STAGE_ASKS[key] ? STAGE_ASKS[key][stageIdx + 1] : null;
+  if (ask) {
+    if (ask.usesBrief !== undefined && !p.briefsHeard.includes(ask.usesBrief)) p.briefsHeard.push(ask.usesBrief);
+    return { brief: { dialogue: CLIENT_STAGES[key][stageIdx], want: ask.want, softDirection: ask.softDirection, fromStage: true }, silent: false };
+  }
+  const briefs = CLIENTS[key].briefs;
+  // Order: her authored briefs, then her trust job (player choice), then the
+  // Year Two briefs. Ids: authored = index, Year Two = "y2-n". A seasonal
+  // Year Two brief jumps the queue while its season is on, so the Solstice
+  // and Dead Day jobs actually land in winter.
+  const order = [
+    ...briefs.map((b, i) => i).filter((i) => !briefs[i].playerChoice).map((i) => ({ id: i, brief: briefs[i] })),
+    ...briefs.map((b, i) => i).filter((i) => briefs[i].playerChoice).map((i) => ({ id: i, brief: briefs[i] })),
+    ...(currentYear >= 2 ? (YEAR_TWO_BRIEFS[key] || []).map((b, n) => ({ id: `y2-${n}`, brief: b })) : []),
+  ];
+  const season = currentSeasonName();
+  const month = currentMonthIndex();
+  const timed = (b) => !!(b.season || b.months);
+  const inTime = (b) => (!b.season || b.season.includes(season)) && (!b.months || b.months.includes(month));
+  const unheard = order.filter((o) => !p.briefsHeard.includes(o.id));
+  const next = unheard.find((o) => timed(o.brief) && inTime(o.brief)) || unheard.find((o) => !timed(o.brief));
+  if (next) { p.briefsHeard.push(next.id); return { brief: next.brief, silent: false }; }
+  // Every authored brief has been heard: reuse one's requirements without
+  // replaying its conversation (the trust job isn't repeated).
+  const pool = briefs.map((b, i) => i).filter((i) => !briefs[i].playerChoice);
+  const pick = briefs[pool[(p.visits || 0) % pool.length]];
+  return { brief: { dialogue: [], want: pick.want, softDirection: pick.softDirection, suppressPreference: pick.suppressPreference }, silent: true };
+}
+
+let talkStageIndex = null;
+let talkedThisVisit = false;
+function beginTalk(render = true) {
   const key = currentClientKey();
-  const stageSet = CLIENT_STAGES[key];
-  const profile = soulProfiles[key];
-  const stageIndex = Math.min(profile.visits - 1, stageSet.length - 1);
-  const stage = stageSet[stageIndex] || FALLBACK_STAGE;
+  if (talkStageIndex === null) return;
+  soulProfiles[key].stagesSeen.push(talkStageIndex);
+  currentStageIndex = talkStageIndex;
+  talkStageIndex = null;
+  talkedThisVisit = true;
+  dialogueLineIndex = 0;
+  soulStep = 0;
+  if (render) renderSoul();
+}
+function goToWork() { soulStep = 3; renderSoul(); }
+
+let specialTalkLines = null;
+function currentStageLines() {
+  if (specialTalkLines) return specialTalkLines;
+  const stages = CLIENT_STAGES[currentClientKey()] || [];
+  return currentStageIndex !== null ? stages[currentStageIndex] || null : null;
+}
+
+function advanceDialogueLine() {
+  const stage = currentStageLines() || [];
   dialogueLineIndex += 1;
   if (dialogueLineIndex >= stage.length) {
     soulStep = 3; // dialogue finished — move on to the brief
   }
   renderSoul();
 }
-
-function advanceSoul() {
-  const key = currentClientKey();
-  const available = unansweredQuestions(key);
-  soulStep = (!roundIsFirstMeeting && available.length > 0) ? 1 : 3;
-  renderSoul();
-}
-
-function skipQuestion() { soulStep = 3; renderSoul(); }
-
-function askQuestion(qid) {
-  const key = currentClientKey();
-  const q = QUESTIONS[key].find((q) => q.id === qid);
-  const profile = soulProfiles[key];
-  profile.answered.push(qid);
-  profile.facts.push({ q: q.prompt, a: q.answer });
-  pendingQuestion = q;
-  soulStep = 2;
-  renderSoul();
-}
-
-function proceedToBrief() { soulStep = 3; renderSoul(); }
 
 function cardArtHTML(card) {
   const art = CARD_ART[card.id] || PLACEHOLDER_ART;
@@ -7135,6 +7554,26 @@ function metSouls() {
   return list;
 }
 
+// What hearts open up with her -- so the player can see what they're
+// working toward.
+function friendshipMilestonesHTML(i) {
+  const h = relationships[i] || 0;
+  const gift = FRIENDSHIP_CARDS[i];
+  const items = [
+    { at: 1.5, text: "She talks about her life" },
+    { at: 2.5, text: "She shares what she remembers" },
+    ...(i === 0 ? [{ at: 3, text: "Something in the Nightgarden" }] : []),
+    { at: 3.5, text: "She trusts you with secrets" },
+    { at: FRIENDSHIP_GIFT_HEARTS, text: gift && friendshipCardsOwned.includes(gift.id) ? `Her gift: ${gift.name}` : "A gift, one of a kind" },
+    { at: 4.5, text: "The last conversation" },
+  ];
+  return `<ul class="milestones">${items.map((m) => `
+    <li class="${h >= m.at ? "reached" : ""}">
+      <span class="milestone-hearts">${heartsHTML(m.at)}</span>
+      <span>${h >= m.at ? m.text : m.text}</span>
+    </li>`).join("")}</ul>`;
+}
+
 function renderSoulsListHTML() {
   const souls = metSouls();
   const current = souls.find((x) => x.key === selectedSoul) || souls[0];
@@ -7164,7 +7603,10 @@ function renderSoulsListHTML() {
     // from the older question flow. Derived from her visit count, so it also
     // fills in for saves made before this panel existed.
     const stages = CLIENT_STAGES[i] || [];
-    const heard = stages.slice(0, Math.min(profile.visits || 0, stages.length));
+    const seenOrder = Array.isArray(profile.stagesSeen)
+      ? profile.stagesSeen
+      : Array.from({ length: Math.min(profile.visits || 0, stages.length) }, (_, n) => n);
+    const heard = seenOrder.map((n) => stages[n]).filter(Boolean);
     const convoHTML = heard.map((lines, n) => {
       const opener = lines.find((l) => l.who !== "NARRATION") || lines[0];
       const body = lines.map((l) => l.who === "NARRATION"
@@ -7185,6 +7627,7 @@ function renderSoulsListHTML() {
         <div class="hearts">${heartsHTML(relationships[i] || 0)}</div>
       </div>
       <section class="panel"><h4>Preferences</h4>${prefsHTML}</section>
+      <section class="panel"><h4>Friendship</h4>${friendshipMilestonesHTML(i)}</section>
       <section class="panel">
         <h4>Best outfit so far${profile.bestScore !== null && profile.bestScore !== undefined ? `<span class="panel-aside">${profile.bestScore} points</span>` : ""}</h4>
         ${bestHTML}
@@ -7549,7 +7992,12 @@ function preferenceMatchWeight(rule, pieces) {
 }
 
 function preferenceLabel(rule) {
-  return rule.type === "name" ? rule.keyword : `${rule.value} ${rule.attr}`;
+  if (rule.type === "name") return rule.keyword;
+  const v = rule.value.toLowerCase();
+  if (rule.attr === "color") return v;              // "black"
+  if (rule.attr === "style") return `${v} styles`;  // "elegant styles"
+  if (rule.attr === "fit") return `${v} cuts`;      // "fitted cuts"
+  return v;
 }
 
 // A stable id for a preference, used to track what's been discovered per
@@ -7677,6 +8125,9 @@ function finishStyling() {
       setBonusName = completed[1];
       setBonusId = completed[0];
       setPiecesUsed = pieces.filter((p) => p.set === completed[0]);
+      if (discoveredSets.has(completed[0])) {
+        scoreWithGaps += SET_REPEAT_BONUS; // a known set still pays off, just less than discovering it
+      }
       if (!discoveredSets.has(completed[0])) {
         discoveredSets.add(completed[0]);
         setNewlyDiscovered = true;
@@ -7695,17 +8146,19 @@ function finishStyling() {
   if (scoreWithGaps >= 70) delightedCount += 1;
 
   let moonCoinsEarned = 0;
-  if (scoreWithGaps >= 70) { moonCoins += 1; moonCoinsEarned = 1; } // a genuinely good outfit, not just a perfect one
+  // Mooncoins: 2 for an outfit she loves, 3 for a perfect one (was a flat 1,
+  // which left the shop out of reach for most of the year).
+  if (scoreWithGaps >= 70) { moonCoinsEarned = scoreWithGaps >= 100 ? 3 : 2; moonCoins += moonCoinsEarned; }
 
+  // Hearts gate the Studio conversations and the friendship gift, so they
+  // grow steadily: half a heart for an outfit she loves, nothing otherwise.
   let relDelta = scoreWithGaps >= 70 ? 0.5 : 0;
-  if (matchedPreferences.length > 0) relDelta += 0.5;
-  if (setBonusName) relDelta += 0.5;
 
   // A single job — however perfect — is one relationship-building moment,
   // not three. Capped at a full heart per visit; the relationship itself
   // caps at 5 hearts total, since this is meant to be a year-long arc, not
   // something maxed out after a handful of good outfits.
-  relDelta = Math.min(relDelta, 1);
+  relDelta = Math.min(relDelta, 0.5);
   relationships[key] = Math.min(5, (relationships[key] || 0) + relDelta);
 
   // Track this client's best-ever outfit, cards and all, for her profile.
@@ -7735,15 +8188,77 @@ function finishStyling() {
     comboNewlyDiscovered, setNewlyDiscovered, setBonusCard, setBonusId, setPiecesUsed, bestPiece,
   };
 
+  // Bible: the first time Holly is dressed in armour, she reacts (stage 17).
+  resultStageLines = null;
+  if (key === 3 && pieces.some((pc) => pc.style === "Armour" || pc.style2 === "Armour")) {
+    ensureStudioHistory(3);
+    if (!soulProfiles[3].stagesSeen.includes(16) && CLIENT_STAGES[3][16]) {
+      soulProfiles[3].stagesSeen.push(16);
+      resultStageLines = CLIENT_STAGES[3][16];
+    }
+  }
+
   renderResult(client, scoreWithGaps, wantResults, relDelta, moonCoinsEarned, breakdown, setBonusName);
+  if ((relationships[key] || 0) >= FRIENDSHIP_GIFT_HEARTS && FRIENDSHIP_CARDS[key] && !friendshipCardsOwned.includes(FRIENDSHIP_CARDS[key].id)) {
+    friendshipCardsOwned.push(FRIENDSHIP_CARDS[key].id);
+    rebuildLiveDeckFromUnlocked();
+    showFriendshipGift(key);
+  }
+}
+let resultStageLines = null;
+
+// The friendship gift: her lines, then the card, face down, to turn over.
+function showFriendshipGift(key) {
+  const card = FRIENDSHIP_CARDS[key];
+  const name = CLIENTS[key].name.split(",")[0];
+  const overlay = document.createElement("div");
+  overlay.className = "set-discovery-overlay moment-overlay gift-overlay";
+  overlay.innerHTML = `
+    <div class="moment" role="dialog" aria-label="A gift from ${name}">
+      <div class="moment-glow" aria-hidden="true"></div>
+      <div class="moment-badge">${icon("heart")} A gift from ${name}</div>
+      <div class="gift-lines">${FRIENDSHIP_GIFT_LINES[key].map((l) => dialogueLineHTML(l, name)).join("")}</div>
+      <div class="tilt-stage" id="giftStage">
+        <div class="tilt-card gift-card" id="giftCard" onclick="this.closest('.moment').classList.add('flipped')">
+          <div class="q-flip">
+            <div class="q-face q-front">${gcardHTML(card)}</div>
+            <div class="q-face q-rear">${quartettBackHTML()}</div>
+          </div>
+          <div class="tilt-foil" aria-hidden="true"></div>
+          <div class="tilt-glow" aria-hidden="true"></div>
+        </div>
+      </div>
+      <p class="gift-hint">Tap to turn it over.</p>
+      <div class="gift-info">
+        <h3 class="card-viewer-name">${titleCase(card.name)}</h3>
+        <p class="card-viewer-lore">\u201C${card.lore}\u201D</p>
+        <p class="q-entry-sub">One of a kind. It can never be lost or destroyed.</p>
+        <button class="primary" onclick="this.closest('.set-discovery-overlay').remove()">Keep it</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+  initCardTilt(overlay.querySelector("#giftStage"), overlay.querySelector("#giftCard"));
 }
 
+const SET_REPEAT_BONUS = 10;
+
 function renderResult(client, score, wantResults, relDelta, moonCoinsEarned, breakdown, setBonusName) {
-  let reaction, headline, line;
-  if (score >= 100) { reaction = "PERFECT"; headline = "Absolutely delighted!"; line = `${client.name.split(",")[0]} is speechless. This is exactly what they pictured — and then some.`; }
-  else if (score >= 70) { reaction = "LOVED IT"; headline = "Delighted."; line = `${client.name.split(",")[0]} twirls once, satisfied. Exactly the vibe they were after.`; }
-  else if (score >= 35) { reaction = "MEH"; headline = "It'll do."; line = `${client.name.split(",")[0]} shrugs. Not quite what they pictured, but wearable.`; }
-  else { reaction = "OUCH"; headline = "Not it."; line = `${client.name.split(",")[0]} sighs. This is going to haunt them — figuratively, this time.`; }
+  let reaction, headline, tier;
+  if (score >= 100) { reaction = "PERFECT"; headline = "Absolutely delighted!"; tier = "perfect"; }
+  else if (score >= 70) { reaction = "LOVED IT"; headline = "Delighted."; tier = "loved"; }
+  else if (score >= 35) { reaction = "MEH"; headline = "It'll do."; tier = "meh"; }
+  else { reaction = "OUCH"; headline = "Not it."; tier = "ouch"; }
+  const name = client.name.split(",")[0];
+  const NEUTRAL_REACTIONS = {
+    perfect: "{name} studies the mirror for a long moment and can't find a single thing to change.",
+    loved: "{name} checks the mirror once. Once is enough.",
+    meh: "{name} looks at the mirror, then at you. It'll do.",
+    ouch: "{name} looks at the mirror and says nothing. Which says plenty.",
+  };
+  const own = (REACTION_LINES[currentClientKey()] || {})[tier];
+  const lineTemplate = own && own.length ? own[Math.floor(Math.random() * own.length)] : NEUTRAL_REACTIONS[tier];
+  const line = lineTemplate.replace(/\{name\}/g, name);
 
   // Combine heart/coin/set bonus into one compact box instead of three stacked lines.
   const bondLines = [];
@@ -7858,7 +8373,9 @@ function renderResult(client, score, wantResults, relDelta, moonCoinsEarned, bre
           <div class="reaction">${reaction.charAt(0) + reaction.slice(1).toLowerCase()}${score >= 100 ? ` ${icon("sparkle")}` : ""}</div>
           <h2>${headline}</h2>
           <div class="score"><span class="score-num">${score}</span><span class="score-label">match</span></div>
-          <div class="speech narration-line">${line}</div>
+          ${resultStageLines
+            ? resultStageLines.map((l) => dialogueLineHTML(l, name)).join("")
+            : `<div class="speech narration-line">${line}</div>`}
         </div>
         <div class="result-grid">
           ${wantHTML}
@@ -8000,6 +8517,17 @@ function advanceMonth() {
   pendingSeasonEnd = SEASON_END_JOBS.includes(completedJob);
   if (eventKey) {
     renderStoryScreen(eventKey, "afterEventContinue()");
+  } else if (!storyFlags.armourSightingSeen && currentYear === 1 && currentMonthIndex() >= 9) {
+    // Bible "Year One Armor reveal": on the way home, autumn of Year One.
+    storyFlags.armourSightingSeen = true;
+    stage.innerHTML = `
+      <div class="center-col screen-pad">
+        <div class="soul-name">On the way home</div>
+        ${sceneHTML(ARMOUR_SIGHTING_LINES, null)}
+        <button class="primary" style="margin-top:14px;" onclick="afterEventContinue()">Continue</button>
+      </div>
+    `;
+    updateTopBar("", true);
   } else {
     afterEventContinue();
   }
@@ -8149,7 +8677,7 @@ function renderEnd() {
   // exited tab right on this screen shouldn't lose the year-end reward.
   saveGame();
 
-  const rewardLine = earned.length > 0
+  const rewardLineUnused = earned.length > 0
     ? `<p style="color:var(--gold);">Word got around about your work — ${earned.length} new piece${earned.length > 1 ? "s" : ""} joined your closet for next time: ${earned.map((c) => c.name).join(", ")}.</p>`
     : `<p style="color:var(--muted);">No new pieces earned this year — delight more clients (3 "Delighted" outfits earns one) to grow your closet.</p>`;
 
@@ -8174,31 +8702,42 @@ function renderEnd() {
       ];
   const narrativeHTML = narrativeLines.map((l) => `<p style="margin:4px 0;">${l}</p>`).join("");
 
-  const closingLine = isYearOne
-    ? "A real version would keep going indefinitely and let relationships unlock new kinds of requests."
-    : "Year Three and beyond — Armor, Angels and Devils, the Knighting — is its own future chapter.";
+  const closingLine = isYearOne ? "" : "To be continued.";
 
   // Year 1 offers a real choice (continue the same run into Year 2, or start
   // over). Year 2 is the end of this content pass, so only Restart remains —
   // per spec, do NOT start Year 3 here.
   const buttonsHTML = isYearOne
     ? `
-      <button class="primary" onclick="enterYearTwo()">Enter Year Two</button>
-      <button class="ghost" style="margin-top:10px;" onclick="renderIntro()">Restart prototype</button>
+      <button class="primary" onclick="enterYearTwo()">Begin Year Two</button>
     `
-    : `<button class="ghost" onclick="renderIntro()">Restart prototype</button>`;
+    : `<button class="ghost" onclick="renderIntro()">Back to the title</button>`;
+
+  const soulsHTML = CLIENTS.map((c, i) => `
+    <div class="year-soul">
+      <span class="soul-thumb" style="background-image:url('${c.portrait}')"></span>
+      <span class="year-soul-name">${c.name.split(",")[0]}</span>
+      <span class="hearts">${heartsHTML(relationships[i] || 0)}</span>
+    </div>`).join("");
+  const storyHTML = narrativeLines.map((l, i) => `<p style="--d:${(i * 0.5).toFixed(2)}s">${l}</p>`).join("");
+  const after = (narrativeLines.length * 0.5 + 0.3).toFixed(2);
 
   stage.innerHTML = `
-    <div class="center-col screen-pad result">
-      <div class="reaction reaction-icon">${icon("candle")}</div>
-      <h2>${heading}</h2>
-      <div class="line" style="max-width:320px; margin-bottom:18px;">${narrativeHTML}</div>
-      <div class="score">Total score across 36 jobs this year: ${totalScore}</div>
-      <div class="score" style="margin-bottom:18px;">${delightedCount} client${delightedCount === 1 ? "" : "s"} were delighted with your work.</div>
-      <div class="year-list">${rows}</div>
-      ${rewardLine}
-      <div class="line">${closingLine}</div>
-      ${buttonsHTML}
+    <div class="story-screen year-end">
+      <div class="year-end-title">${heading.replace(/\.$/, "")}</div>
+      <div class="story-lines">${storyHTML}</div>
+      <div class="year-end-panel" style="--d:${after}s">
+        <div class="year-stats">
+          <div><span class="year-stat-num">${delightedCount}</span><span class="year-stat-label">delighted clients</span></div>
+          <div><span class="year-stat-num">${Math.round(totalScore)}</span><span class="year-stat-label">total score</span></div>
+        </div>
+        <div class="year-souls">${soulsHTML}</div>
+        ${earned.length > 0
+          ? `<p class="year-reward">${icon("sparkle")} Word got around. ${earned.length} new piece${earned.length > 1 ? "s" : ""} joined your closet: ${earned.map((c) => c.name).join(", ")}.</p>`
+          : `<p class="year-reward muted">Delight three clients to earn a new piece at year's end.</p>`}
+        ${closingLine ? `<p class="year-closing">${closingLine}</p>` : ""}
+        <div class="q-result-actions">${buttonsHTML}</div>
+      </div>
     </div>
   `;
 }
@@ -8214,6 +8753,7 @@ function enterYearTwo() {
   delightedCount = 0;
   pendingSeasonEnd = false;
   currentShopItem = null;
+  shopStockMonth = null;
   Object.keys(soulProfiles).forEach((key) => { soulProfiles[key].yearVisits = 0; });
   // Pick up any cards earned as the Year 1 reward (see renderEnd()) so they're
   // actually drawable from the very first Year 2 Studio visit.
