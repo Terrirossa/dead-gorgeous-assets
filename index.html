@@ -1914,6 +1914,8 @@
   .cache-grid .deck-status { display: block; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--paper-3); }
   .cache-grid .deck-item.status-hand .deck-status { color: #fff; }
 
+  .build-stamp { position: fixed; left: 16px; bottom: 12px; font-size: 11px; letter-spacing: 0.06em; color: rgba(255,255,255,0.4); }
+
 </style>
 </head>
 <body>
@@ -2288,6 +2290,9 @@ function evaluateAestheticAchievements(pieces) {
     .map((a) => a.id);
 }
 
+// Shown small on the title screen, so it's easy to confirm which version
+// the browser actually loaded (GitHub Pages and browsers cache aggressively).
+const BUILD_ID = "2026-09-28 · duel 3";
 const stage = document.getElementById("stage");
 
 /* ---------------- CONVERSATION PRESENTATION ----------------
@@ -2682,6 +2687,7 @@ function renderIntro() {
         <h1 class="sr-only">Drop Dead Gorgeous</h1>
         <img class="title-logo" src="https://terrirossa.github.io/dead-gorgeous-assets/interface_elements/logo.svg" alt="">
         <p class="title-tagline">You died on a Tuesday. Mildly inconvenient. However work never ends. Now you got the job as the stylist of the afterlife — dressing souls for whatever comes now and next.</p>
+        <div class="build-stamp">Build ${BUILD_ID}</div>
         <div class="title-actions">
           <button class="primary" onclick="${hasSave ? "continueGame()" : "beginGame()"}">${hasSave ? "Continue" : "Start game"}</button>
           ${hasSave ? `<button class="ghost" onclick="startNewGame()">Start a new game</button>` : ""}
