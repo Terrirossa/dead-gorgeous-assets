@@ -1916,10 +1916,49 @@
 
   .build-stamp { position: fixed; left: 16px; bottom: 12px; font-size: 11px; letter-spacing: 0.06em; color: rgba(255,255,255,0.4); }
 
+  /* ============ LOCATION ARTWORK ============ */
+  .scene-bg { position: fixed; inset: 0; z-index: -1; pointer-events: none; opacity: 0; transition: opacity 0.8s ease; }
+  .scene-bg.on { opacity: 1; }
+  .scene-layer {
+    position: absolute; inset: 0; background: center / cover no-repeat;
+    opacity: 0; transition: opacity 0.9s ease, filter 0.8s ease, transform 0.8s ease;
+  }
+  .scene-layer.active { opacity: 1; }
+  .scene-shade { position: absolute; inset: 0; transition: background 0.8s ease; }
+  /* sharp: the place itself, with a soft pool of shade where text sits */
+  .scene-bg[data-mode="sharp"] .scene-layer { filter: none; transform: scale(1.02); }
+  .scene-bg[data-mode="sharp"] .scene-shade {
+    background:
+      radial-gradient(ellipse 60% 70% at 50% 55%, rgba(16,11,28,0.55), rgba(16,11,28,0) 70%),
+      linear-gradient(180deg, rgba(16,11,28,0.35) 0%, rgba(16,11,28,0.1) 35%, rgba(16,11,28,0.55) 100%);
+  }
+  /* talk: a conversation in a place -- the place stays recognisable */
+  .scene-bg[data-mode="talk"] .scene-layer { filter: blur(2.5px) brightness(0.7) saturate(1.05); transform: scale(1.03); }
+  .scene-bg[data-mode="talk"] .scene-shade { background: radial-gradient(ellipse 55% 75% at 50% 55%, rgba(16,11,28,0.45), rgba(16,11,28,0.1) 75%), linear-gradient(180deg, rgba(16,11,28,0.2), rgba(16,11,28,0.4)); }
+  /* soft: results and card reveals */
+  .scene-bg[data-mode="soft"] .scene-layer { filter: blur(7px) brightness(0.72) saturate(1.05); transform: scale(1.06); }
+  .scene-bg[data-mode="soft"] .scene-shade { background: linear-gradient(180deg, rgba(16,11,28,0.25), rgba(16,11,28,0.45)); }
+  /* blur: styling table, duel, story screens */
+  .scene-bg[data-mode="blur"] .scene-layer { filter: blur(26px) brightness(0.62) saturate(1.1); transform: scale(1.12); }
+  .scene-bg[data-mode="blur"] .scene-shade { background: rgba(16,11,28,0.2); }
+  /* the map now shows the city artwork through the scene layer */
+  .map-fullscreen-bg { display: none; }
+  .map-screen .map-title { text-shadow: 0 6px 40px rgba(10,6,20,0.7); }
+  .map-tile { background: rgba(16,11,28,0.62); }
+  @media (prefers-reduced-motion: reduce) { .scene-bg, .scene-layer { transition: none; } }
+
+  .screen-pad > h2:first-child { font-size: clamp(56px, 7vw, 100px); line-height: 0.95; margin: 0 0 16px; text-shadow: 0 4px 30px rgba(15,8,30,0.5); }
+  .screen-pad > .line { color: var(--paper); text-shadow: 0 2px 16px rgba(15,8,30,0.7); }
+
 </style>
 </head>
 <body>
 
+<div class="scene-bg" id="sceneBg" aria-hidden="true">
+  <div class="scene-layer"></div>
+  <div class="scene-layer"></div>
+  <div class="scene-shade"></div>
+</div>
 <div class="stage" id="stage"></div>
 <div class="top-bar" id="topBar">
   <div class="top-bar-left" id="topBarLeft"></div>
@@ -2290,9 +2329,97 @@ function evaluateAestheticAchievements(pieces) {
     .map((a) => a.id);
 }
 
+/* ---------------- LOCATION ARTWORK ----------------
+   Every screen gets a painted backdrop. The backdrop is chosen centrally from
+   what's on the stage (see sceneForStage), so the ~40 scene renderers don't
+   each have to manage it. Three treatments:
+     sharp -- locations: the art is the point, darkened toward the centre
+     soft  -- conversations & results: lightly blurred so faces and pills read
+     blur  -- busy screens (styling table, duel): heavily blurred, calm
+   Changes crossfade over ~0.8s. */
+const SCENE_ART_BASE = "https://terrirossa.github.io/dead-gorgeous-assets/backgrounds/";
+const SCENE_ART = {
+  studio: "studio.png",
+  city: "city_overview.png",
+  cafe: "cafe.png",
+  backroom: "cafe_backroom.png",
+  castle: "castle_front.png",
+  oldquarter: "oldquarter.png",
+  rosegarden: "rose_garden.png",
+  store: "store.png",
+  nightgarden_spring: "nightgarden_spring.png",
+  nightgarden_summer: "nightgarden_summer.png",
+  nightgarden_autumn: "nightgarden_fall.png",
+  nightgarden_winter: "nightgarden_winter.png",
+};
+// Location title shown on a scene -> artwork
+const SCENE_BY_TITLE = {
+  "Night Café": "cafe", "Quartett": "cafe", "Choose your hand": "cafe",
+  "Back Room": "backroom", "Café Attic": "backroom",
+  "Night Castle": "castle", "Castle Wall": "castle",
+  "Royal Garden": "rosegarden",
+  "Old Quarter": "oldquarter",
+  "The Vendor": "store",
+  "Nightgarden": "nightgarden", "Glass House": "nightgarden",
+};
+
+function sceneForStage() {
+  if (stage.querySelector(".title-screen")) return null; // the title keeps its own painting
+  if (stage.querySelector(".map-screen")) return ["city", "sharp"];
+  if (stage.querySelector("#outfitBoard")) return ["studio", "blur"];
+  if (stage.querySelector(".soul-scene")) return ["studio", "talk"];
+  if (stage.querySelector(".result-scene, .shuffle")) return ["studio", "soft"];
+  if (stage.querySelector(".q-table")) return ["cafe", "blur"];
+  if (stage.querySelector(".q-reward, .q-result")) return ["cafe", "soft"];
+  if (stage.querySelector(".story-screen")) return ["city", "blur"];
+  const title = (stage.querySelector(".soul-name, h2")?.textContent || "").trim();
+  let key = SCENE_BY_TITLE[title];
+  if (key === "nightgarden") key = `nightgarden_${currentSeasonName()}`;
+  if (key) return [key, stage.querySelector(".cast, .speech:not(.narration-line)") ? "talk" : "sharp"];
+  return ["city", "blur"];
+}
+
+const sceneArtLoaded = new Set();
+function preloadSceneArt(key) {
+  return new Promise((resolve) => {
+    const url = SCENE_ART_BASE + SCENE_ART[key];
+    if (sceneArtLoaded.has(url)) { resolve(url); return; }
+    const img = new Image();
+    img.onload = () => { sceneArtLoaded.add(url); resolve(url); };
+    img.onerror = () => resolve(null); // missing art: keep the default painting
+    img.src = url;
+  });
+}
+
+let sceneCurrent = { key: null, mode: null };
+let sceneRequest = 0;
+function updateSceneBackground() {
+  const bg = document.getElementById("sceneBg");
+  if (!bg) return;
+  const want = sceneForStage();
+  if (!want) { bg.classList.remove("on"); sceneCurrent = { key: null, mode: null }; return; }
+  const [key, mode] = want;
+  bg.dataset.mode = mode;
+  if (key === sceneCurrent.key) { sceneCurrent.mode = mode; bg.classList.add("on"); return; }
+  const req = ++sceneRequest;
+  preloadSceneArt(key).then((url) => {
+    if (req !== sceneRequest || !url) return;
+    const layers = bg.querySelectorAll(".scene-layer");
+    const active = bg.querySelector(".scene-layer.active");
+    const next = active === layers[0] ? layers[1] : layers[0];
+    next.style.backgroundImage = `url("${url}")`;
+    next.classList.add("active");
+    if (active) active.classList.remove("active");
+    bg.classList.add("on");
+    sceneCurrent = { key, mode };
+  });
+}
+// Warm the cache with the places you'll see first.
+["city", "studio", "cafe"].forEach((k) => setTimeout(() => preloadSceneArt(k), 1500));
+
 // Shown small on the title screen, so it's easy to confirm which version
 // the browser actually loaded (GitHub Pages and browsers cache aggressively).
-const BUILD_ID = "2026-09-28 · duel 3";
+const BUILD_ID = "2026-09-29 · locations 1";
 const stage = document.getElementById("stage");
 
 /* ---------------- CONVERSATION PRESENTATION ----------------
@@ -2319,6 +2446,7 @@ function syncFloatingCards() {
 
 let lastStepSignature = null;
 function enhanceStage() {
+  updateSceneBackground();
   observeLazyArt(stage);
   document.body.classList.toggle("no-scroll", !!stage.querySelector("#outfitBoard, .q-table"));
   document.body.classList.toggle("in-duel", !!stage.querySelector(".q-table"));
