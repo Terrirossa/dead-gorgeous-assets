@@ -2079,6 +2079,65 @@
 
   @media (max-width: 899px) { .action-pins { justify-content: center; } }
 
+  /* ---------- action cards on the table ---------- */
+  .action-stack { position: absolute; left: calc(100% + 34px); top: 8%; width: calc(var(--slot-w) * 0.78); pointer-events: none; }
+  .action-card {
+    position: absolute; left: 0; top: calc(var(--i) * 34px); width: 100%; aspect-ratio: 595.28 / 841.9; border-radius: 12px;
+    background: #0b0a0f; color: #fff; text-align: center;
+    box-shadow: inset 0 0 0 1.5px rgba(255,255,255,0.28), inset 0 0 0 6px #0b0a0f, inset 0 0 0 7px rgba(255,255,255,0.12), 0 20px 40px rgba(0,0,0,0.5);
+    display: flex; flex-direction: column; align-items: center; justify-content: space-between; padding: 16px 10px;
+    transform: rotate(calc(4deg - var(--i) * 6deg));
+  }
+  .action-card .ac-text { font-size: clamp(15px, 1.3vw, 21px); }
+  .action-card .ac-from { font-size: 20px; }
+  .action-card.kind-exclude .ac-text, .action-card.kind-noBasics .ac-text { color: #fff; }
+  .action-card.kind-add .ac-text, .action-card.kind-swap .ac-text { color: var(--lamp); }
+  .action-card.arriving { animation: actionToTable 0.8s cubic-bezier(.2,.9,.25,1.12) both; }
+  @keyframes actionToTable {
+    0% { opacity: 0; transform: translate(-70vw, -30vh) rotate(-40deg) scale(0.7); }
+    75% { opacity: 1; transform: translate(0, 0) rotate(8deg) scale(1.04); }
+    100% { transform: rotate(calc(4deg - var(--i) * 6deg)); }
+  }
+  .style-speech { position: fixed; left: 24px; top: calc(128px + clamp(170px, 15vw, 300px) * 1.414 + 10px); max-width: clamp(220px, 20vw, 320px); margin: 0; text-align: left; font-size: 15px; padding: 12px 18px 14px; animation: fadeUp 0.5s 0.5s ease both; }
+  .style-not { font-size: 14px; color: var(--paper-2); margin-top: 2px; }
+  .style-not b { color: var(--paper); font-weight: 600; }
+  .want-tag.not { background: rgba(10,8,16,0.85); color: #fff; box-shadow: inset 0 0 0 1px rgba(255,255,255,0.3); }
+  /* cards that break an exclusion go black and white */
+  .fan-card-wrap.violates .gcard, .board-slot.violates .gcard { filter: grayscale(1) brightness(0.72) contrast(0.95); }
+  .board-slot.violates { box-shadow: 0 16px 34px rgba(12,6,26,0.45); }
+  @media (max-width: 899px) {
+    .action-stack { left: auto; right: -14px; top: -34px; width: 62px; }
+    .action-card { padding: 7px 4px; border-radius: 8px; top: calc(var(--i) * 20px); }
+    .action-card .ac-label { font-size: 7px; letter-spacing: 0.2em; }
+    .action-card .ac-text { font-size: 10px; }
+    .action-card .ac-from { font-size: 11px; }
+    .style-speech { position: static; margin: 8px auto 0; text-align: center; font-size: 13px; padding: 8px 14px 10px; max-width: 90vw; }
+    .style-client .style-speech { pointer-events: none; }
+  }
+  @media (prefers-reduced-motion: reduce) { .action-card.arriving { animation: none; } }
+
+  /* ---------- card reveal ---------- */
+  .reveal-screen { min-height: 100vh; justify-content: center; }
+  .reveal { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+  .reveal-card { width: min(62vw, 260px); aspect-ratio: 595.28 / 841.9; box-shadow: 0 0 0 1px rgba(242,200,120,0.35), 0 30px 70px rgba(0,0,0,0.5), 0 0 70px rgba(242,200,120,0.22); }
+  .reveal-card .q-face > * { width: 100%; height: 100%; }
+  .reveal .q-flip { transition: transform 1s cubic-bezier(.3,.7,.3,1); }
+  .reveal.flipped .q-flip { transform: rotateY(0deg); }
+  .reveal:not(.flipped) .reveal-card { cursor: pointer; animation: prizeBob 2.4s ease-in-out infinite; }
+  .reveal-hint { color: var(--paper-2); font-size: 14px; margin: 4px 0 0; }
+  .reveal.flipped .reveal-hint { display: none; }
+  .reveal-info { max-width: 460px; text-align: center; opacity: 0; transition: opacity 0.6s 0.7s ease; }
+  .reveal.flipped .reveal-info { opacity: 1; }
+  .reveal-info .card-viewer-name { font-size: clamp(40px, 4vw, 64px); margin-bottom: 8px; }
+  @media (min-width: 900px) {
+    .reveal { flex-direction: row; gap: 5vw; }
+    .reveal-card { width: auto; height: min(56vh, 520px); }
+    .reveal-info { text-align: left; }
+  }
+
+  .reveal:not(.flipped) { flex-direction: column !important; }
+  .reveal:not(.flipped) .reveal-info { display: none; }
+
 </style>
 </head>
 <body>
@@ -2550,7 +2609,7 @@ function updateSceneBackground() {
 
 // Shown small on the title screen, so it's easy to confirm which version
 // the browser actually loaded (GitHub Pages and browsers cache aggressively).
-const BUILD_ID = "2026-09-30 · action cards 1";
+const BUILD_ID = "2026-09-30 · action cards 3";
 const stage = document.getElementById("stage");
 
 /* ---------------- CONVERSATION PRESENTATION ----------------
@@ -2798,6 +2857,9 @@ function startRound() {
   // A private copy: action cards may change this job's brief.
   currentBrief = { ...currentBrief, want: [...(currentBrief.want || [])] };
   planActionCards();
+  // Things she said she doesn't want ("No pink") apply from the start.
+  (currentBrief.exclude || []).forEach((x) => actionExclusions.push({ attr: x.attr, value: x.value, label: `No ${actionShort(x.attr, x.value)}`, fromBrief: true }));
+  lastActionLine = null;
   soulStep = "arrive";
   specialTalkLines = null;
   // Bible: after the armour sighting, Holly's next job opens with it.
@@ -2823,6 +2885,22 @@ function startRound() {
   const handIds = drawInitialHand(deckPile);
   deckPile = deckPile.filter((id) => !handIds.includes(id));
   hand = handIds;
+  ensureBriefIsDrawable();
+}
+
+// A requirement you can't possibly meet -- because nothing in your whole
+// collection matches it (e.g. you don't own a single red piece yet) --
+// becomes a hint instead. Anything you DO own has to be found the hard way:
+// it's in your deck somewhere, and Jokers and the redraw are how you fish
+// for it. Nothing is ever slipped into your hand for you.
+function ensureBriefIsDrawable() {
+  if (!currentBrief || !currentBrief.want) return;
+  const owned = [...hand, ...deckPile].map(findCard).filter((c) => c && c.type !== "KEY" && c.category !== "Joker");
+  [...currentBrief.want].forEach((r) => {
+    if (owned.some((c) => reqMatches(r, c))) return;
+    currentBrief.want = currentBrief.want.filter((w) => w !== r);
+    currentBrief.softDirection = `${r.label}, if you have any.`;
+  });
 }
 
 // Draw a hand that always tries to cover Jacket, Top-or-Dress, Bottom, and
@@ -3789,13 +3867,12 @@ function renderMannequinReward(card, puzzle) {
   windowFirstSolveSeen = true;
 
   const cardHTML = card
-    ? `<div class="shop-mystery-card">${gcardHTML(card)}</div><div class="card-detail-lore" style="margin-top:14px;">${card.lore || ""}</div>`
-    : `<p class="line" style="color:var(--muted);">Nothing left in your closet to find -- somehow every piece is already yours.</p>`;
+    ? cardRevealHTML(card, true)
+    : `<p class="line" style="color:var(--muted);">Nothing left in your closet to find. Somehow every piece is already yours.</p>`;
 
   stage.innerHTML = `
     <div class="center-col screen-pad result">
-      <h2>Click.</h2>
-      <div class="mannequin-turn-icon">\ud83e\uddcd</div>
+      <div class="soul-name">Click.</div>
       <div class="line" style="margin-bottom:14px;">
         <p style="margin:4px 0;">Something moves behind the door.</p>
         <p style="margin:4px 0;">A card slips through the gap underneath.</p>
@@ -3809,6 +3886,7 @@ function renderMannequinReward(card, puzzle) {
     </div>
   `;
   updateTopBar("", true);
+  if (card) initCardReveal();
 }
 
 /* ---------------- LOOK AROUND ----------------
@@ -4165,17 +4243,46 @@ function renderShop() {
 // stylesheet) while the three Shop purchase screens never did -- a small
 // pre-existing inconsistency, kept exactly as-is rather than silently
 // "fixed" here, since that's a visual change nobody asked for.
-function renderCardAcquiredScreen(heading, card, buttonLabel, includeResultClass) {
-  const cls = includeResultClass ? "center-col screen-pad result" : "center-col screen-pad";
+// A new card, shown big: lit, tiltable, with its details beside it (like
+// the Quartett prize). flip: start face down and turn over on tap -- for
+// cards you haven't seen yet.
+function cardRevealHTML(card, flip) {
+  const rarity = (card.rarity || "Basic").toLowerCase();
+  const foil = card.rarity === "Iconic" || card.rarity === "Legendary";
+  return `
+    <div class="reveal ${flip ? "" : "flipped"}">
+      <div class="tilt-stage reveal-stage" id="revealStage">
+        <div class="tilt-card reveal-card rarity-${rarity}" id="revealCard" ${flip ? `onclick="this.closest('.reveal').classList.add('flipped')"` : ""}>
+          <div class="q-flip">
+            <div class="q-face q-front">${gcardHTML(card)}</div>
+            <div class="q-face q-rear">${quartettBackHTML()}</div>
+          </div>
+          ${foil ? `<div class="tilt-foil" aria-hidden="true"></div>` : ""}
+          <div class="tilt-glow" aria-hidden="true"></div>
+        </div>
+      </div>
+      ${flip ? `<p class="reveal-hint">Tap to turn it over.</p>` : ""}
+      <div class="reveal-info">
+        <div class="card-viewer-rarity">${card.rarity || ""}</div>
+        <h3 class="card-viewer-name">${titleCase(card.name)}</h3>
+        ${card.lore ? `<p class="card-viewer-lore">\u201C${card.lore}\u201D</p>` : ""}
+      </div>
+    </div>`;
+}
+function initCardReveal() {
+  initCardTilt(document.getElementById("revealStage"), document.getElementById("revealCard"));
+}
+
+function renderCardAcquiredScreen(heading, card, buttonLabel, includeResultClass, action) {
   stage.innerHTML = `
-    <div class="${cls}">
-      <h2>${heading}</h2>
-      <div class="shop-mystery-card">${gcardHTML(card)}</div>
-      <div class="card-detail-lore" style="margin-top:14px;">${card.lore || ""}</div>
-      <button class="primary" style="margin-top:22px;" onclick="renderMap()">${buttonLabel}</button>
+    <div class="center-col screen-pad reveal-screen">
+      <div class="soul-name">${heading}</div>
+      ${cardRevealHTML(card, false)}
+      <button class="primary" style="margin-top:18px;" onclick="${action || "renderMap()"}">${buttonLabel}</button>
     </div>
   `;
   updateTopBar("", true);
+  initCardReveal();
 }
 
 function buyUnusualKey() {
@@ -6697,7 +6804,8 @@ function updateTopBar(leftHTML, showInfo) {
 // player-choice (trust) job, which has no want array at all.
 function wantTagsHTML(brief) {
   if (brief.playerChoice) return `<span class="want-tag">Your call — style from what you know</span>`;
-  return brief.want.map((r) => `<span class="want-tag">${r.label}</span>`).join("");
+  return brief.want.map((r) => `<span class="want-tag">${r.label}</span>`).join("")
+    + (brief.exclude || []).map((x) => `<span class="want-tag not">No ${actionShort(x.attr, x.value).toLowerCase()}</span>`).join("");
 }
 
 // Shared renderer for a single line of dialogue, used by briefs, the
@@ -6837,7 +6945,7 @@ function renderSoul() {
   const firstName = client.name.split(",")[0];
 
   const wantTags = wantTagsHTML(currentBrief);
-  const returningNote = rel > 0 ? `<div class="returning-note">You've styled ${firstName} before.</div>` : "";
+  const returningNote = "";
 
   const stageSet = CLIENT_STAGES[key];
 
@@ -7241,7 +7349,7 @@ function renderStyle() {
   const slotsHTML = outfit.map((card, i) => {
     if (card) {
       const v = actionViolations(card);
-      return `<div class="board-slot filled ${card.fullArt ? "filled-plain" : ""} ${v.length ? "violates" : ""} slot-${i}" onpointerdown="onSlotPointerDown(event, ${i})">${gcardHTML(card)}${v.length ? `<span class="violate-badge">${icon("close")} ${v[0]}</span>` : ""}</div>`;
+      return `<div class="board-slot filled ${card.fullArt ? "filled-plain" : ""} ${v.length ? "violates" : ""} slot-${i}" onpointerdown="onSlotPointerDown(event, ${i})">${gcardHTML(card)}</div>`;
     }
     return `<div class="board-slot empty slot-${i}"><span class="plus"></span></div>`;
   }).join("");
@@ -7257,7 +7365,6 @@ function renderStyle() {
                style="transform:${fanTransform(i, n)}; z-index:${selected ? 900 : 100 - Math.abs(i - (n - 1) / 2)};"
                onpointerdown="onCardPointerDown(event, ${id})">
             ${gcardHTML(card)}
-            ${actionViolations(card).length ? `<span class="violate-badge">${icon("close")} ${actionViolations(card)[0]}</span>` : ""}
           </div>
         `;
       }).join("");
@@ -7274,12 +7381,13 @@ function renderStyle() {
       <div class="style-brief">
         <div class="style-who">${firstName}</div>
         <div class="style-wants">${currentBrief.playerChoice ? "Style from what you know" : `Wants: <b>${wants}</b>`}</div>
-        ${actionCards.length ? `<div class="action-pins">${actionCards.map((c) => `<span class="action-pin kind-${c.kind}">${c.label}</span>`).join("")}</div>` : ""}
+        ${actionExclusions.some((x) => x.fromBrief) ? `<div class="style-not">Not: <b>${actionExclusions.filter((x) => x.fromBrief).map((x) => actionShort(x.attr, x.value).toLowerCase()).join(", ")}</b></div>` : ""}
       </div>
       ${client.portrait ? `<div class="portrait"><img src="${client.portrait}" alt="${firstName}"></div>` : ""}
+      ${lastActionLine ? `<div class="speech style-speech"><span class="speaker">${lastActionLine.name}</span>${lastActionLine.text}</div>` : ""}
     </aside>
 
-    <div class="style-table"><div class="outfit-board" id="outfitBoard">${slotsHTML}</div></div>
+    <div class="style-table"><div class="outfit-board" id="outfitBoard">${slotsHTML}${actionStackHTML()}</div></div>
 
     <div class="hand-fan" id="handFan">${fanHTML}</div>
 
@@ -7463,17 +7571,42 @@ function actionLineFor(card) {
     .replace(/\{old\}/g, (card.old || "").toLowerCase());
 }
 
-// Called after every card placed on the board.
+// Called after every card placed on the board. The card slides from her
+// portrait onto the table beside your slots; her line appears under her
+// portrait. Nothing blocks play.
+let lastActionLine = null;   // { name, text } shown under her portrait
+let actionArriving = -1;     // index of the card that just arrived (animates once)
 function maybeFireActionCard() {
   const next = actionPlan.find((p) => !p.fired);
-  if (!next || document.querySelector(".action-overlay")) return;
+  if (!next) return;
   const placed = outfit.filter(Boolean).length;
   if (placed < next.afterPlaced) return;
   next.fired = true;
   const card = generateActionCard();
   if (!card) return;
   applyActionCard(card);
-  setTimeout(() => showActionCard(card), 350);
+  const fire = () => {
+    if (!document.getElementById("outfitBoard")) return;
+    if (document.querySelector(".fan-card-wrap.dragging")) { setTimeout(fire, 300); return; }
+    const key = currentClientKey();
+    lastActionLine = { name: CLIENTS[key].name.split(",")[0], text: actionLineFor(card) };
+    actionArriving = actionCards.length - 1;
+    renderStyle();
+    actionArriving = -1;
+    const portrait = document.querySelector(".style-client .portrait");
+    if (portrait) { portrait.classList.remove("speaking"); void portrait.offsetWidth; portrait.classList.add("speaking"); }
+  };
+  setTimeout(fire, 350);
+}
+function actionStackHTML() {
+  if (!actionCards.length) return "";
+  const name = CLIENTS[currentClientKey()].name.split(",")[0];
+  return `<div class="action-stack">${actionCards.map((c, i) => `
+    <div class="action-card kind-${c.kind} ${i === actionArriving ? "arriving" : ""}" style="--i:${i}" role="img" aria-label="Action card: ${c.label}">
+      <span class="ac-label">Action</span>
+      <span class="ac-text">${c.label}</span>
+      <span class="ac-from">${name}</span>
+    </div>`).join("")}</div>`;
 }
 
 function showActionCard(card) {
