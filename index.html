@@ -1820,6 +1820,100 @@
     .q-centre { top: calc(var(--fan-w) * 1.414 * 0.62 + 40px); }
   }
 
+  /* ---------- fixes & additions ---------- */
+  /* the flank rule for scenes with a cast must not pull fixed decoration into the flow */
+  .center-col:has(> .cast-multi, > .cast-solo) > .q-result-glow { position: fixed; z-index: -1; }
+  .q-result-glow { position: fixed !important; }
+
+  /* lazy card art: a quiet placeholder until the art is on screen */
+  .art-fill.lazy:empty { background: rgba(255,255,255,0.06); border-radius: 10px; }
+  .deck-item, .q-pick { contain: layout paint; }
+
+  /* duel: hand sits higher so the attributes along the bottom of each card show */
+  .q-table { --qh: calc(var(--fan-w) * 1.414 * 0.96); --oh: calc(var(--fan-w) * 1.414 * 0.62); }
+  .q-player-hand, .q-player-hand[class] { height: var(--qh); }
+  .q-player-hand .fan-card-wrap { bottom: 8px; }
+  .q-hand-card.selected .gcard, .q-hand-card:hover .gcard { transform: translateY(-9%) scale(1.03); }
+  .q-centre { top: var(--oh); bottom: var(--qh); }
+  .phase-reveal .q-centre { bottom: calc(var(--qh) * 0.55); }
+  .phase-reveal .q-player-hand { transform: translateY(48%); }
+  .q-hand-card { touch-action: none; }
+  .q-hand-card.dragging-source { opacity: 0.25; }
+  .q-drag-ghost { position: fixed; z-index: 3000; pointer-events: none; transform: rotate(-4deg) scale(1.05); filter: drop-shadow(0 24px 40px rgba(0,0,0,0.5)); }
+  .q-drag-ghost .gcard { width: 100%; height: 100%; }
+  .q-slot.target { border-color: #fff; border-style: solid; background: rgba(255,255,255,0.12); box-shadow: 0 0 40px rgba(255,255,255,0.25); }
+
+  /* left column: score + rounds */
+  .q-score { position: static; transform: none; }
+  .q-side { position: fixed; left: 40px; top: 50%; transform: translateY(-50%); z-index: 40; display: flex; flex-direction: column; gap: 26px; width: clamp(200px, 17vw, 280px); }
+  .q-rounds { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+  .q-round { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: 14px; background: rgba(20,14,34,0.45); box-shadow: inset 0 0 0 1px var(--panel-line); transition: background 0.3s ease; }
+  .q-round-num { width: 22px; height: 22px; flex-shrink: 0; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; box-shadow: inset 0 0 0 1.5px rgba(255,255,255,0.35); }
+  .q-round-text { display: flex; flex-direction: column; min-width: 0; flex: 1; }
+  .q-round-text b { font-size: 14px; font-weight: 600; }
+  .q-round-text small { font-size: 11px; color: var(--paper-3); line-height: 1.3; }
+  .q-round-tag { font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--paper-2); white-space: nowrap; }
+  .q-round.current { background: rgba(255,255,255,0.14); box-shadow: inset 0 0 0 1.5px rgba(255,255,255,0.7); }
+  .q-round.current .q-round-num { background: #fff; color: #1b1626; box-shadow: none; }
+  .q-round.done { opacity: 0.55; }
+  .q-round.won .q-round-num { background: var(--lamp); color: #1b1626; box-shadow: none; }
+  .q-round.won .q-round-tag { color: var(--lamp); }
+
+  @media (max-width: 899px) {
+    .q-side { left: 0; right: 0; top: calc(var(--oh) + 6px); transform: none; width: auto; gap: 8px; align-items: center; }
+    .q-score { flex-direction: row; gap: 24px; }
+    .q-rounds { flex-direction: row; gap: 5px; overflow-x: auto; max-width: 100%; padding: 0 10px; scrollbar-width: none; }
+    .q-round { padding: 4px 9px 4px 5px; gap: 6px; flex-shrink: 0; border-radius: 999px; }
+    .q-round-text small, .q-round-tag { display: none; }
+    .q-round-text b { font-size: 12px; white-space: nowrap; }
+    .q-round-num { width: 18px; height: 18px; font-size: 10px; }
+    .q-centre { top: calc(var(--oh) + 76px); }
+  }
+
+  .q-result-title { font-size: clamp(64px, 9vw, 170px); }
+  .q-table { --qh: calc(var(--fan-w) * 1.414 * 0.96 + 30px); }
+  .q-player-hand .fan-card-wrap { bottom: 36px; }
+
+  /* Back Room: the offered cards sit centred */
+  .deck-grid.cache-grid, .deck-grid.cache-grid[class] { display: flex; flex-wrap: wrap; justify-content: center; gap: 18px; max-width: 1100px; margin: 10px auto 0; }
+  .cache-grid .deck-item { width: clamp(130px, 14vw, 220px); }
+  .deck-grid, .deck-grid[class] { justify-content: center; }
+
+  /* speaking wiggle: uses the separate rotate/translate properties so it
+     adds to each card's own tilt instead of replacing it */
+  .portrait.speaking { animation: speakWiggle 0.7s cubic-bezier(.3,.7,.3,1); }
+  @keyframes speakWiggle {
+    0% { rotate: 0deg; translate: 0 0; }
+    25% { rotate: -1.4deg; translate: 0 -4px; }
+    55% { rotate: 1.1deg; translate: 0 -2px; }
+    80% { rotate: -0.4deg; translate: 0 -1px; }
+    100% { rotate: 0deg; translate: 0 0; }
+  }
+  .phase-reveal .q-opp-portrait .portrait { animation: speakWiggle 0.7s 2.4s cubic-bezier(.3,.7,.3,1); }
+  @media (prefers-reduced-motion: reduce) { .portrait.speaking, .phase-reveal .q-opp-portrait .portrait { animation: none; } }
+
+  /* Souls: conversation log */
+  .convo-list { display: flex; flex-direction: column; gap: 6px; max-height: 420px; overflow-y: auto; padding-right: 4px; }
+  .convo { border-radius: 12px; background: rgba(255,255,255,0.04); }
+  .convo summary { list-style: none; cursor: pointer; display: flex; align-items: center; gap: 10px; padding: 10px 12px; font-size: 14px; }
+  .convo summary::-webkit-details-marker { display: none; }
+  .convo[open] summary { border-bottom: 1px solid var(--panel-line); }
+  .convo-num { width: 22px; height: 22px; flex-shrink: 0; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 600; box-shadow: inset 0 0 0 1.5px rgba(255,255,255,0.35); }
+  .convo-open { color: var(--paper); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .convo-body { padding: 10px 14px 12px; display: flex; flex-direction: column; gap: 6px; }
+  .convo-line { margin: 0; font-size: 14px; line-height: 1.4; }
+  .convo-line span { display: block; font-size: 11px; color: var(--paper-3); }
+  .convo-line.you { color: var(--paper-2); }
+  .convo-narr { margin: 0; font-size: 13px; font-style: italic; color: var(--paper-3); }
+
+  .cache-grid .deck-item { cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 10px; transition: transform 0.25s ease; }
+  .cache-grid .deck-item .gcard { width: 100%; aspect-ratio: 595.28 / 841.9; border-radius: 12px; transition: box-shadow 0.25s ease; }
+  .cache-grid .deck-item:hover { transform: translateY(-4px); }
+  .cache-grid .deck-item.status-hand { transform: translateY(-8px); }
+  .cache-grid .deck-item.status-hand .gcard { box-shadow: 0 0 0 3px #fff, 0 18px 34px rgba(10,6,20,0.45); }
+  .cache-grid .deck-status { display: block; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--paper-3); }
+  .cache-grid .deck-item.status-hand .deck-status { color: #fff; }
+
 </style>
 </head>
 <body>
@@ -2218,15 +2312,18 @@ function syncFloatingCards() {
   });
 }
 
+let lastStepSignature = null;
 function enhanceStage() {
+  observeLazyArt(stage);
   document.body.classList.toggle("no-scroll", !!stage.querySelector("#outfitBoard, .q-table"));
   document.body.classList.toggle("in-duel", !!stage.querySelector(".q-table"));
   if (!stage.querySelector(".q-table")) quartettClearTimer();
   syncFloatingCards();
   const speeches = [...stage.querySelectorAll(".speech")];
-  if (speeches.length === 0) return;
+  if (speeches.length === 0) { lastStepSignature = null; return; }
   autoCast(speeches);
   stepDialogue(speeches);
+  wiggleStudioSpeaker();
 }
 
 function autoCast(speeches) {
@@ -2246,12 +2343,39 @@ function autoCast(speeches) {
   col.insertBefore(cast, col.firstChild);
 }
 
+// Whoever speaks gives a tiny wiggle, so the conversation feels live.
+function speakWiggle(line) {
+  const who = (line && line.dataset.who || "").toLowerCase();
+  if (!who || who === "you" || who === "narration") return;
+  let portrait = stage.querySelector(`.cast-member[data-key="${who}"] .portrait`);
+  if (!portrait && (who === "client" || stage.querySelector(".soul-scene"))) portrait = stage.querySelector(".soul-scene .portrait");
+  if (!portrait) return;
+  portrait.classList.remove("speaking");
+  void portrait.offsetWidth; // restart the animation
+  portrait.classList.add("speaking");
+}
+
+// The Studio conversation re-renders per line: wiggle if the newest line
+// is hers.
+function wiggleStudioSpeaker() {
+  const scene = stage.querySelector(".soul-scene");
+  if (!scene) return;
+  const current = [...scene.querySelectorAll(".speech:not(.is-past):not(.is-past-2)")].pop();
+  if (current && current.dataset.who !== "YOU" && current.dataset.who !== "NARRATION") speakWiggle(current);
+}
+
 let stepAdvance = null;
 function stepDialogue(speeches) {
   stepAdvance = null;
   // The Studio conversation already steps itself; one line needs no stepping.
   if (speeches.length < 2 || speeches[0].dataset.stepped || stage.querySelector(".talk-continue")) return;
   speeches[0].dataset.stepped = "1";
+  // A screen that re-renders itself in place (e.g. tapping a card to choose
+  // it in the Back Room) shows the same lines again: that conversation has
+  // already played, so show it whole instead of starting over.
+  const signature = speeches.map((el) => el.textContent.trim()).join("|");
+  if (signature === lastStepSignature) return;
+  lastStepSignature = signature;
   const last = speeches[speeches.length - 1];
   const held = new Set();
   for (let el = last.nextElementSibling; el; el = el.nextElementSibling) held.add(el);
@@ -2267,17 +2391,7 @@ function stepDialogue(speeches) {
 
   let shown = 1;
   const WINDOW = 3; // keep the latest three lines, like the Studio conversation
-  // Characters step onto the scene when they first speak or are named,
-  // rather than all standing there before anyone has said anything.
-  const members = [...stage.querySelectorAll(".cast-member[data-key]")];
-  const revealCast = () => {
-    if (members.length === 0) return;
-    const lines = speeches.slice(0, shown).map((el) => ({ who: el.dataset.who || "", t: el.textContent }));
-    const present = new Set(inferPortraitKeys(lines));
-    members.forEach((m) => m.classList.toggle("cast-away", !present.has(m.dataset.key)));
-  };
   const layout = () => {
-    revealCast();
     speeches.forEach((el, i) => {
       el.classList.remove("is-past", "is-past-2", "step-gone");
       if (i >= shown) return;
@@ -2289,6 +2403,7 @@ function stepDialogue(speeches) {
   stepAdvance = () => {
     if (shown >= speeches.length) return;
     speeches[shown].classList.remove("step-hidden");
+    speakWiggle(speeches[shown]);
     shown++;
     layout();
     if (shown >= speeches.length) {
@@ -2299,6 +2414,7 @@ function stepDialogue(speeches) {
   };
   next.addEventListener("click", stepAdvance);
   layout();
+  speakWiggle(speeches[0]);
 }
 
 new MutationObserver(enhanceStage).observe(stage, { childList: true });
@@ -3285,7 +3401,7 @@ function renderOldQuarterWindow() {
   } else {
     const lockedHTML = puzzle.lockedIds.map((id) => {
       const card = DECK.find((c) => c.id === id);
-      return `<div class="mannequin-slot mannequin-slot-locked">${gcardHTML(card)}<div class="mannequin-lock">\ud83d\udd12</div></div>`;
+      return `<div class="mannequin-slot mannequin-slot-locked">${gcardHTML(card)}<div class="mannequin-lock">${icon("lock")}</div></div>`;
     }).join("");
     const captionHTML = puzzle.flavorCaption
       ? `<div class="mannequin-note">\u201c${puzzle.flavorCaption}\u201d</div>`
@@ -3907,7 +4023,7 @@ function renderCafeBackRoomCache() {
       <div class="speech narration-line">Four cards have been laid face-up on a small table.</div>
       <div class="speech narration-line">No note. No price.</div>
       <p style="color:var(--muted); font-size:12.5px; margin-bottom:12px;">Choose exactly 2.</p>
-      <div class="deck-grid">${itemsHTML}</div>
+      <div class="deck-grid cache-grid">${itemsHTML}</div>
       <button class="primary" style="margin-top:14px;" ${cacheSelectedCardIds.length === 2 ? "" : "disabled"} onclick="confirmCacheChoice()">Take these two</button>
     </div>
   `;
@@ -4420,7 +4536,7 @@ function renderQuartettPickScreen() {
     const disabled = !selected && count >= QUARTETT_HAND_SIZE;
     return `
       <button class="q-pick ${selected ? "selected" : ""} ${disabled ? "disabled" : ""}" onclick="quartettToggleDraftCard(${card.id})" aria-pressed="${selected}">
-        ${gcardHTML(card)}
+        ${gcardLazyHTML(card)}
         ${selected ? `<span class="q-pick-badge">${order + 1}</span>` : ""}
       </button>`;
   }).join("");
@@ -4468,7 +4584,7 @@ function renderQuartettMatch() {
     const selected = match.selectedCardId === id;
     return `
       <div class="fan-card-wrap q-hand-card ${selected ? "selected" : ""}" style="transform:${fanTransform(i, unplayed.length)}; z-index:${selected ? 900 : 100 - Math.abs(i - (unplayed.length - 1) / 2)};"
-           ${interactive ? `onclick="quartettSelectCard(${id})" ondblclick="quartettSelectCard(${id}); quartettPlaySelectedCard()"` : ""}>
+           ${interactive ? `onpointerdown="quartettHandPointerDown(event, ${id})" onclick="quartettSelectCard(${id})" ondblclick="quartettSelectCard(${id}); quartettPlaySelectedCard()"` : ""}>
         ${gcardHTML(card)}
       </div>`;
   }).join("");
@@ -4491,7 +4607,7 @@ function renderQuartettMatch() {
     centre = `
       ${banner}
       <div class="q-slots">
-        <div class="q-slot"><span>You</span></div>
+        <div class="q-slot q-slot-you"><span>You</span></div>
         <div class="q-slot"><span>${opp.name}</span></div>
       </div>
       <button class="primary q-play" ${match.selectedCardId ? "" : "disabled"} onclick="quartettPlaySelectedCard()">${match.selectedCardId ? "Play this card" : "Choose a card"}</button>`;
@@ -4505,7 +4621,7 @@ function renderQuartettMatch() {
     centre = `
       ${banner}
       <div class="q-slots">
-        <div class="q-slot filled q-played-you ${reveal.result === "A" ? "winner" : reveal.result === "B" ? "loser" : ""}" style="--fx:${fromX}px">
+        <div class="q-slot filled q-played-you ${reveal.result === "A" ? "winner" : reveal.result === "B" ? "loser" : ""}" style="--fx:${fromX}px; --fy:${reveal.fromY !== undefined ? reveal.fromY + "px" : "55vh"}">
           <div class="q-card-in">${gcardHTML(quartettFindCard(reveal.playerCardId))}</div>
         </div>
         <div class="q-slot filled q-played-opp ${reveal.result === "B" ? "winner" : reveal.result === "A" ? "loser" : ""}">
@@ -4533,9 +4649,12 @@ function renderQuartettMatch() {
   stage.innerHTML = `
     <div class="q-table phase-${phase}">
       <div class="q-opp-hand">${oppHandHTML}</div>
-      <aside class="q-score">
-        <div class="q-score-row"><span class="q-score-name">${opp.name}</span><span class="q-pips">${quartettPipsHTML(match.opponentRoundWins, fresh && reveal.result === "B")}</span></div>
-        <div class="q-score-row"><span class="q-score-name">You</span><span class="q-pips">${quartettPipsHTML(match.playerRoundWins, fresh && reveal.result === "A")}</span></div>
+      <aside class="q-side">
+        <div class="q-score">
+          <div class="q-score-row"><span class="q-score-name">${opp.name}</span><span class="q-pips">${quartettPipsHTML(match.opponentRoundWins, fresh && reveal.result === "B")}</span></div>
+          <div class="q-score-row"><span class="q-score-name">You</span><span class="q-pips">${quartettPipsHTML(match.playerRoundWins, fresh && reveal.result === "A")}</span></div>
+        </div>
+        <ol class="q-rounds" aria-label="Rounds">${quartettRoundsHTML(match, phase)}</ol>
       </aside>
       <div class="q-opp-portrait"><div class="portrait"><img src="${opp.portrait}" alt="${opp.name}"></div></div>
       <div class="q-centre">${centre}</div>
@@ -4546,6 +4665,81 @@ function renderQuartettMatch() {
   updateTopBar("", true);
 
   if (phase === "announce") quartettTimer = setTimeout(quartettBeginChoosing, 2600);
+}
+
+// Round overview on the left: what's been decided, what's being played now,
+// and what's still coming -- so a strong card can be saved for a later task.
+function quartettRoundsHTML(match, phase) {
+  return match.calls.map((call, i) => {
+    const t = quartettSplitLabel(call.label);
+    const h = match.roundHistory[i];
+    const state = h && !(phase === "reveal" && i === match.currentRound) ? "done" : i === match.currentRound ? "current" : "upcoming";
+    const outcome = state === "done" ? (h.result === "A" ? "won" : h.result === "B" ? "lost" : "drawn") : "";
+    const tag = outcome === "won" ? "You" : outcome === "lost" ? QUARTETT_OPPONENTS[match.opponentId].name : outcome === "drawn" ? "Draw" : "";
+    return `
+      <li class="q-round ${state} ${outcome}">
+        <span class="q-round-num">${i + 1}</span>
+        <span class="q-round-text"><b>${t.main}</b>${t.rule ? `<small>${t.rule}</small>` : ""}</span>
+        ${tag ? `<span class="q-round-tag">${tag}</span>` : ""}
+      </li>`;
+  }).join("");
+}
+
+// Drag a card from your hand onto your slot to play it (a tap still just
+// selects, and the button or a double-click plays the selection).
+function quartettHandPointerDown(ev, id) {
+  const match = quartettMatch;
+  if (!match || match.phase !== "choose" || ev.button > 0) return;
+  const wrap = ev.currentTarget;
+  const start = { x: ev.clientX, y: ev.clientY };
+  let ghost = null;
+  const slot = () => document.querySelector(".q-slot-you");
+  const overSlot = (x, y) => {
+    const s = slot(); if (!s) return false;
+    const r = s.getBoundingClientRect(), pad = 30;
+    return x > r.left - pad && x < r.right + pad && y > r.top - pad && y < r.bottom + pad;
+  };
+  const move = (e) => {
+    const dx = e.clientX - start.x, dy = e.clientY - start.y;
+    if (!ghost) {
+      if (Math.hypot(dx, dy) < 8) return;
+      const r = wrap.getBoundingClientRect();
+      ghost = document.createElement("div");
+      ghost.className = "q-drag-ghost";
+      ghost.style.width = `${wrap.offsetWidth}px`;
+      ghost.innerHTML = wrap.innerHTML;
+      document.body.appendChild(ghost);
+      wrap.classList.add("dragging-source");
+    }
+    ghost.style.left = `${e.clientX - ghost.offsetWidth / 2}px`;
+    ghost.style.top = `${e.clientY - ghost.offsetHeight * 0.35}px`;
+    slot()?.classList.toggle("target", overSlot(e.clientX, e.clientY));
+  };
+  const up = (e) => {
+    wrap.removeEventListener("pointermove", move);
+    wrap.removeEventListener("pointerup", up);
+    wrap.removeEventListener("pointercancel", up);
+    if (!ghost) return; // a plain tap: the onclick handler selects the card
+    const s = slot();
+    const dropped = overSlot(e.clientX, e.clientY);
+    ghost.remove();
+    wrap.classList.remove("dragging-source");
+    s?.classList.remove("target");
+    wrap.dataset.suppressClick = "1";
+    setTimeout(() => { delete wrap.dataset.suppressClick; }, 0);
+    if (dropped && s) {
+      const r = s.getBoundingClientRect();
+      match.selectedCardId = id;
+      quartettPlaySelectedCard({
+        fromX: Math.round(e.clientX - (r.left + r.width / 2)),
+        fromY: Math.round(e.clientY - (r.top + r.height / 2)),
+      });
+    }
+  };
+  wrap.setPointerCapture(ev.pointerId);
+  wrap.addEventListener("pointermove", move);
+  wrap.addEventListener("pointerup", up);
+  wrap.addEventListener("pointercancel", up);
 }
 
 function quartettBeginChoosing() {
@@ -4651,11 +4845,13 @@ function quartettFlipReward() {
 
 function quartettSelectCard(id) {
   if (!quartettMatch) return;
+  const src = document.querySelector(`.q-hand-card[data-suppress-click]`);
+  if (src) return;
   quartettMatch.selectedCardId = quartettMatch.selectedCardId === id ? null : id;
   renderQuartettMatch();
 }
 
-function quartettPlaySelectedCard() {
+function quartettPlaySelectedCard(from) {
   const match = quartettMatch;
   if (!match || !match.selectedCardId) return;
   const playerCardId = match.selectedCardId;
@@ -4673,12 +4869,13 @@ function quartettPlaySelectedCard() {
   // Where the card sat in your fan, so it can slide from there to the table.
   const handEl = document.querySelector(`.q-hand-card.selected`);
   const slotEl = document.querySelector(".q-slot");
-  let fromX = 0;
-  if (handEl && slotEl) {
+  let fromX = 0, fromY;
+  if (from) { fromX = from.fromX; fromY = from.fromY; }
+  else if (handEl && slotEl) {
     const h = handEl.getBoundingClientRect(), t = slotEl.getBoundingClientRect();
     fromX = Math.round((h.left + h.width / 2) - (t.left + t.width / 2));
   }
-  match.reveal = { playerCardId, opponentCardId, result, fromX };
+  match.reveal = { playerCardId, opponentCardId, result, fromX, fromY };
   match.phase = "reveal";
   renderQuartettMatch();
 }
@@ -6258,10 +6455,56 @@ function ensureSvgArtLoaded(url) {
       svgArtCache[url] = svg;
       delete svgArtLoading[url];
       document.querySelectorAll(`.art-fill[data-src="${CSS.escape(url)}"]`).forEach((el) => {
-        if (!el.innerHTML) el.innerHTML = svg;
+        if (el.innerHTML) return;
+        if (el.classList.contains("lazy") && el.dataset.visible !== "1") return;
+        el.innerHTML = svg;
       });
     })
     .catch(() => { delete svgArtLoading[url]; });
+}
+
+// Grids that can show the whole collection at once (the deck, the Quartett
+// hand picker) use lazy cards: the heavy vector art is only put into the page
+// while a card is on or near the screen, and taken out again once it scrolls
+// far away. Without this, 100+ cards at ~450 KB of SVG each made those
+// screens so heavy that scrolling stalled.
+const lazyArtEls = new Map(); // element -> observer watching it
+const lazyArtObservers = new Map(); // scroll container (or null = page) -> observer
+function lazyArtObserverFor(scrollRoot) {
+  if (lazyArtObservers.has(scrollRoot)) return lazyArtObservers.get(scrollRoot);
+  // The observer's root must be the element that actually scrolls, or the
+  // look-ahead margin is clipped away and cards only appear once visible.
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach((e) => {
+      const el = e.target;
+      const url = el.dataset.src;
+      if (e.isIntersecting) {
+        el.dataset.visible = "1";
+        if (svgArtCache[url]) { if (!el.innerHTML) el.innerHTML = svgArtCache[url]; }
+        else ensureSvgArtLoaded(url);
+      } else {
+        el.dataset.visible = "";
+        el.innerHTML = "";
+      }
+    });
+  }, { root: scrollRoot, rootMargin: "700px 0px" });
+  lazyArtObservers.set(scrollRoot, io);
+  return io;
+}
+
+function observeLazyArt(root, scrollRoot = null) {
+  lazyArtEls.forEach((io, el) => { if (!el.isConnected) { io.unobserve(el); lazyArtEls.delete(el); } });
+  const io = lazyArtObserverFor(scrollRoot);
+  (root || document).querySelectorAll(".art-fill.lazy").forEach((el) => {
+    if (lazyArtEls.has(el)) return;
+    lazyArtEls.set(el, io);
+    io.observe(el);
+  });
+}
+
+function gcardLazyHTML(card) {
+  if (!card.fullArt || card.type === "KEY") return gcardHTML(card);
+  return `<div class="gcard gcard-full"><div class="art-fill lazy" data-src="${card.fullArt}" role="img" aria-label="${card.name}"></div></div>`;
 }
 
 function gcardHTML(card) {
@@ -6782,9 +7025,23 @@ function renderSoulsListHTML() {
     const prefsHTML = discovered.length > 0
       ? `<div class="chip-row">${discovered.map((d) => `<span class="chip">${d}</span>`).join("")}</div>`
       : `<p class="panel-empty">??? Style her and watch what she loves.</p>`;
-    const factsHTML = profile.facts.length > 0
-      ? profile.facts.map((f) => `<div class="fact"><span class="fact-q">${f.q}</span><span class="fact-a">${f.a}</span></div>`).join("")
-      : `<p class="panel-empty">Nothing learned yet. Ask her something next time you meet.</p>`;
+    // Everything she has actually told you: each Studio conversation you've
+    // had with her (one per visit, in order), newest first, plus any answers
+    // from the older question flow. Derived from her visit count, so it also
+    // fills in for saves made before this panel existed.
+    const stages = CLIENT_STAGES[i] || [];
+    const heard = stages.slice(0, Math.min(profile.visits || 0, stages.length));
+    const convoHTML = heard.map((lines, n) => {
+      const opener = lines.find((l) => l.who !== "NARRATION") || lines[0];
+      const body = lines.map((l) => l.who === "NARRATION"
+        ? `<p class="convo-narr">${l.t}</p>`
+        : `<p class="convo-line ${l.who === "YOU" ? "you" : ""}"><span>${l.who === "YOU" ? "You" : current.name}</span>${l.t}</p>`).join("");
+      return `<details class="convo"><summary><span class="convo-num">${n + 1}</span><span class="convo-open">${opener.t}</span></summary><div class="convo-body">${body}</div></details>`;
+    }).reverse().join("");
+    const qaHTML = profile.facts.map((f) => `<div class="fact"><span class="fact-q">${f.q}</span><span class="fact-a">${f.a}</span></div>`).join("");
+    const factsHTML = convoHTML || qaHTML
+      ? `${convoHTML}${qaHTML}`
+      : `<p class="panel-empty">Nothing yet. Style her and talk to her in the Studio.</p>`;
     const bestHTML = profile.bestScore !== null && profile.bestScore !== undefined
       ? `<div class="best-row">${(profile.bestPieces || []).map((id) => { const card = findCard(id); return card ? `<div class="best-card">${gcardHTML(card)}</div>` : ""; }).join("")}</div>`
       : `<p class="panel-empty">No outfit yet.</p>`;
@@ -6798,7 +7055,7 @@ function renderSoulsListHTML() {
         <h4>Best outfit so far${profile.bestScore !== null && profile.bestScore !== undefined ? `<span class="panel-aside">${profile.bestScore} points</span>` : ""}</h4>
         ${bestHTML}
       </section>
-      <section class="panel"><h4>What you've learned</h4>${factsHTML}</section>
+      <section class="panel"><h4>Your conversations${heard.length ? `<span class="panel-aside">${heard.length} so far</span>` : ""}</h4><div class="convo-list">${factsHTML}</div></section>
     `;
   } else {
     detailHTML = `
@@ -6975,7 +7232,7 @@ function renderDeckOverlay() {
 
       return `
         <div class="deck-item ${cls}" ${onclick} ${dim}>
-          ${gcardHTML(card)}
+          ${gcardLazyHTML(card)}
           <div class="deck-status">${status}</div>
         </div>
       `;
@@ -7003,6 +7260,7 @@ function renderDeckOverlay() {
     <div class="deck-grid">${items}</div>
     ${picking ? "" : foundObjectsHTML()}
   `;
+  observeLazyArt(overlay, overlay);
   overlay.classList.add("open");
 }
 
