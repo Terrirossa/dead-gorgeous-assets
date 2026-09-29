@@ -2037,6 +2037,48 @@
   .shop-offers { flex-wrap: wrap; }
   @media (min-width: 900px) { .shop-offers { gap: 28px; } .offer { width: 200px; } .offer .shop-mystery-card { width: 170px; } }
 
+  /* ============ ACTION CARDS ============ */
+  .action-overlay {
+    position: fixed; inset: 0; z-index: 2500;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; padding: 20px;
+    background: radial-gradient(ellipse at 50% 45%, rgba(20,12,34,0.55), rgba(10,6,20,0.88));
+    animation: momentFade 0.3s ease both;
+  }
+  .action-card-big {
+    width: clamp(170px, 18vw, 240px); aspect-ratio: 595.28 / 841.9; border-radius: 16px;
+    background: #0b0a0f; color: #fff;
+    box-shadow: inset 0 0 0 1.5px rgba(255,255,255,0.28), inset 0 0 0 7px #0b0a0f, inset 0 0 0 8px rgba(255,255,255,0.12), 0 30px 70px rgba(0,0,0,0.6);
+    display: flex; flex-direction: column; align-items: center; justify-content: space-between; padding: 22px 16px; text-align: center;
+    animation: actionSlide 0.75s cubic-bezier(.2,.9,.25,1.15) both;
+  }
+  .ac-label { font-size: 11px; font-weight: 700; letter-spacing: 0.3em; text-transform: uppercase; color: rgba(255,255,255,0.55); }
+  .ac-text { font-size: clamp(22px, 2.2vw, 30px); font-weight: 600; line-height: 1.15; }
+  .ac-from { font-family: var(--font-display); font-size: 26px; color: rgba(255,255,255,0.7); }
+  .action-card-big.kind-exclude .ac-text, .action-card-big.kind-noBasics .ac-text { color: #f3a5a5; }
+  .action-card-big.kind-add .ac-text, .action-card-big.kind-swap .ac-text { color: var(--lamp); }
+  .action-line { max-width: 460px; margin: 0; animation: fadeUp 0.5s 0.6s ease both !important; }
+  .action-ok { animation: fadeUp 0.5s 0.9s ease both; min-width: 0; }
+  @keyframes actionSlide {
+    0% { opacity: 0; transform: translate(-42vw, -38vh) rotate(-28deg) scale(0.6); }
+    70% { opacity: 1; transform: translate(0, 0) rotate(4deg) scale(1.03); }
+    100% { transform: rotate(-2deg); }
+  }
+  .action-pins { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; pointer-events: none; }
+  .action-pin { background: #0b0a0f; color: #fff; font-size: 12px; font-weight: 600; padding: 5px 10px; border-radius: 6px; box-shadow: inset 0 0 0 1px rgba(255,255,255,0.25); }
+  .action-pin.kind-exclude, .action-pin.kind-noBasics { color: #f3a5a5; }
+  .action-pin.kind-add, .action-pin.kind-swap { color: var(--lamp); }
+  .violate-badge {
+    position: absolute; left: 50%; top: 6%; transform: translateX(-50%); z-index: 3; white-space: nowrap;
+    display: inline-flex; align-items: center; gap: 4px; padding: 4px 9px; border-radius: 999px;
+    background: #7a1d2a; color: #fff; font-size: 11px; font-weight: 600; box-shadow: 0 4px 12px rgba(0,0,0,0.4); pointer-events: none;
+  }
+  .violate-badge .ico { width: 11px; height: 11px; }
+  .fan-card-wrap.violates .gcard, .board-slot.violates .gcard { filter: saturate(0.4) brightness(0.8); }
+  .board-slot.violates { box-shadow: 0 0 0 3px #b0303f, 0 16px 34px rgba(12,6,26,0.45); }
+  @media (prefers-reduced-motion: reduce) { .action-card-big, .action-line, .action-ok { animation: none !important; } }
+
+  @media (max-width: 899px) { .action-pins { justify-content: center; } }
+
 </style>
 </head>
 <body>
@@ -2508,7 +2550,7 @@ function updateSceneBackground() {
 
 // Shown small on the title screen, so it's easy to confirm which version
 // the browser actually loaded (GitHub Pages and browsers cache aggressively).
-const BUILD_ID = "2026-09-30 · café and economy 1";
+const BUILD_ID = "2026-09-30 · action cards 1";
 const stage = document.getElementById("stage");
 
 /* ---------------- CONVERSATION PRESENTATION ----------------
@@ -2753,6 +2795,9 @@ function startRound() {
   const chosen = chooseBriefForVisit(key, askIdx);
   currentBrief = chosen.brief;
   currentBriefSilent = chosen.silent;
+  // A private copy: action cards may change this job's brief.
+  currentBrief = { ...currentBrief, want: [...(currentBrief.want || [])] };
+  planActionCards();
   soulStep = "arrive";
   specialTalkLines = null;
   // Bible: after the armour sighting, Holly's next job opens with it.
@@ -2851,6 +2896,7 @@ function startSpecialRound(virtualClient, brief, jobMeta) {
   currentBrief = brief;
   specialJob = { ...jobMeta, virtualClient };
   storyBeatsRemaining = STORY_BEATS_PER_JOB; // same rule as a normal job -- see startRound()
+  actionPlan = []; actionCards = []; actionExclusions = []; // special jobs keep their own rules
 
   deckPile = liveDeck.map((c) => c.id); // Joker cards included -- see drawInitialHand()
   discardPile = [];
@@ -7193,7 +7239,10 @@ function renderStyle() {
 
   applyStyleMetrics();
   const slotsHTML = outfit.map((card, i) => {
-    if (card) return `<div class="board-slot filled ${card.fullArt ? "filled-plain" : ""} slot-${i}" onpointerdown="onSlotPointerDown(event, ${i})">${gcardHTML(card)}</div>`;
+    if (card) {
+      const v = actionViolations(card);
+      return `<div class="board-slot filled ${card.fullArt ? "filled-plain" : ""} ${v.length ? "violates" : ""} slot-${i}" onpointerdown="onSlotPointerDown(event, ${i})">${gcardHTML(card)}${v.length ? `<span class="violate-badge">${icon("close")} ${v[0]}</span>` : ""}</div>`;
+    }
     return `<div class="board-slot empty slot-${i}"><span class="plus"></span></div>`;
   }).join("");
 
@@ -7204,10 +7253,11 @@ function renderStyle() {
         const card = findCard(id);
         const selected = id === selectedHandId;
         return `
-          <div class="fan-card-wrap ${selected ? "selected" : ""}" id="fan-${id}"
+          <div class="fan-card-wrap ${selected ? "selected" : ""} ${actionViolations(card).length ? "violates" : ""}" id="fan-${id}"
                style="transform:${fanTransform(i, n)}; z-index:${selected ? 900 : 100 - Math.abs(i - (n - 1) / 2)};"
                onpointerdown="onCardPointerDown(event, ${id})">
             ${gcardHTML(card)}
+            ${actionViolations(card).length ? `<span class="violate-badge">${icon("close")} ${actionViolations(card)[0]}</span>` : ""}
           </div>
         `;
       }).join("");
@@ -7224,6 +7274,7 @@ function renderStyle() {
       <div class="style-brief">
         <div class="style-who">${firstName}</div>
         <div class="style-wants">${currentBrief.playerChoice ? "Style from what you know" : `Wants: <b>${wants}</b>`}</div>
+        ${actionCards.length ? `<div class="action-pins">${actionCards.map((c) => `<span class="action-pin kind-${c.kind}">${c.label}</span>`).join("")}</div>` : ""}
       </div>
       ${client.portrait ? `<div class="portrait"><img src="${client.portrait}" alt="${firstName}"></div>` : ""}
     </aside>
@@ -7282,6 +7333,174 @@ function firstEmptySlot() {
 
 /* ---------------- DRAG + PLACE ---------------- */
 
+
+/* ---------------- ACTION CARDS ----------------
+   See ACTION_CARD_* in data-story.js. The round's brief is copied at the
+   start of the job (so an action card never edits the authored data), and
+   planActionCards() decides whether -- and after how many placed cards --
+   she interrupts. */
+let actionPlan = [];   // [{ afterPlaced, fired }]
+let actionCards = [];  // cards played this job
+let actionExclusions = []; // [{ attr, value, label }] or { rarity: [...] }
+
+function overallJobNumber() { return (currentYear - 1) * 36 + clientRoundIndex; }
+
+function planActionCards() {
+  actionPlan = []; actionCards = []; actionExclusions = [];
+  const g = overallJobNumber();
+  const tier = ACTION_CARD_CHANCE.find((t) => g < t.beforeJob) || ACTION_CARD_CHANCE[ACTION_CARD_CHANCE.length - 1];
+  if (Math.random() < tier.chance) {
+    actionPlan.push({ afterPlaced: Math.random() < 0.5 ? 1 : 2, fired: false });
+    if (Math.random() < tier.second) actionPlan.push({ afterPlaced: 3, fired: false });
+  }
+}
+
+function actionAttrValues(card, attr) {
+  if (attr === "style") return [card.style, card.style2].filter(Boolean);
+  return card[attr] ? [card[attr]] : [];
+}
+function actionNoun(attr, value) {
+  const v = value.toLowerCase();
+  if (attr === "style") return `${v} pieces`;
+  if (attr === "fit") return `${v} cuts`;
+  return v;
+}
+function actionShort(attr, value) { return attr === "fit" ? `${value} fit` : value; }
+
+// Does this card break one of the exclusions played this job?
+function actionViolations(card) {
+  if (!card || card.type === "KEY" || card.category === "Joker") return [];
+  return actionExclusions.filter((x) =>
+    x.rarities ? x.rarities.includes(card.rarity) : actionAttrValues(card, x.attr).includes(x.value)).map((x) => x.label);
+}
+
+function wantedValue(attr, value) {
+  return (currentBrief.want || []).some((r) => r.attr === attr && r.value === value);
+}
+
+function generateActionCard() {
+  const key = currentClientKey();
+  const inPlay = [...hand.map(findCard), ...outfit.filter(Boolean)].filter((c) => c && c.type !== "KEY" && c.category !== "Joker");
+  const inHand = hand.map(findCard).filter((c) => c && c.type !== "KEY" && c.category !== "Joker");
+  const weights = { ...(ACTION_CARD_WEIGHTS[key] || { exclude: 1, add: 1, swap: 1, noBasics: 0.3 }) };
+  if (currentBrief.playerChoice) { weights.add = 0; weights.swap = 0; }
+  const ATTRS = ["color", "style", "fit"];
+  const alreadyExcluded = (attr, value) => actionExclusions.some((x) => x.attr === attr && x.value === value);
+  const stillPlayable = (extra) => inPlay.filter((c) => actionViolations(c).length === 0 && !extra(c)).length >= 4;
+
+  const attempts = {
+    exclude: () => {
+      // something actually in play, not something she asked for
+      const options = [];
+      inPlay.forEach((c) => ATTRS.forEach((attr) => actionAttrValues(c, attr).forEach((value) => {
+        if (!wantedValue(attr, value) && !alreadyExcluded(attr, value)) options.push({ attr, value });
+      })));
+      const onBoard = options.filter((o) => outfit.some((c) => c && actionAttrValues(c, o.attr).includes(o.value)));
+      const pool = shuffle(onBoard.length && Math.random() < 0.6 ? onBoard : options);
+      const pick = pool.find((o) => stillPlayable((c) => actionAttrValues(c, o.attr).includes(o.value)));
+      if (!pick) return null;
+      return { kind: "exclude", attr: pick.attr, value: pick.value, label: `No ${actionShort(pick.attr, pick.value)}` };
+    },
+    noBasics: () => {
+      if (actionExclusions.some((x) => x.rarities)) return null;
+      if (!inPlay.some((c) => c.rarity === "Basic")) return null;
+      if (!stillPlayable((c) => c.rarity === "Basic")) return null;
+      return { kind: "noBasics", rarities: ["Basic"], label: "No Basics" };
+    },
+    add: () => {
+      const options = [];
+      inHand.forEach((c) => ATTRS.forEach((attr) => actionAttrValues(c, attr).forEach((value) => {
+        if (!wantedValue(attr, value) && !alreadyExcluded(attr, value)) options.push({ attr, value });
+      })));
+      const pick = shuffle(options)[0];
+      if (!pick) return null;
+      return { kind: "add", attr: pick.attr, value: pick.value, label: `+ ${actionShort(pick.attr, pick.value)}` };
+    },
+    swap: () => {
+      const swappable = (currentBrief.want || []).filter((r) => ATTRS.includes(r.attr) && !r.anyOf);
+      if (!swappable.length) return null;
+      const old = shuffle(swappable)[0];
+      const options = [];
+      inHand.forEach((c) => actionAttrValues(c, old.attr).forEach((value) => {
+        if (!wantedValue(old.attr, value) && !alreadyExcluded(old.attr, value)) options.push(value);
+      }));
+      const value = shuffle(options)[0];
+      if (!value) return null;
+      return { kind: "swap", attr: old.attr, value, old: old.value, label: `${actionShort(old.attr, value)}, not ${old.value}` };
+    },
+  };
+
+  // Weighted pick, falling back through the other kinds if one can't be made fair.
+  const kinds = Object.keys(weights).filter((k) => weights[k] > 0);
+  const order = [];
+  while (kinds.length) {
+    const total = kinds.reduce((sum, k) => sum + weights[k], 0);
+    let r = Math.random() * total;
+    const i = kinds.findIndex((k) => (r -= weights[k]) < 0);
+    order.push(kinds.splice(i < 0 ? 0 : i, 1)[0]);
+  }
+  for (const kind of order) {
+    const card = attempts[kind]();
+    if (card) return card;
+  }
+  return null;
+}
+
+function applyActionCard(card) {
+  if (card.kind === "exclude") actionExclusions.push({ attr: card.attr, value: card.value, label: card.label });
+  if (card.kind === "noBasics") actionExclusions.push({ rarities: card.rarities, label: card.label });
+  if (card.kind === "add") currentBrief.want = [...(currentBrief.want || []), req(card.attr, card.value)];
+  if (card.kind === "swap") currentBrief.want = currentBrief.want.map((r) => (r.attr === card.attr && r.value === card.old ? req(card.attr, card.value) : r));
+  actionCards.push(card);
+}
+
+function actionLineFor(card) {
+  const lines = (ACTION_CARD_LINES[currentClientKey()] || ACTION_CARD_LINES[0])[card.kind] || ["..."];
+  const noun = card.attr ? actionNoun(card.attr, card.value) : "";
+  const adj = card.value ? card.value.toLowerCase() : "";
+  const t = lines[Math.floor(Math.random() * lines.length)];
+  return t.replace(/\{A\}/g, adj.charAt(0).toUpperCase() + adj.slice(1)).replace(/\{V\}/g, noun.charAt(0).toUpperCase() + noun.slice(1)).replace(/\{v\}/g, noun).replace(/\{a\}/g, adj)
+    .replace(/\{old\}/g, (card.old || "").toLowerCase());
+}
+
+// Called after every card placed on the board.
+function maybeFireActionCard() {
+  const next = actionPlan.find((p) => !p.fired);
+  if (!next || document.querySelector(".action-overlay")) return;
+  const placed = outfit.filter(Boolean).length;
+  if (placed < next.afterPlaced) return;
+  next.fired = true;
+  const card = generateActionCard();
+  if (!card) return;
+  applyActionCard(card);
+  setTimeout(() => showActionCard(card), 350);
+}
+
+function showActionCard(card) {
+  const key = currentClientKey();
+  const name = CLIENTS[key].name.split(",")[0];
+  const reply = ((ACTION_CARD_LINES[key] || {}).replies || ["Fine."]);
+  const overlay = document.createElement("div");
+  overlay.className = "action-overlay";
+  overlay.innerHTML = `
+    <div class="action-card-big kind-${card.kind}" role="img" aria-label="Action card: ${card.label}">
+      <span class="ac-label">Action</span>
+      <span class="ac-text">${card.label}</span>
+      <span class="ac-from">${name}</span>
+    </div>
+    <div class="speech action-line"><span class="speaker">${name}</span>${actionLineFor(card)}</div>
+    <button class="primary action-ok" onclick="dismissActionCard()">${reply[Math.floor(Math.random() * reply.length)]}</button>
+  `;
+  document.body.appendChild(overlay);
+  const portrait = document.querySelector(".style-client .portrait");
+  if (portrait) { portrait.classList.remove("speaking"); void portrait.offsetWidth; portrait.classList.add("speaking"); }
+  setTimeout(() => overlay.querySelector(".action-ok")?.focus(), 900);
+}
+function dismissActionCard() {
+  document.querySelector(".action-overlay")?.remove();
+  renderStyle();
+}
+
 function placeCardInSlot(id, slotIndex) {
   const card = findCard(id);
   if (slotIndex === null) { renderStyle(); return; } // no valid target — snap back
@@ -7297,6 +7516,7 @@ function placeCardInSlot(id, slotIndex) {
   hand = hand.filter((hid) => hid !== id);
   selectedHandId = null;
   renderStyle();
+  maybeFireActionCard();
 }
 
 function returnCardToHand(slotIndex) {
@@ -8043,7 +8263,7 @@ function finishStyling() {
   // (currentBrief.suppressPreference) so wearing the thing she just asked
   // to avoid doesn't quietly still score. A player-choice (trust) job scores
   // these at +15 each, capped at +60, instead of the usual uncapped +8 each.
-  const suppressed = new Set(currentBrief.suppressPreference || []);
+  const suppressed = new Set([...(currentBrief.suppressPreference || []), ...actionExclusions.filter((x) => x.value).map((x) => x.value)]);
   const matchedPreferences = (client.preferences || [])
     .filter((rule) => !suppressed.has(rule.value) && preferenceMatches(rule, pieces));
   const preferencePointValue = currentBrief.playerChoice ? 15 : 8;
@@ -8105,6 +8325,14 @@ function finishStyling() {
   if (!hasShoes) { gapPenalty -= 10; gaps.push("No shoes"); }
   if (!hasDress && !hasTop) { gapPenalty -= 10; gaps.push("No top"); }
   if (!hasDress && !hasBottom) { gapPenalty -= 10; gaps.push("No bottom"); }
+  // Action cards: each worn piece that ignores an exclusion costs points.
+  const exclusionResults = actionExclusions.map((x) => {
+    const count = pieces.filter((pc) => actionViolations(pc).includes(x.label)).length;
+    return { label: x.label, count };
+  });
+  const exclusionPenalty = exclusionResults.reduce((sum, r) => sum - r.count * ACTION_EXCLUDE_PENALTY, 0);
+  gapPenalty += exclusionPenalty;
+  exclusionResults.filter((r) => r.count > 0).forEach((r) => gaps.push(`Ignored \u201C${r.label}\u201D` + (r.count > 1 ? ` ×${r.count}` : "")));
   let scoreWithGaps = score + gapPenalty;
 
   // A complete matching set, but only when the outfit already works. Resolved
@@ -8176,9 +8404,13 @@ function finishStyling() {
   deckPile.push(...hand);
   hand = [];
 
-  const wantResults = wantList.map((r) => ({
-    label: r.label, matched: pieces.some((p) => reqMatches(r, p)),
-  }));
+  const wantResults = [
+    ...wantList.map((r) => ({ label: r.label, matched: pieces.some((p) => reqMatches(r, p)) })),
+    ...actionExclusions.map((x) => {
+      const broke = pieces.some((pc) => actionViolations(pc).includes(x.label));
+      return { label: x.label, matched: !broke, text: broke ? `Ignored \u201C${x.label}\u201D` : `Respected \u201C${x.label}\u201D` };
+    }),
+  ];
 
   const breakdown = {
     briefScore, briefCapped, rarityBonus, comboBonus, eventBonus, activeEvent, welcomeBonus, gaps, pieceDetails,
@@ -8286,7 +8518,7 @@ function renderResult(client, score, wantResults, relDelta, moonCoinsEarned, bre
     breakdown.comboBonus > 0 ? { label: `${breakdown.comboName} combo`, value: breakdown.comboBonus } : null,
     breakdown.eventBonus > 0 ? { label: `${EVENT_LABELS[breakdown.activeEvent]} bonus`, value: breakdown.eventBonus } : null,
     breakdown.welcomeBonus > 0 ? { label: "New stylist grace", value: breakdown.welcomeBonus } : null,
-    ...breakdown.gaps.map((g) => ({ label: g, value: -10 })),
+    ...breakdown.gaps.map((g) => ({ label: g, value: g.startsWith("Ignored") ? -ACTION_EXCLUDE_PENALTY * (parseInt((g.split("×")[1] || "1"), 10)) : -10 })),
   ].filter(Boolean);
 
   const breakdownHTML = `
@@ -8343,7 +8575,7 @@ function renderResult(client, score, wantResults, relDelta, moonCoinsEarned, bre
     : `
     <div class="result-box">
       <h4>The brief</h4>
-      ${wantResults.map((w) => `<p class="want-result ${w.matched ? "hit" : "miss"}">${icon(w.matched ? "check" : "close")} ${w.matched ? "Loved" : "Missed"} ${w.label.toLowerCase()}</p>`).join("")}
+      ${wantResults.map((w) => `<p class="want-result ${w.matched ? "hit" : "miss"}">${icon(w.matched ? "check" : "close")} ${w.text || `${w.matched ? "Loved" : "Missed"} ${w.label.toLowerCase()}`}</p>`).join("")}
     </div>
   `;
 

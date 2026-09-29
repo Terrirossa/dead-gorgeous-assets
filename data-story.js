@@ -2300,3 +2300,67 @@ const ARMOUR_HOLLY_LINES = [
   { who: "YOU", t: "No." },
   { who: "HOLLY", t: "Good." },
 ];
+
+/* ===========================================================================
+   ACTION CARDS -- DRAFT (system and lines written by Claude for review).
+   While you style, a client may slide in a black action card that changes
+   the brief mid-job: EXCLUDE something ("No red"), ADD a requirement
+   ("+ Red"), SWAP one ("Red, not Black"), or ban Basics ("No Basics").
+   They're always solvable with the cards in play: added or swapped-in
+   values are taken from your hand, and an exclusion never removes so much
+   that fewer than four usable cards remain.
+   How often: none in the first two months, then more as the cycle goes on
+   (ACTION_CARD_CHANCE, by overall job number); from Year Two a second card
+   can follow.
+   Lines: {v} = noun ("red", "romantic pieces", "regular cuts"),
+          {a} = adjective ("red", "romantic", "regular"), {A} = capitalised,
+          {old} = what it replaces.
+   =========================================================================== */
+const ACTION_CARD_CHANCE = [
+  { beforeJob: 6, chance: 0, second: 0 },     // Jan-Feb, Year 1: learn the ropes
+  { beforeJob: 15, chance: 0.3, second: 0 },
+  { beforeJob: 27, chance: 0.5, second: 0 },
+  { beforeJob: 36, chance: 0.65, second: 0 },
+  { beforeJob: 54, chance: 0.8, second: 0.35 },
+  { beforeJob: 9999, chance: 0.85, second: 0.5 },
+];
+const ACTION_EXCLUDE_PENALTY = 15; // per worn piece that ignores an exclusion
+
+// Which kinds each character tends to play.
+const ACTION_CARD_WEIGHTS = {
+  0: { exclude: 5, swap: 2.5, add: 1.5, noBasics: 1 },   // Margo: vetoes
+  1: { exclude: 2.5, swap: 3, add: 4.5, noBasics: 0.5 }, // Juniper: second thoughts
+  2: { exclude: 2.5, swap: 4, add: 3.5, noBasics: 1 },   // Ivy: changes of plan
+  3: { exclude: 4.5, swap: 2.5, add: 3, noBasics: 1 },   // Holly: practical vetoes
+};
+
+const ACTION_CARD_LINES = {
+  0: {
+    exclude: ["No {v}. I won't explain.", "Take the {v} off. I've changed my mind about {v}.", "I've decided I'm against {v} today."],
+    noBasics: ["Nothing Basic. I've seen what Basic does to people."],
+    add: ["It needs {v}. Don't argue. Find some.", "Something {a}. Then it will work."],
+    swap: ["Forget {old}. {A}. I was wrong, which is rare, so enjoy it."],
+    replies: ["Of course.", "Naturally.", "Fine."],
+  },
+  1: {
+    exclude: ["Could we not do {v}? It's making me itchy.", "Sorry. Not {v}. I don't know why. Just not {v}."],
+    noBasics: ["Could it be less plain? I want to feel a bit special. Sorry."],
+    add: ["Hey stylist. I think we need something {a} to make this work.", "Sorry, could there be something {a}? It feels like a {a} day."],
+    swap: ["Actually, {a} instead of {old}? Sorry. Sorry."],
+    replies: ["Okay.", "Of course.", "No, it's fine."],
+  },
+  2: {
+    exclude: ["No {v}. Can't ride in it. Won't.", "Scratch the {v}. Bad luck tonight."],
+    noBasics: ["Nothing Basic. Someone important might see me."],
+    add: ["Hey stylist. Needs something {a}. Trust me.", "Throw something {a} in there. For luck."],
+    swap: ["Change of plan: {a}, not {old}."],
+    replies: ["Sure.", "Fine.", "Of course it is."],
+  },
+  3: {
+    exclude: ["Nothing {a}. It impedes.", "Remove the {v}. That is not a request."],
+    noBasics: ["Nothing Basic. I will be inspected."],
+    add: ["Add something {a}. It is necessary.", "Something {a}. I will not explain."],
+    swap: ["Not {old}. {A}. Circumstances have changed."],
+    replies: ["Understood.", "Of course.", "Fine."],
+  },
+};
