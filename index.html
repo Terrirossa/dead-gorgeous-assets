@@ -45,11 +45,12 @@
     color: var(--card-bg);
     display: flex;
     align-items: center;
+    align-items: safe center; /* a screen taller than the window starts at the top instead of being cut off */
     justify-content: center;
     padding: 20px;
     overscroll-behavior: none;
   }
-  body.no-scroll { overflow-y: hidden; height: 100vh; }
+  body.no-scroll { overflow-y: hidden; height: 100vh; height: 100dvh; }
 
   .stage { width: 100%; max-width: 480px; overflow-x: hidden; }
 
@@ -364,6 +365,16 @@
     left: 18px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.16); color: #ece7f4;
   }
   .corner-action.corner-left.corner-left-2 { left: 72px; }
+  .coin-toast {
+    position: fixed; left: 22px; bottom: 96px; z-index: 950; pointer-events: none;
+    display: flex; align-items: center; gap: 10px; padding: 10px 16px 10px 12px; border-radius: 999px;
+    background: rgba(16,11,28,0.88); color: #fff; font-size: 14px; box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+    animation: coinToast 2.6s ease forwards;
+  }
+  .coin-toast .ico { width: 26px; height: 26px; color: var(--gold); animation: coinSpin 0.7s ease-out; }
+  @keyframes coinSpin { from { transform: rotateY(0deg); } to { transform: rotateY(1080deg); } }
+  @keyframes coinToast { 0% { opacity: 0; transform: translateY(8px); } 12%, 78% { opacity: 1; transform: none; } 100% { opacity: 0; } }
+  @media (prefers-reduced-motion: reduce) { .coin-toast .ico { animation: none; } }
   .corner-action.corner-left.used { opacity: 0.3; pointer-events: none; }
   .joker-count {
     position: absolute; top: -4px; right: -4px; background: var(--gold); color: #1a1428;
@@ -413,7 +424,8 @@
   /* ---------- Deck modal ---------- */
   .deck-overlay {
     position: fixed; inset: 0; background: rgba(15, 10, 20, 0.95); z-index: 2000;
-    overflow-y: auto; padding: 26px 20px 50px; display: none;
+    overflow-y: auto; padding: 26px 20px calc(90px + env(safe-area-inset-bottom, 0px)); display: none;
+    overscroll-behavior: contain; -webkit-overflow-scrolling: touch;
   }
   .deck-overlay.open { display: block; }
   .deck-header { display: flex; justify-content: space-between; align-items: center; max-width: 480px; margin: 0 auto 20px; }
@@ -1190,6 +1202,65 @@
     max-width: 440px; margin: 10px auto 26px; font-size: 18px; line-height: 1.45;
     font-style: italic; color: var(--paper); text-shadow: 0 2px 16px rgba(15,8,30,0.6); text-wrap: balance;
   }
+  .action-card.kind-sobbing { background: linear-gradient(160deg, #3b4152, #262a36); }
+  .style-note { display: block; font-style: italic; opacity: 0.8; margin-bottom: 4px; }
+  /* the sword */
+  .sword-scene { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 60px 16px; box-sizing: border-box; }
+  .sword-card { position: relative; width: clamp(170px, 22vw, 300px); aspect-ratio: 595.28 / 841.9; animation: pyreIn 0.7s cubic-bezier(.2,.7,.2,1) both; }
+  .sword-half { position: absolute; inset: 0; }
+  .sword-half .gcard { width: 100%; height: 100%; }
+  .sword-half-a { clip-path: polygon(0 0, 100% 0, 100% 38%, 0 62%); animation: halfA 1.1s 1.75s cubic-bezier(.5,0,.8,.6) forwards; }
+  .sword-half-b { clip-path: polygon(0 62%, 100% 38%, 100% 100%, 0 100%); animation: halfB 1.1s 1.75s cubic-bezier(.5,0,.8,.6) forwards; }
+  @keyframes halfA { to { transform: translate(-26px, -34px) rotate(-7deg); opacity: 0; filter: brightness(0.5); } }
+  @keyframes halfB { to { transform: translate(30px, 70px) rotate(9deg); opacity: 0; filter: brightness(0.5); } }
+  .sword-blade {
+    position: absolute; left: -45%; top: 50%; width: 190%; height: 5px; border-radius: 3px; pointer-events: none;
+    background: linear-gradient(90deg, rgba(255,255,255,0), #f3f6ff 20%, #ffffff 50%, #cfd8ee 80%, rgba(255,255,255,0));
+    box-shadow: 0 0 18px rgba(220,232,255,0.95), 0 0 42px rgba(200,220,255,0.6);
+    transform: rotate(-14deg) translateX(-120%); opacity: 0;
+    animation: bladeCut 0.55s 1.2s cubic-bezier(.7,0,.3,1) forwards;
+  }
+  @keyframes bladeCut { 0% { opacity: 0; transform: rotate(-14deg) translateX(-120%); } 20% { opacity: 1; } 80% { opacity: 1; } 100% { opacity: 0; transform: rotate(-14deg) translateX(120%); } }
+  .sword-caption { margin-top: 30px; text-align: center; opacity: 0; animation: pyreIn 0.6s 2.6s both; }
+  .sword-caption-label { font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase; color: #dfe8ff; }
+  .sword-caption-name { font-size: 20px; color: #fff; margin-top: 4px; }
+  .sword-continue { margin-top: 22px; opacity: 0; animation: pyreIn 0.5s 3s both; }
+  @media (prefers-reduced-motion: reduce) {
+    .sword-blade { display: none; }
+    .sword-half-a, .sword-half-b { animation-duration: 0.3s; animation-delay: 0.3s; }
+    .sword-caption, .sword-continue { animation-delay: 0.4s; }
+  }
+  .survival-panel {
+    margin: 16px 0 18px; padding: 12px 16px; border-radius: 16px; max-width: 420px;
+    background: rgba(230,238,255,0.08); box-shadow: inset 0 0 0 1px rgba(220,232,255,0.35);
+  }
+  .survival-panel.compact { margin: 10px 0 0; padding: 8px 12px; }
+  .survival-title { font-size: 12px; letter-spacing: 0.06em; color: #dfe8ff; margin-bottom: 8px; }
+  .survival-rules { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
+  .survival-panel.compact .survival-rules { justify-content: flex-start; }
+  .survival-rule {
+    display: inline-flex; align-items: center; gap: 4px; padding: 4px 11px; border-radius: 999px;
+    font-size: 13px; color: #fff; background: rgba(255,255,255,0.1); box-shadow: inset 0 0 0 1px rgba(255,255,255,0.28);
+  }
+  .survival-rule .ico { width: 14px; height: 14px; }
+  .survival-rule.met { background: rgba(170,210,255,0.28); box-shadow: inset 0 0 0 1px rgba(200,225,255,0.7); }
+  .survival-rule.unmet { opacity: 0.75; }
+  .survival-note { margin: 10px 0 0; font-size: 13px; line-height: 1.45; color: var(--paper-2); text-wrap: balance; }
+  .danger-verdict { font-size: 14px; color: var(--paper-3); margin: -6px 0 14px; }
+  .danger-hearts { position: relative; }
+  .danger-result.is-hit .hearts-before { display: inline-block; animation: heartsDrain 1.2s 0.6s ease forwards; }
+  .danger-result.is-hit .hearts-after { position: absolute; left: 0; right: 0; opacity: 0; animation: heartsReveal 0.6s 1.5s ease forwards; }
+  @keyframes heartsDrain { 0% { opacity: 1; } 40% { transform: translateX(-3px); } 55% { transform: translateX(3px); } 70% { transform: none; } 100% { opacity: 0; } }
+  @keyframes heartsReveal { to { opacity: 1; } }
+  @media (prefers-reduced-motion: reduce) { .danger-result.is-hit .hearts-before { animation: none; opacity: 0; } .danger-result.is-hit .hearts-after { animation: none; opacity: 1; } }
+  .special-rating {
+    display: flex; flex-direction: column; align-items: center; gap: 2px;
+    margin: 4px 0 18px; padding: 12px 22px; border-radius: 16px;
+    background: rgba(16,11,28,0.55); box-shadow: inset 0 0 0 1px var(--panel-line);
+  }
+  .special-rating-label { font-size: 13px; color: var(--paper-3); }
+  .special-rating-score { font-family: var(--font-display); font-size: 54px; line-height: 1; color: #fff; }
+  .special-rating-marks { font-size: 12px; color: var(--paper-3); }
   .soul-deceased { font-size: 13px; color: var(--paper-3); letter-spacing: 0.04em; }
 
   /* ============ SHUFFLE ============ */
@@ -2040,6 +2111,24 @@
   .q-forfeit-row { display: flex; flex-wrap: wrap; justify-content: center; gap: 14px; margin: 10px 0 26px; }
   .q-forfeit-row .q-pick { width: clamp(100px, 11vw, 170px); }
   .q-pick.burning { animation: burnAway 1.4s ease forwards; }
+  /* the burn itself: chosen cards large, then fire, one after another */
+  .burn-pyre { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 60px 16px; box-sizing: border-box; }
+  .burn-pyre-row { display: flex; flex-wrap: wrap; justify-content: center; gap: clamp(12px, 2vw, 28px); max-width: 1400px; }
+  .burn-pyre-card {
+    width: clamp(130px, 17vw, 260px); aspect-ratio: 595.28 / 841.9;
+    animation: pyreIn 0.7s cubic-bezier(.2,.7,.2,1) both; animation-delay: calc(var(--i) * 0.08s);
+  }
+  .burn-pyre-card .gcard { width: 100%; height: 100%; }
+  .burn-pyre-card.burning { animation: pyreBurn 1.6s ease-in forwards; }
+  @keyframes pyreIn { from { opacity: 0; transform: translateY(30px) scale(0.86); } to { opacity: 1; transform: none; } }
+  @keyframes pyreBurn {
+    0% { filter: none; transform: none; opacity: 1; }
+    25% { filter: brightness(1.5) sepia(0.7) saturate(3.5) hue-rotate(-25deg) drop-shadow(0 0 26px rgba(255,140,40,0.85)); transform: translateY(-4px); }
+    60% { filter: brightness(0.6) sepia(1) saturate(2) drop-shadow(0 0 18px rgba(255,90,20,0.6)); opacity: 0.8; }
+    100% { filter: brightness(0) blur(8px); opacity: 0; transform: translateY(-50px) scale(0.92) rotate(-3deg); }
+  }
+  .burn-pyre-note { margin-top: 26px; color: var(--paper-2); font-size: 15px; animation: pyreIn 0.7s 0.3s both; }
+  @media (prefers-reduced-motion: reduce) { .burn-pyre-card, .burn-pyre-card.burning, .burn-pyre-note { animation-duration: 0.3s; } }
   @keyframes burnAway {
     0% { filter: none; transform: translateY(-6px); }
     35% { filter: brightness(1.4) sepia(0.6) saturate(3) hue-rotate(-20deg); }
@@ -2077,7 +2166,7 @@
   .milestone-hearts .heart { width: 11px; height: 10px; }
   .milestone-hearts { min-width: 72px; display: inline-flex; }
 
-  .gift-card { width: min(46vw, 200px) !important; aspect-ratio: 595.28 / 841.9; }
+  .gift-card { width: min(46vw, 200px) !important; height: auto !important; aspect-ratio: 595.28 / 841.9; } /* the wide-screen .tilt-card height would stretch it */
   .gift-card .q-face > * { width: 100%; height: 100%; }
   .gift-overlay .moment { padding: 20px 0; }
   .gift-overlay .tilt-stage { padding: 10px; }
@@ -2475,11 +2564,14 @@ let deckPile = [];
 let liveDeck = [];
 let unlockedCardIds = new Set();
 let pendingSeasonEnd = false;
-// A purchased Joker card grants one permanent extra joker-ability use, every
-// round, from then on -- ownedJokerCount never resets. jokerUsesRemaining is
-// the actual per-round counter (replaces the old jokerAvailable boolean).
+// Joker CARDS: each one bought adds a Joker card to the deck (1 + owned in
+// play); a Joker card in hand lets you pick any card from your deck.
+// ownedJokerCount never resets.
 let ownedJokerCount = 0;
-let jokerUsesRemaining = 1;
+// The coin (styling screen, bottom left) is a separate thing from Joker
+// cards: once per client, heads = one new card, tails = two.
+let coinFlipAvailable = true;
+let coinFlipResult = null; // 1 or 2 right after a flip, for the toast
 let redrawAvailable = true;
 let selectedHandId = null; // hand card lifted (tapped) but not yet dropped
 let discardPile = [];
@@ -2504,6 +2596,10 @@ function freshPeril() {
     griefProgress: {},        // griefProgress[survivor][dead] = grief visits already played, 0..3
     graveyardVisited: false,
     rumoursSeen: [],          // ids from ANGEL_RUMOURS, in the order played
+    lastPrepJob: -99,         // overallJobNumber() of the last encounter preparation
+    arrivalJob: null,         // overallJobNumber() when Irina and Lucia first came in
+    lastAngelJob: -99,        // overallJobNumber() of the last Angel Studio job
+    heartsAreLifeShown: false,
     rumourMonth: null,        // yearMonthKey() of the last rumour -- one per month
   };
 }
@@ -2744,7 +2840,7 @@ function sceneForStage() {
   if (stage.querySelector(".title-screen")) return null; // the title keeps its own painting
   if (stage.querySelector(".map-screen, .intro-seq")) return ["city", "sharp"];
   if (stage.querySelector("#outfitBoard")) return ["stylingtable", "table"];
-  if (stage.querySelector(".angel-arrival")) return ["studio", "cold"];
+  if (stage.querySelector(".angel-arrival, .angel-job, .sword-scene")) return ["studio", "cold"];
   if (stage.querySelector(".soul-scene")) return ["studio", "sharp"];
   if (stage.querySelector(".result-scene, .shuffle, .quiet-night")) return ["studio", "soft"];
   if (stage.querySelector(".q-table")) return ["cafe", "blur"];
@@ -2798,7 +2894,7 @@ function updateSceneBackground() {
 
 // Shown small on the title screen, so it's easy to confirm which version
 // the browser actually loaded (GitHub Pages and browsers cache aggressively).
-const BUILD_ID = "2026-09-30 · angel rumours 1";
+const BUILD_ID = "2026-09-30 · year three preparations 1";
 const stage = document.getElementById("stage");
 
 /* ---------------- CONVERSATION PRESENTATION ----------------
@@ -2836,7 +2932,7 @@ const HINTS = [
   { id: "talk", sel: ".arrive-actions .primary:not([disabled])", text: "She has something on her mind. The more she likes you, the more she'll tell you." },
   { id: "brief", sel: ".soul-talk .want-tags", text: "Today's job. Every piece that matches what she asks for scores." },
   { id: "drag", sel: "#handFan", text: "Drag cards from your hand onto the table." },
-  { id: "joker", sel: ".corner-left:not(.corner-left-2):not(.used)", text: "Joker: draw two extra cards. Once per client." },
+  { id: "coin", sel: ".corner-left:not(.corner-left-2):not(.used)", text: "Flip a coin: heads, one new card; tails, two. Once per client." },
   { id: "redraw", sel: ".corner-left-2:not(.used)", text: "Redraw: swap your hand for new cards. Once per client." },
   { id: "jokerCard", sel: ".fan-card-wrap .gcard-joker, .fan-card-wrap[data-joker]", text: "A Joker card. Tap it to pick any card from your whole deck." },
   { id: "action", sel: ".action-card", text: "She changed her mind. That card is a new rule for this job." },
@@ -3035,6 +3131,7 @@ const ICONS = {
   close: '<path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/>',
   check: '<path d="M5 12.5l4.5 4.5L19 7.5"/>',
   redraw: '<path d="M19.5 12a7.5 7.5 0 0 1-13.2 4.9"/><path d="M4.5 12a7.5 7.5 0 0 1 13.2-4.9"/><path d="M18 3.5v4h-4"/><path d="M6 20.5v-4h4"/>',
+  coin: '<circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="5.5"/><path d="M12 9.5v5"/>',
   joker: '<rect x="6" y="3.5" width="12" height="17" rx="2.2"/><path d="M12 8l1.2 2.8L16 12l-2.8 1.2L12 16l-1.2-2.8L8 12l2.8-1.2z"/>',
   sparkle: '<path d="M11 3.5l1.7 5L17.5 10l-4.8 1.6L11 16.5l-1.7-4.9L4.5 10l4.8-1.5z"/><path d="M18 15.5l.7 1.8 1.8.7-1.8.7-.7 1.8-.7-1.8-1.8-.7 1.8-.7z"/>',
   bell: '<path d="M6.5 16.5V11a5.5 5.5 0 0 1 11 0v5.5l1.5 2H5z"/><path d="M10 20.5a2 2 0 0 0 4 0"/>',
@@ -3207,14 +3304,20 @@ function markRumourSeen(r) {
   peril.rumoursSeen.push(r.id);
   peril.rumourMonth = yearMonthKey();
   if (peril.angelIntroStage < 1) peril.angelIntroStage = 1;
-  if (r.id === "arrival") peril.angelIntroStage = 3;
+  if (r.id === "arrival") { peril.angelIntroStage = 3; peril.arrivalJob = overallJobNumber(); }
 }
 
 // The one way into the Studio from the map.
 function enterStudio() {
+  const arrival = rumourAt("studio-arrival");
+  if (arrival) { renderAngelArrival(arrival); return; }
+  const angelJob = angelJobDue();
+  if (angelJob) { beginAngelJob(angelJob); return; }
+  studioAfterArrival();
+}
+// Tonight's own client (or her empty chair).
+function studioAfterArrival() {
   if (coreIsDead(currentClientKey())) { renderQuietNight(); return; }
-  const r = rumourAt("studio-arrival");
-  if (r) { renderAngelArrival(r); return; }
   renderShuffle();
 }
 
@@ -3227,7 +3330,7 @@ function renderAngelArrival(r) {
       <div class="portrait token">${icon("moon")}</div>
       <div class="soul-name">Studio</div>
       ${sceneHTML(r.lines, null)}
-      <button class="primary" style="margin-top:14px;" onclick="renderShuffle()">Continue</button>
+      <button class="primary" style="margin-top:14px;" onclick="studioAfterArrival()">Continue</button>
     </div>
   `;
   updateTopBar("", true);
@@ -3245,11 +3348,323 @@ function renderOldQuarterRumour(r) {
   updateTopBar("", true);
 }
 
+/* ---------------- ANGELS: ENCOUNTER PREPARATIONS ----------------
+   Data and rules: ENCOUNTER_PREPS in data-story.js. */
+let currentPrep = null;     // the preparation being styled this visit, or null
+let lastPrepOutcome = null; // { prep, key, safe, before, after, died } for the danger screen
+
+function prepById(id) { return ENCOUNTER_PREPS.find((e) => e.id === id); }
+function prepDone(id) { return peril.angelEncountersDone.includes(id); }
+function storyStepDone(id) { return prepDone(id) || peril.rumoursSeen.includes(id); }
+function prepsThisYearTwo() { return peril.prepsYearTwo || 0; }
+
+function ruleHits(rule, card) {
+  const v = rule.attr === "style" ? card.style : card[rule.attr]; // Armour is only ever a main style
+  return v === rule.value;
+}
+function ruleMet(rule, pieces) {
+  const n = pieces.filter((c) => ruleHits(rule, c)).length;
+  return rule.kind === "none" ? n === 0 : n >= rule.n;
+}
+function ruleLabel(rule) {
+  const v = rule.attr === "rarity" ? rule.value : rule.value.toLowerCase();
+  return rule.kind === "none" ? `No ${v}` : `${rule.value} \u00D7 ${rule.n}`;
+}
+
+// The smallest outfit from the owned cards (at most four, no category
+// clash) that meets every need, or null. needs: [{ hits(card), n }];
+// allowed(card): may this card be worn at all. Used for fairness (never
+// offer a job the wardrobe can't solve) and for how many Joker cards a
+// preparation hand gets.
+function ownedWearables() {
+  const jokerIds = new Set(JOKER_CARDS.map((j) => j.id));
+  return liveDeck.filter((c) => c.type !== "KEY" && !jokerIds.has(c.id) && c.category && c.category !== "Joker");
+}
+function smallestOutfit(needs, allowed) {
+  const pool = ownedWearables().filter(allowed);
+  const met = (need, chosen) => chosen.filter(need.hits).length >= need.n;
+  const clash = (a, b) => a.category === b.category
+    || (a.category === "Dress" && (b.category === "Top" || b.category === "Bottom"))
+    || (b.category === "Dress" && (a.category === "Top" || a.category === "Bottom"));
+  function search(chosen, depth) {
+    const unmet = needs.find((nd) => !met(nd, chosen));
+    if (!unmet) return chosen;
+    if (chosen.length >= depth) return null;
+    for (const c of pool) {
+      if (!unmet.hits(c) || chosen.includes(c) || chosen.some((x) => clash(x, c))) continue;
+      const found = search([...chosen, c], depth);
+      if (found) return found;
+    }
+    return null;
+  }
+  for (let depth = 0; depth <= 4; depth++) {
+    const found = search([], depth);
+    if (found) return found;
+  }
+  return null;
+}
+function smallestSolution(rules) {
+  return smallestOutfit(
+    rules.filter((r) => r.kind === "atLeast").map((r) => ({ hits: (c) => ruleHits(r, c), n: r.n })),
+    (c) => rules.every((r) => r.kind !== "none" || !ruleHits(r, c)));
+}
+
+// The preparation this visit becomes, or null. (E1 comes through R8.)
+function preparationFor(key) {
+  if (!prepDone("e1") || coreIsDead(key)) return null;
+  if (overallJobNumber() - peril.lastPrepJob < PREP_MIN_GAP) return null;
+  if (currentYear === 2 && prepsThisYearTwo() >= PREPS_MAX_YEAR_TWO) return null;
+  return ENCOUNTER_PREPS.find((e) => e.who === key && !prepDone(e.id) && (e.year || 2) <= currentYear
+    && (e.requires || []).every(storyStepDone)
+    && smallestSolution(e.rules)) || null;
+}
+
+// Turns this visit into the preparation: its brief, no Action Cards, no
+// Talk, her lines first. The hand gets one Joker card per piece the
+// smallest solution needs, so a solution is always reachable.
+function beginPreparation(prep, openingLines) {
+  currentPrep = prep;
+  currentBrief = { id: prep.id, want: [...prep.want], dialogue: [] };
+  currentBriefSilent = true;
+  actionPlan = []; actionCards = []; actionExclusions = [];
+  talkStageIndex = null;
+  specialTalkLines = openingLines || prep.lines;
+  talkedThisVisit = true;
+  soulStep = 0;
+  peril.angelEncountersDone.push(prep.id);
+  peril.lastPrepJob = overallJobNumber();
+  if (currentYear === 2) peril.prepsYearTwo = prepsThisYearTwo() + 1;
+  if (peril.angelIntroStage < 2) peril.angelIntroStage = 2;
+}
+function dealPreparationJokers() {
+  const need = (smallestSolution(currentPrep.rules) || []).length;
+  const jokers = JOKER_CARDS.slice(0, need).map((j) => j.id).filter((id) => !hand.includes(id));
+  deckPile = deckPile.filter((id) => !jokers.includes(id));
+  hand = [...hand, ...jokers];
+}
+
+function survivalPanelHTML(pieces) {
+  if (!currentPrep) return "";
+  const live = Array.isArray(pieces);
+  const chips = currentPrep.rules.map((r) => {
+    const met = live && ruleMet(r, pieces);
+    return `<span class="survival-rule ${live ? (met ? "met" : "unmet") : ""}">${live && met ? icon("check") : ""}${ruleLabel(r)}</span>`;
+  }).join("");
+  const first = !peril.heartsAreLifeShown && !live;
+  return `
+    <div class="survival-panel${live ? " compact" : ""}">
+      <div class="survival-title">Survival</div>
+      <div class="survival-rules">${chips}</div>
+      ${first ? `<p class="survival-note">${HEARTS_ARE_LIFE_LINE}</p>` : ""}
+    </div>`;
+}
+
+// Runs inside finishStyling(), after the normal score and hearts: survival
+// is judged on its own, the result is applied and saved at once.
+function resolvePreparation(pieces, key) {
+  const prep = currentPrep;
+  const safe = prep.rules.every((r) => ruleMet(r, pieces));
+  const before = relationships[key] || 0;
+  let after = before;
+  let died = false;
+  if (!safe) {
+    after = setHearts(key, before - ENCOUNTER_HIT_HEARTS);
+    if (after <= 0) { killCoreCharacter(key); died = true; }
+  }
+  peril.heartsAreLifeShown = true;
+  lastPrepOutcome = { prep, key, safe, before, after, died };
+  currentPrep = null;
+  saveGame();
+}
+
+function renderDangerResult() {
+  const o = lastPrepOutcome;
+  if (!o) { advanceMonth(); return; }
+  const client = CLIENTS[o.key];
+  const firstName = coreFirstName(o.key);
+  const lines = o.safe ? o.prep.safe : o.prep.hit;
+  const next = o.died ? `renderDeathScreen(${o.key}, 'advanceMonth()')` : "advanceMonth()";
+  stage.innerHTML = `
+    <div class="soul-scene danger-result ${o.safe ? "is-safe" : "is-hit"}">
+      <div class="portrait-col"><div class="portrait"><img src="${client.portrait}" alt="${firstName}"></div></div>
+      <div class="soul-talk">
+        <div class="soul-hearts danger-hearts">
+          <span class="hearts-before">${heartsHTML(o.before)}</span>
+          ${o.safe ? "" : `<span class="hearts-after">${heartsHTML(o.after)}</span>`}
+        </div>
+        <div class="soul-name">${titleCase(o.safe ? "Safe" : "Hurt")}</div>
+        <div class="danger-verdict">${o.prep.title}${o.safe ? "" : ` \u00B7 \u2212${ENCOUNTER_HIT_HEARTS} hearts`}</div>
+        ${sceneHTML(lines, firstName)}
+        <button class="primary" style="margin-top:14px;" onclick="${next}">Continue</button>
+      </div>
+    </div>`;
+  updateTopBar("", true);
+  lastPrepOutcome = null;
+}
+
+/* ---------------- ANGELS: STUDIO JOBS ----------------
+   Data and rules: ANGEL_JOBS in data-story.js. */
+let lastAngelOutcome = null; // { job, client, score, success, victim } for the result screens
+
+function angelVirtual(job) { return job.client === "lucia" ? LUCIA_VIRTUAL : IRINA_VIRTUAL; }
+const ANGEL_BLACK_BAN = { attr: "color", value: "Black", label: "No black", fromBrief: true };
+
+// Everything the job will ask by the end: the brief plus every scripted
+// "+", every "No ..." and the black ban.
+function angelJobFinalRules(job) {
+  const want = [...job.want, ...job.actions.filter((a) => a.kind === "add").map((a) => req(a.attr, a.value))];
+  const banned = (c) => c.color === "Black"
+    || job.actions.some((a) => (a.kind === "noBasics" && c.rarity === "Basic")
+      || (a.kind === "exclude" && actionAttrValues(c, a.attr).includes(a.value)));
+  return { want, banned };
+}
+// Solvable = one owned outfit meets every requirement without breaking a
+// rule (that alone scores at least 75, over ANGEL_PASS_SCORE).
+function angelJobSolvable(job) {
+  const { want, banned } = angelJobFinalRules(job);
+  return !!smallestOutfit(want.map((r) => ({ hits: (c) => reqMatches(r, c), n: 1 })), (c) => !banned(c));
+}
+function angelJobDue() {
+  if (!angelsMet() || peril.arrivalJob === null || overallJobNumber() <= peril.arrivalJob) return null;
+  if (overallJobNumber() - peril.lastAngelJob < ANGEL_JOB_GAP) return null;
+  return ANGEL_JOBS.find((j) => !peril.angelStudioJobsDone.includes(j.id) && angelJobSolvable(j)) || null;
+}
+
+function beginAngelJob(job) {
+  peril.angelStudioJobsDone.push(job.id);
+  peril.lastAngelJob = overallJobNumber();
+  startSpecialRound(angelVirtual(job), { want: [...job.want] }, { type: "angel", job });
+  actionExclusions = [{ ...ANGEL_BLACK_BAN }];
+  actionPlan = job.actions.map((a) => ({ afterPlaced: a.after, fired: false, scripted: a }));
+  saveGame();
+  renderAngelJobIntro();
+}
+function scriptedActionCard(a) {
+  const card = { kind: a.kind, attr: a.attr, value: a.value, from: titleCase(a.who) };
+  if (a.kind === "add") card.label = `+ ${actionShort(a.attr, a.value)}`;
+  if (a.kind === "exclude") card.label = `No ${actionShort(a.attr, a.value)}`;
+  if (a.kind === "noBasics") { card.rarities = ["Basic"]; card.label = "No Basics"; }
+  return card;
+}
+
+function renderAngelJobIntro() {
+  const job = specialJob.job;
+  const client = specialJob.virtualClient;
+  stage.innerHTML = `
+    <div class="soul-scene angel-job">
+      <div class="portrait-col"><div class="portrait"><img src="${client.portrait}" alt="${client.name}"></div></div>
+      <div class="soul-talk">
+        <div class="soul-name">${client.name}</div>
+        ${sceneHTML(job.lines, client.name)}
+        <div class="job-label">Today's job</div>
+        <div class="want-tags">${wantTagsHTML(currentBrief)}</div>
+        <div class="soft-direction">No black. Ever.</div>
+        <button class="primary" onclick="renderStyle()">Start styling</button>
+      </div>
+    </div>`;
+  updateTopBar("", true);
+}
+
+function resolveAngelJob(pieces, score) {
+  const job = specialJob.job;
+  const success = score >= ANGEL_PASS_SCORE;
+  let victim = null;
+  if (!success) {
+    // One worn wearable, chosen once, destroyed and saved before anything is shown.
+    const eligible = pieces.filter((c) => !c.storyCard && !c.unique && c.id !== THORN_VEIL.id && DECK.some((d) => d.id === c.id));
+    victim = eligible.length ? eligible[Math.floor(Math.random() * eligible.length)] : null;
+    if (victim) { destroyWearableCard(victim.id); rebuildLiveDeckFromUnlocked(); }
+  }
+  lastAngelOutcome = { job, client: specialJob.virtualClient, score, success, victim };
+  specialJob = null;
+  saveGame();
+  renderAngelResult();
+}
+
+function renderAngelResult() {
+  const o = lastAngelOutcome;
+  const next = !o.success && o.victim ? "renderSwordCut()" : "finishAngelNight()";
+  stage.innerHTML = `
+    <div class="soul-scene angel-job ${o.success ? "" : "angel-fail"}">
+      <div class="portrait-col"><div class="portrait"><img src="${o.client.portrait}" alt="${o.client.name}"></div></div>
+      <div class="soul-talk">
+        <div class="soul-name">${o.client.name}</div>
+        ${specialRatingHTML(o.job.title, o.score, [{ at: ANGEL_PASS_SCORE, means: "nothing is cut" }])}
+        ${sceneHTML(o.success ? o.job.success : o.job.failure, o.client.name)}
+        <button class="primary" style="margin-top:14px;" onclick="${next}">Continue</button>
+      </div>
+    </div>`;
+  updateTopBar("", true);
+}
+
+// The sword: the card comes up large, a blade crosses it, the halves fall apart.
+function renderSwordCut() {
+  const card = lastAngelOutcome.victim;
+  stage.innerHTML = `
+    <div class="sword-scene">
+      <div class="sword-card">
+        <div class="sword-half sword-half-a">${gcardHTML(card)}</div>
+        <div class="sword-half sword-half-b">${gcardHTML(card)}</div>
+        <div class="sword-blade" aria-hidden="true"></div>
+      </div>
+      <div class="sword-caption">
+        <div class="sword-caption-label">Card destroyed</div>
+        <div class="sword-caption-name">${card.name}</div>
+      </div>
+      <button class="primary sword-continue" onclick="finishAngelNight()">Continue</button>
+    </div>`;
+  updateTopBar("", true);
+}
+
+// An Angel job is an extra night: the calendar does not move; the map opens
+// with a fresh evening and tonight's Core Four client still waiting.
+function finishAngelNight() {
+  lastAngelOutcome = null;
+  renderMap();
+}
+
+/* ---------------- GRIEF ----------------
+   Data and rules: GRIEF_REACTIONS in data-story.js. Only normal Core Four
+   visits (never a preparation or an Angel job); at most one grief card per
+   visit; the most recent death she still has grief visits left for. */
+let griefThisVisit = null; // { dead, reaction } while a grief visit is being played
+
+function griefProgressOf(survivor, dead) { return ((peril.griefProgress[survivor] || {})[dead]) || 0; }
+function griefForVisit(survivor) {
+  for (let i = peril.deathOrder.length - 1; i >= 0; i--) {
+    const dead = peril.deathOrder[i];
+    const reaction = (GRIEF_REACTIONS[dead] || {})[survivor];
+    if (!reaction || griefProgressOf(survivor, dead) >= GRIEF_VISITS) continue;
+    // Never contradict her brief: a visit that asks for the refused colour waits.
+    const refused = reaction.card.refuse;
+    if (refused && (currentBrief.want || []).some((r) => r.attr === "color" && r.value === refused)) return null;
+    return { dead, reaction };
+  }
+  return null;
+}
+function applyGriefCard(survivor, grief) {
+  griefThisVisit = grief;
+  if (!peril.griefProgress[survivor]) peril.griefProgress[survivor] = {};
+  peril.griefProgress[survivor][grief.dead] = griefProgressOf(survivor, grief.dead) + 1;
+  const from = coreFirstName(survivor);
+  const refused = grief.reaction.card.refuse;
+  const card = refused
+    ? { kind: "exclude", attr: "color", value: refused, label: `No ${refused.toLowerCase()}`, from, grief: true }
+    : { kind: "sobbing", label: "Sobbing", from, grief: true };
+  if (refused) actionExclusions.push({ attr: "color", value: refused, label: card.label, grief: true });
+  actionCards.push(card);
+  // At most three Action Cards on the table: the grief card takes one place.
+  actionPlan = actionPlan.slice(0, 2);
+  const spoken = [...grief.reaction.lines].reverse().find((l) => l.who !== "YOU" && l.who !== "NARRATION");
+  lastActionLine = spoken ? { name: from, text: spoken.t } : null;
+}
+function griefSobbing() { return !!(griefThisVisit && griefThisVisit.reaction.card.sobbing); }
+
 /* ---------------- ROUND SETUP ---------------- */
 
 function startRound() {
   outfit = [null, null, null, null];
-  jokerUsesRemaining = 1 + ownedJokerCount;
+  coinFlipAvailable = true;
   redrawAvailable = true;
   selectedHandId = null;
   storyBeatsRemaining = STORY_BEATS_PER_JOB; // starting any job re-fills the story-beat pool
@@ -3272,22 +3687,39 @@ function startRound() {
   // now; a talk stage is only used up if the player actually talks.
   currentStageIndex = null;
   talkedThisVisit = false;
-  talkStageIndex = chooseStageForVisit(key, "talk");
-  const askIdx = chooseStageForVisit(key, "ask");
-  if (askIdx !== null) profile.stagesSeen.push(askIdx);
-  const chosen = chooseBriefForVisit(key, askIdx);
-  currentBrief = chosen.brief;
-  currentBriefSilent = chosen.silent;
-  // A private copy: action cards may change this job's brief.
-  currentBrief = { ...currentBrief, want: [...(currentBrief.want || [])] };
-  planActionCards();
-  // Things she said she doesn't want ("No pink") apply from the start.
-  (currentBrief.exclude || []).forEach((x) => actionExclusions.push({ attr: x.attr, value: x.value, label: `No ${actionShort(x.attr, x.value)}`, fromBrief: true }));
   lastActionLine = null;
   soulStep = "arrive";
   specialTalkLines = null;
+  currentPrep = null;
+  // An Angel encounter preparation replaces the whole visit (R8 -> E1 comes
+  // through the rumour ladder, the rest through preparationFor()).
+  const prepRumour = rumourAt("studio");
+  const r8Prep = prepRumour && prepRumour.prep ? prepById(prepRumour.prep) : null;
+  if (r8Prep && smallestSolution(r8Prep.rules)) {
+    markRumourSeen(prepRumour);
+    beginPreparation(r8Prep, prepRumour.lines);
+  } else if (!(prepRumour && prepRumour.prep)) {
+    const prep = preparationFor(key);
+    if (prep) beginPreparation(prep);
+  }
+  if (!currentPrep) {
+    talkStageIndex = chooseStageForVisit(key, "talk");
+    const askIdx = chooseStageForVisit(key, "ask");
+    if (askIdx !== null) profile.stagesSeen.push(askIdx);
+    const chosen = chooseBriefForVisit(key, askIdx);
+    currentBrief = chosen.brief;
+    currentBriefSilent = chosen.silent;
+    // A private copy: action cards may change this job's brief.
+    currentBrief = { ...currentBrief, want: [...(currentBrief.want || [])] };
+    planActionCards();
+    // Things she said she doesn't want ("No pink") apply from the start.
+    (currentBrief.exclude || []).forEach((x) => actionExclusions.push({ attr: x.attr, value: x.value, label: `No ${actionShort(x.attr, x.value)}`, fromBrief: true }));
+  }
+  griefThisVisit = null;
+  const grief = !currentPrep && anyCoreDead() ? griefForVisit(key) : null;
+  if (grief) applyGriefCard(key, grief);
   // Bible: after the armour sighting, Holly's next job opens with it.
-  if (key === 3 && storyFlags.armourSightingSeen && !storyFlags.armourHollySeen) {
+  if (!currentPrep && key === 3 && storyFlags.armourSightingSeen && !storyFlags.armourHollySeen) {
     storyFlags.armourHollySeen = true;
     specialTalkLines = ARMOUR_HOLLY_LINES;
     talkedThisVisit = true;
@@ -3295,7 +3727,8 @@ function startRound() {
   }
   // Angel rumours told in the Studio (R4 Margo, R5 Juniper): her visit opens with it.
   const studioRumour = !specialTalkLines && profile.visits > 1 ? rumourAt("studio") : null;
-  if (studioRumour) {
+  // (a rumour that is a preparation was handled above)
+  if (studioRumour && !studioRumour.prep) {
     markRumourSeen(studioRumour);
     specialTalkLines = studioRumour.lines;
     talkedThisVisit = true;
@@ -3317,6 +3750,7 @@ function startRound() {
   const handIds = drawInitialHand(deckPile);
   deckPile = deckPile.filter((id) => !handIds.includes(id));
   hand = handIds;
+  if (currentPrep) dealPreparationJokers();
   ensureBriefIsDrawable();
 }
 
@@ -3400,7 +3834,7 @@ function drawInitialHand(pool) {
 // or any lifetime/per-year counters -- see the comment on `let specialJob`.
 function startSpecialRound(virtualClient, brief, jobMeta) {
   outfit = [null, null, null, null];
-  jokerUsesRemaining = 1 + ownedJokerCount;
+  coinFlipAvailable = true;
   redrawAvailable = true;
   selectedHandId = null;
   currentBrief = brief;
@@ -3425,6 +3859,12 @@ function startSpecialRound(virtualClient, brief, jobMeta) {
 // can never be affected by this one.
 function scoreSpecialOutfit(pieces, virtualClient, brief) {
   const wantList = brief.want || [];
+  // Same rule as finishStyling(): a piece that breaks a "No ..." earns
+  // nothing, costs ACTION_EXCLUDE_PENALTY, and satisfies no preference.
+  const broken = pieces.filter((p) => actionViolations(p).length > 0);
+  const exclusionPenalty = -broken.reduce((sum, p) => sum + actionViolations(p).length * ACTION_EXCLUDE_PENALTY, 0);
+  const allPieces = pieces;
+  pieces = pieces.filter((p) => !broken.includes(p));
   const pieceDetails = pieces.map((piece) => {
     const matchedAttrs = wantList.filter((r) => reqMatches(r, piece));
     const briefPts = wantList.reduce((sum, r) => sum + reqMatchWeight(r, piece) * 25, 0);
@@ -3453,11 +3893,11 @@ function scoreSpecialOutfit(pieces, virtualClient, brief) {
     if (fits) eventBonus = 10;
   }
 
-  const hasDress = pieces.some((p) => p.category === "Dress");
-  const hasShoes = pieces.some((p) => p.category === "Shoes");
-  const hasTop = pieces.some((p) => p.category === "Top");
-  const hasBottom = pieces.some((p) => p.category === "Bottom");
-  let gapPenalty = 0;
+  const hasDress = allPieces.some((p) => p.category === "Dress");
+  const hasShoes = allPieces.some((p) => p.category === "Shoes");
+  const hasTop = allPieces.some((p) => p.category === "Top");
+  const hasBottom = allPieces.some((p) => p.category === "Bottom");
+  let gapPenalty = exclusionPenalty;
   if (!hasShoes) gapPenalty -= 10;
   if (!hasDress && !hasTop) gapPenalty -= 10;
   if (!hasDress && !hasBottom) gapPenalty -= 10;
@@ -3972,6 +4412,8 @@ function loadGame() {
   peakHearts = data.peakHearts || { ...relationships };
   // Saves from before this pass have no deaths, no Angels and nothing destroyed.
   peril = { ...freshPeril(), ...(data.peril || {}) };
+  // Saves from before Angel jobs existed: they already met them.
+  if (peril.arrivalJob === null && peril.rumoursSeen.includes("arrival")) peril.arrivalJob = -1;
   destroyedCardIds = new Set(data.destroyedCardIds || []);
   yearEndReward = data.yearEndReward || { year: null, ids: [] };
   Object.keys(peril.dead).forEach((k) => { if (peril.dead[k]) relationships[k] = 0; });
@@ -4733,18 +5175,35 @@ function toggleBurn(id) {
   else if (burnSelection.length < maxBurn) burnSelection.push(id);
   renderBurnScreen();
 }
+// Burning is deliberate: the chosen cards come up large, hold for a moment,
+// then burn one after another. The collection changes (and is saved) first,
+// so leaving mid-animation can't undo or repeat it.
 function confirmBurn() {
   const n = burnSelection.length;
   if (!n) return;
   const reward = BURN_REWARDS[n - 1] || 0;
-  document.querySelectorAll(".burn-selected").forEach((el) => el.classList.add("burning"));
-  document.querySelectorAll(".burn-screen button, .q-pick-bar button").forEach((b) => { b.disabled = true; });
+  const cards = burnSelection.map((id) => DECK.find((c) => c.id === id)).filter(Boolean);
+  burnSelection.forEach((id) => destroyWearableCard(id));
+  rebuildLiveDeckFromUnlocked();
+  moonCoins += reward;
+  burnSelection = [];
+  saveGame();
+
+  const reduced = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const HOLD = reduced ? 300 : 1500;   // cards shown large before the first catches
+  const STAGGER = reduced ? 0 : 450;   // next card catches this much later
+  const BURN = reduced ? 300 : 1600;   // one card burning away
+  stage.innerHTML = `
+    <div class="burn-pyre" aria-live="polite">
+      <div class="burn-pyre-row">
+        ${cards.map((c, i) => `<div class="burn-pyre-card" style="--i:${i}">${gcardHTML(c)}</div>`).join("")}
+      </div>
+      <p class="burn-pyre-note">${n === 1 ? "One card" : `${n} cards`} into the fire.</p>
+    </div>`;
+  updateTopBar("", true);
+  const els = [...stage.querySelectorAll(".burn-pyre-card")];
+  els.forEach((el, i) => setTimeout(() => el.classList.add("burning"), HOLD + i * STAGGER));
   setTimeout(() => {
-    burnSelection.forEach((id) => destroyWearableCard(id));
-    rebuildLiveDeckFromUnlocked();
-    moonCoins += reward;
-    burnSelection = [];
-    saveGame();
     stage.innerHTML = `
       <div class="center-col screen-pad reveal-screen">
         <div class="soul-name">Ash</div>
@@ -4753,7 +5212,7 @@ function confirmBurn() {
         <button class="primary" onclick="renderShop()">Back to the shop</button>
       </div>`;
     updateTopBar("", true);
-  }, 1400);
+  }, HOLD + (els.length - 1) * STAGGER + BURN + 300);
 }
 
 function renderShop() {
@@ -4940,14 +5399,17 @@ function renderCafeScreen(lines, leaveLabel, leaveAction) {
   updateTopBar("", true);
 }
 
-function afterMayaFirst() { metMaya = true; mayaEncounterCount += 1; renderMap(); }
-function afterMayaPhotoReaction() { mayaPhotoReactionSeen = true; renderMap(); }
-function afterMayaBackRoomReaction() { mayaBackRoomReactionSeen = true; renderMap(); }
-function afterMayaAtticHint() {
+// One-time scenes are marked as seen as soon as they are shown (mark...()),
+// not when "Leave" is clicked: from the same screen the player can also walk
+// off through a side door (Back room, Attic, Glass House...) and must never
+// be shown the scene again.
+function markMayaFirst() { metMaya = true; mayaEncounterCount += 1; }
+function markMayaPhotoReaction() { mayaPhotoReactionSeen = true; }
+function markMayaBackRoomReaction() { mayaBackRoomReactionSeen = true; }
+function markMayaAtticHint() {
   mayaAtticHintGiven = true;
   julietteCafeKeyHintAvailable = true;
   mayaEncounterCount += 1;
-  renderMap();
 }
 
 // Main-room priority resolver: back-door reveal (must pre-empt everything
@@ -5013,19 +5475,19 @@ function buildCafeEvents() {
     { eligible: () => hasUnusualKey && !cafeBackDoorDiscovered, run: renderCafeBackDoorReveal },
     {
       eligible: () => !metMaya && mayaEligible(),
-      run: () => renderCafeScreen(MAYA_FIRST_SCENE, "Leave", "afterMayaFirst()"),
+      run: () => { renderCafeScreen(MAYA_FIRST_SCENE, "Leave", "renderMap()"); markMayaFirst(); },
     },
     {
       eligible: () => metMaya && hasFadedPhotograph && !mayaPhotoReactionSeen,
-      run: () => renderCafeScreen(MAYA_PHOTO_REACTION, "Leave", "afterMayaPhotoReaction()"),
+      run: () => { renderCafeScreen(MAYA_PHOTO_REACTION, "Leave", "renderMap()"); markMayaPhotoReaction(); },
     },
     {
       eligible: () => metMaya && cafeBackRoomUnlocked && !mayaBackRoomReactionSeen,
-      run: () => renderCafeScreen(MAYA_BACKROOM_REACTION, "Leave", "afterMayaBackRoomReaction()"),
+      run: () => { renderCafeScreen(MAYA_BACKROOM_REACTION, "Leave", "renderMap()"); markMayaBackRoomReaction(); },
     },
     {
       eligible: mayaAtticHintEligible,
-      run: () => renderCafeScreen(MAYA_ATTIC_HINT_SCENE, "Leave", "afterMayaAtticHint()"),
+      run: () => { renderCafeScreen(MAYA_ATTIC_HINT_SCENE, "Leave", "renderMap()"); markMayaAtticHint(); },
     },
     {
       eligible: () => !!getFestivalReactionFor("maya", metMaya),
@@ -5269,8 +5731,8 @@ function takeAtticPhotograph() {
   cafeAtticFirstVisitSeen = true;
   renderAtticScene(ATTIC_PHOTO_TAKEN_LINES, "Continue", "renderMap()");
 }
-function afterAtticMenus() { atticMenusSeen = true; renderMap(); }
-function afterAtticCoat() { cafeAtticStaffCoatSeen = true; renderMap(); }
+function markAtticMenus() { atticMenusSeen = true; }
+function markAtticCoat() { cafeAtticStaffCoatSeen = true; }
 
 /* ===========================================================================
    NIGHT CAFÉ — QUARTETT
@@ -6167,8 +6629,8 @@ function atticRepeatVisit() {
 
 function renderCafeAttic() {
   if (!cafeAtticFirstVisitSeen) { renderAtticScene(ATTIC_FIRST_SCENE, "Take the photograph", "takeAtticPhotograph()"); return; }
-  if (!atticMenusSeen) { renderAtticScene(ATTIC_MENUS_SCENE, "Continue", "afterAtticMenus()"); return; }
-  if (!cafeAtticStaffCoatSeen) { renderAtticScene(ATTIC_COAT_SCENE, "Continue", "afterAtticCoat()"); return; }
+  if (!atticMenusSeen) { renderAtticScene(ATTIC_MENUS_SCENE, "Continue", "renderMap()"); markAtticMenus(); return; }
+  if (!cafeAtticStaffCoatSeen) { renderAtticScene(ATTIC_COAT_SCENE, "Continue", "renderMap()"); markAtticCoat(); return; }
   atticRepeatVisit();
 }
 
@@ -6238,7 +6700,7 @@ function renderGardenScene(lines, leaveLabel, leaveAction) {
   updateTopBar("", true);
 }
 
-function afterOctaviaFirst() { metOctavia = true; octaviaEncounterCount = 1; renderMap(); }
+function markOctaviaFirst() { metOctavia = true; octaviaEncounterCount = 1; }
 
 function buildGardenEvents() {
   return [
@@ -6253,7 +6715,7 @@ function buildGardenEvents() {
       eligible: () => !storyFlags.gardenRitualSeen && storyFlags.gardenWalkSeen && stageWasSeen(0, 16) && heartsEarned(0) >= 3,
       run: () => { storyFlags.gardenRitualSeen = true; renderGardenScene(GARDEN_RITUAL_LINES, "Leave", "renderMap()"); },
     },
-    { eligible: () => !metOctavia, run: () => renderGardenScene(OCT_FIRST_SCENE, "Leave", "afterOctaviaFirst()") },
+    { eligible: () => !metOctavia, run: () => { renderGardenScene(OCT_FIRST_SCENE, "Leave", "renderMap()"); markOctaviaFirst(); } },
     { eligible: octaviaSacrificeEligible, run: () => renderGardenScene(OCT_SACRIFICE_INTRO_LINES, "Continue", "renderOctaviaSacrificePicker()") },
     {
       eligible: () => !!getFestivalReactionFor("octavia", metOctavia),
@@ -6454,7 +6916,7 @@ function glassHouseCultivateUnlockEligible() {
   return currentYear >= 2 && currentMonthIndex() >= 5 && currentMonthIndex() <= 7
     && glassHouseOctaviaVisitSeen && glassHouseVisitCount >= 3 && !glassHouseCultivationUnlocked;
 }
-function afterGlassHouseCultivateUnlock() { glassHouseCultivationUnlocked = true; renderMap(); }
+function markGlassHouseCultivateUnlock() { glassHouseCultivationUnlocked = true; }
 
 function renderGlassHouse() {
   if (!glassHouseFirstVisitSeen) {
@@ -6476,7 +6938,7 @@ function renderGlassHouse() {
   }
 
   if (glassHouseCultivateUnlockEligible()) {
-    renderGlassHouseScene(GH_CULTIVATE_UNLOCK_LINES, "Leave", "afterGlassHouseCultivateUnlock()");
+    renderGlassHouseScene(GH_CULTIVATE_UNLOCK_LINES, "Leave", "renderMap()"); markGlassHouseCultivateUnlock();
     return;
   }
 
@@ -6698,11 +7160,14 @@ function castleSublocButtonsHTML() {
   return `<div class="subloc-row">${buttons.join("")}</div>`;
 }
 
-function renderCastleScene(lines, buttonLabel, onContinue) {
+// ratingHTML: the score of a styling job at the Castle (guards, Valery),
+// shown above the reaction -- see specialRatingHTML().
+function renderCastleScene(lines, buttonLabel, onContinue, ratingHTML = "") {
   stage.innerHTML = `
     <div class="center-col screen-pad">
       ${portraitHTML(lines, "🏰", "#33323c")}
       <div class="soul-name">Night Castle</div>
+      ${ratingHTML}
       ${sceneHTML(lines, null)}
       ${castleSublocButtonsHTML()}
       <button class="primary" onclick="${onContinue}">${buttonLabel}</button>
@@ -6711,11 +7176,10 @@ function renderCastleScene(lines, buttonLabel, onContinue) {
   updateTopBar("", true);
 }
 
-function afterCastleGuardsFirst() {
+function markCastleGuardsFirst() {
   metHelena = true;
   metJuliette = true;
   castleGateCharactersUnlocked = true;
-  renderMap();
 }
 
 function askHelenaAboutJuliette(stageNum) {
@@ -6732,7 +7196,7 @@ function askHelenaAboutJuliette(stageNum) {
 // Garden content plug into this same resolver once their locations exist.
 // The Juliette Attic Key handoff (Characters spec §9) — the only way to
 // obtain the Nightcafe Attic Key. Depends on flags set by Maya's Attic hint
-// at the Café (see mayaAtticHintEligible()/afterMayaAtticHint()).
+// at the Café (see mayaAtticHintEligible()/markMayaAtticHint()).
 
 
 // Cross-doc reactions to the Faded Photograph (Characters spec §10.2–10.3).
@@ -6743,20 +7207,19 @@ function julietteAtticKeyEligible() {
   return currentYear >= 2 && julietteCafeKeyHintAvailable && mayaAtticHintGiven
     && !julietteGaveAtticKey && !cafeAtticUnlocked;
 }
-function afterJulietteAtticKey() {
+function markJulietteAtticKey() {
   julietteGaveAtticKey = true;
   awardKeyCard("key_cafeattic");
-  renderMap();
 }
-function afterHelenaPhotoReaction() { helenaPhotoReactionSeen = true; renderMap(); }
-function afterJuliettePhotoReaction() { juliettePhotoReactionSeen = true; renderMap(); }
+function markHelenaPhotoReaction() { helenaPhotoReactionSeen = true; }
+function markJuliettePhotoReaction() { juliettePhotoReactionSeen = true; }
 
 // --- Valery (Castle exterior) --------------------------------------------
 
 
 
 function valeryEligible() { return currentYear >= 2 || currentMonthIndex() >= 4; } // May Y1 onward
-function afterValeryFirstExit() { metValery = true; renderMap(); }
+function markValeryFirstExit() { metValery = true; }
 
 // --- Guard Ceremony special job (Characters spec §8) ----------------------
 
@@ -6786,6 +7249,17 @@ function beginGuardRoundJuliette() {
   startSpecialRound(JULIETTE_VIRTUAL, GUARD_BRIEF, { type: "guard", guard: "juliette" });
   renderStyle();
 }
+// The score of a special styling job, with what it needed to reach.
+function specialRatingHTML(label, score, marks) {
+  const marksText = marks.map((m) => `${m.at}+ ${m.means}`).join(" \u00B7 ");
+  return `
+    <div class="special-rating">
+      <span class="special-rating-label">${label}</span>
+      <span class="special-rating-score">${Math.round(score)}</span>
+      <span class="special-rating-marks">${marksText}</span>
+    </div>`;
+}
+
 function closeGuardCeremony(combinedScore) {
   guardCeremonyCompleted = true;
   const succeeded = combinedScore >= 70;
@@ -6806,7 +7280,8 @@ function closeGuardCeremony(combinedScore) {
     moonCoins += 5;
     lines.push({ who: "NARRATION", t: "Earned 5 mooncoins for the ceremony." });
   }
-  renderCastleScene(lines, "Leave", "renderMap()");
+  renderCastleScene(lines, "Leave", "renderMap()",
+    specialRatingHTML("Helena and Juliette, together", combinedScore, [{ at: 70, means: "they approve" }]));
 }
 
 // The one-time retry (§8.1): a smaller Juliette-only single-card fitting,
@@ -6864,10 +7339,9 @@ function valeryKeyFallbackEligible() {
     && valerySolsticeCompleted && royalGardenKeyFallbackNeeded
     && !hasRoyalGardenKey && !royalGardenUnlocked;
 }
-function afterValeryKeyFallback() {
+function markValeryKeyFallback() {
   awardKeyCard("key_royalgarden");
   royalGardenKeyFallbackNeeded = false;
-  renderMap();
 }
 
 // --- Seasonal festival reactions (Characters spec §12) --------------------
@@ -6925,23 +7399,23 @@ function buildCastleEvents() {
     { eligible: julThornRetryEligible, run: startJulThornRetry },
     {
       eligible: valeryKeyFallbackEligible,
-      run: () => renderCastleScene(VALERY_KEY_FALLBACK_SCENE, "Leave", "afterValeryKeyFallback()"),
+      run: () => { renderCastleScene(VALERY_KEY_FALLBACK_SCENE, "Leave", "renderMap()"); markValeryKeyFallback(); },
     },
     {
       eligible: julietteAtticKeyEligible,
-      run: () => renderCastleScene(JULIETTE_ATTIC_KEY_SCENE, "Leave", "afterJulietteAtticKey()"),
+      run: () => { renderCastleScene(JULIETTE_ATTIC_KEY_SCENE, "Leave", "renderMap()"); markJulietteAtticKey(); },
     },
     {
       eligible: () => hasFadedPhotograph && !helenaPhotoReactionSeen,
-      run: () => renderCastleScene(HELENA_PHOTO_REACTION, "Leave", "afterHelenaPhotoReaction()"),
+      run: () => { renderCastleScene(HELENA_PHOTO_REACTION, "Leave", "renderMap()"); markHelenaPhotoReaction(); },
     },
     {
       eligible: () => hasFadedPhotograph && !juliettePhotoReactionSeen,
-      run: () => renderCastleScene(JULIETTE_PHOTO_REACTION, "Leave", "afterJuliettePhotoReaction()"),
+      run: () => { renderCastleScene(JULIETTE_PHOTO_REACTION, "Leave", "renderMap()"); markJuliettePhotoReaction(); },
     },
     {
       eligible: () => metHelena && !metValery && valeryEligible(),
-      run: () => renderCastleScene(VALERY_FIRST_EXIT_SCENE, "Leave", "afterValeryFirstExit()"),
+      run: () => { renderCastleScene(VALERY_FIRST_EXIT_SCENE, "Leave", "renderMap()"); markValeryFirstExit(); },
     },
     {
       eligible: () => !!getFestivalReactionFor("helena", metHelena),
@@ -7020,7 +7494,8 @@ function buildCastleEvents() {
 
 function renderCastle() {
   if (!castleGateCharactersUnlocked) {
-    renderCastleScene(CASTLE_GUARDS_FIRST_SCENE, "Back to After City", "afterCastleGuardsFirst()");
+    renderCastleScene(CASTLE_GUARDS_FIRST_SCENE, "Back to After City", "renderMap()");
+    markCastleGuardsFirst();
     return;
   }
 
@@ -7057,6 +7532,11 @@ function finishSpecialStyling() {
       return;
     }
     closeGuardCeremony(combinedScore);
+    return;
+  }
+
+  if (job.type === "angel") {
+    resolveAngelJob(pieces, scoreSpecialOutfit(pieces, job.virtualClient, currentBrief));
     return;
   }
 
@@ -7583,10 +8063,12 @@ function renderSoul() {
       const lines = currentBrief.dialogue.filter((l) => !(talkedThisVisit && l.skipAfterStage));
       talk = lines.map((line) => dialogueLineHTML(line, firstName)).join("");
     }
+    // Grief comes before the job, every time it is played.
+    if (griefThisVisit) talk = griefThisVisit.reaction.lines.map((line) => dialogueLineHTML(line, firstName)).join("") + talk;
     const softDirectionHTML = currentBrief.softDirection
       ? `<div class="soft-direction">${currentBrief.softDirection}</div>`
       : "";
-    body = `${talk}<div class="job-label">Today's job</div><div class="want-tags">${wantTags}</div>${softDirectionHTML}<button class="primary" onclick="renderStyle()">Start styling</button>`;
+    body = `${talk}<div class="job-label">Today's job</div><div class="want-tags">${wantTags}</div>${softDirectionHTML}${survivalPanelHTML()}<button class="primary" onclick="renderStyle()">Start styling</button>`;
   }
 
   const portrait = client.portrait
@@ -7919,12 +8401,13 @@ function redrawHand() {
   renderStyle();
 }
 
-function drawJoker() {
-  if (jokerUsesRemaining <= 0 || deckPile.length === 0) return;
-  const extra = shuffle(deckPile).slice(0, Math.min(2, deckPile.length));
+function flipCoin() {
+  if (!coinFlipAvailable || deckPile.length === 0) return;
+  coinFlipAvailable = false;
+  coinFlipResult = Math.random() < 0.5 ? 1 : 2; // heads: one card, tails: two
+  const extra = shuffle(deckPile).slice(0, Math.min(coinFlipResult, deckPile.length));
   deckPile = deckPile.filter((id) => !extra.includes(id));
   hand = hand.concat(extra);
-  jokerUsesRemaining -= 1;
   renderStyle();
 }
 
@@ -7963,7 +8446,11 @@ function renderStyle() {
   const wants = currentBrief.playerChoice
     ? "your call"
     : currentBrief.want.map((r) => r.label.toLowerCase()).join(" & ");
-  const jokerReady = jokerUsesRemaining > 0 && deckPile.length > 0;
+  const coinReady = coinFlipAvailable && deckPile.length > 0;
+  const coinToastHTML = coinFlipResult
+    ? `<div class="coin-toast" role="status">${icon("coin")}<span>${coinFlipResult === 1 ? "Heads \u2014 one new card" : "Tails \u2014 two new cards"}</span></div>`
+    : "";
+  coinFlipResult = null;
   const redrawReady = redrawAvailable && hand.length > 0;
 
   stage.innerHTML = `
@@ -7972,16 +8459,18 @@ function renderStyle() {
         <div class="style-who">${firstName}</div>
         <div class="style-wants">${currentBrief.playerChoice ? "Style from what you know" : `Wants: <b>${wants}</b>`}</div>
         ${actionExclusions.some((x) => x.fromBrief) ? `<div class="style-not">Not: <b>${actionExclusions.filter((x) => x.fromBrief).map((x) => actionShort(x.attr, x.value).toLowerCase()).join(", ")}</b></div>` : ""}
+        ${survivalPanelHTML(outfit.filter(Boolean))}
       </div>
       ${client.portrait ? `<div class="portrait"><img src="${client.portrait}" alt="${firstName}"></div>` : ""}
-      ${lastActionLine ? `<div class="speech style-speech ${actionArriving >= 0 ? "fresh" : ""}"><span class="speaker">${lastActionLine.name}</span>${lastActionLine.text}</div>` : ""}
+      ${lastActionLine ? `<div class="speech style-speech ${actionArriving >= 0 ? "fresh" : ""}"><span class="speaker">${lastActionLine.name}</span>${lastActionLine.note ? `<em class="style-note">${lastActionLine.note}</em>` : ""}${lastActionLine.text}</div>` : ""}
     </aside>
 
     <div class="style-table"><div class="outfit-board" id="outfitBoard">${slotsHTML}${actionStackHTML()}</div></div>
 
     <div class="hand-fan" id="handFan">${fanHTML}</div>
 
-    <button class="corner-action corner-left ${jokerReady ? "" : "used"}" onclick="drawJoker()" aria-label="Joker" title="Joker: draw 2 extra cards, once per client${ownedJokerCount > 0 ? ` (uses left this visit: ${jokerUsesRemaining})` : ""}">${icon("joker")}${ownedJokerCount > 0 ? `<span class="joker-count">${jokerUsesRemaining}</span>` : ""}</button>
+    <button class="corner-action corner-left ${coinReady ? "" : "used"}" onclick="flipCoin()" aria-label="Flip a coin" title="Flip a coin, once per client: heads, one new card; tails, two">${icon("coin")}</button>
+    ${coinToastHTML}
     <button class="corner-action corner-left corner-left-2 ${redrawReady ? "" : "used"}" onclick="redrawHand()" aria-label="Redraw" title="Redraw: swap your hand for new cards of the same rarity or lower, once per client">${icon("redraw")}</button>
     <button class="corner-action corner-right" id="continueBtn" onclick="${specialJob ? "finishSpecialStyling()" : "finishStyling()"}" aria-label="Finish outfit" title="See their reaction">${icon("check")}</button>
   `;
@@ -8178,7 +8667,7 @@ function maybeFireActionCard() {
   const placed = outfit.filter(Boolean).length;
   if (placed < next.afterPlaced) return;
   next.fired = true;
-  const card = generateActionCard();
+  const card = next.scripted ? scriptedActionCard(next.scripted) : generateActionCard();
   if (!card) return;
   applyActionCard(card);
   storyFlags.actionCardMet = true;
@@ -8186,7 +8675,9 @@ function maybeFireActionCard() {
     if (!document.getElementById("outfitBoard")) return;
     if (document.querySelector(".fan-card-wrap.dragging")) { setTimeout(fire, 300); return; }
     const key = currentClientKey();
-    lastActionLine = { name: CLIENTS[key].name.split(",")[0], text: actionLineFor(card) };
+    lastActionLine = next.scripted
+      ? { name: titleCase(next.scripted.who), text: next.scripted.t, note: next.scripted.note }
+      : { name: CLIENTS[key].name.split(",")[0], text: actionLineFor(card) };
     actionArriving = actionCards.length - 1;
     renderStyle();
     actionArriving = -1;
@@ -8197,12 +8688,12 @@ function maybeFireActionCard() {
 }
 function actionStackHTML() {
   if (!actionCards.length) return "";
-  const name = CLIENTS[currentClientKey()].name.split(",")[0];
+  const name = specialJob ? specialJob.virtualClient.name : CLIENTS[currentClientKey()].name.split(",")[0];
   return `<div class="action-stack">${actionCards.map((c, i) => `
     <div class="action-card kind-${c.kind} ${i === actionArriving ? "arriving" : ""}" style="--i:${i}" role="img" aria-label="Action card: ${c.label}">
       <span class="ac-label">Action</span>
       <span class="ac-text">${c.label}</span>
-      <span class="ac-from">${name}</span>
+      <span class="ac-from">${c.from || name}</span>
     </div>`).join("")}</div>`;
 }
 
@@ -8966,7 +9457,12 @@ function finishStyling() {
 
   // Per-piece detail — computed once, used for both the aggregate totals and
   // the itemized breakdown, so the two views can never disagree.
+  // A piece that breaks one of the rules (a brief's "No ..." or an Action
+  // Card's) earns nothing at all -- no brief points, no rarity bonus, never
+  // "Best piece" -- on top of its ACTION_EXCLUDE_PENALTY below.
   const pieceDetails = pieces.map((piece) => {
+    const broken = actionViolations(piece);
+    if (broken.length > 0) return { piece, matchedAttrs: [], briefPts: 0, rarityPts: 0, broken, penalty: -broken.length * ACTION_EXCLUDE_PENALTY };
     const matchedAttrs = wantList.filter((r) => reqMatches(r, piece));
     const briefPts = wantList.reduce((sum, r) => sum + reqMatchWeight(r, piece) * 25, 0);
     let rarityPts = 0;
@@ -9064,6 +9560,11 @@ function finishStyling() {
   const exclusionPenalty = exclusionResults.reduce((sum, r) => sum - r.count * ACTION_EXCLUDE_PENALTY, 0);
   gapPenalty += exclusionPenalty;
   exclusionResults.filter((r) => r.count > 0).forEach((r) => gaps.push(`Ignored \u201C${r.label}\u201D` + (r.count > 1 ? ` ×${r.count}` : "")));
+  // Grief: sobbing costs every worn piece SOBBING_PER_PIECE.
+  if (griefSobbing() && pieces.length) {
+    gapPenalty -= SOBBING_PER_PIECE * pieces.length;
+    gaps.push(`Sobbing` + (pieces.length > 1 ? ` ×${pieces.length}` : ""));
+  }
   let scoreWithGaps = score + gapPenalty;
 
   // A complete matching set, but only when the outfit already works. Resolved
@@ -9119,6 +9620,7 @@ function finishStyling() {
   // something maxed out after a handful of good outfits.
   relDelta = Math.min(relDelta, 0.5);
   setHearts(key, (relationships[key] || 0) + relDelta);
+  if (currentPrep) resolvePreparation(pieces, key); // fashion result first, danger result second
 
   // Track this client's best-ever outfit, cards and all, for her profile.
   if (profile.bestScore === null || scoreWithGaps > profile.bestScore) {
@@ -9249,7 +9751,10 @@ function renderResult(client, score, wantResults, relDelta, moonCoinsEarned, bre
     breakdown.comboBonus > 0 ? { label: `${breakdown.comboName} combo`, value: breakdown.comboBonus } : null,
     breakdown.eventBonus > 0 ? { label: `${EVENT_LABELS[breakdown.activeEvent]} bonus`, value: breakdown.eventBonus } : null,
     breakdown.welcomeBonus > 0 ? { label: "New stylist grace", value: breakdown.welcomeBonus } : null,
-    ...breakdown.gaps.map((g) => ({ label: g, value: g.startsWith("Ignored") ? -ACTION_EXCLUDE_PENALTY * (parseInt((g.split("×")[1] || "1"), 10)) : -10 })),
+    ...breakdown.gaps.map((g) => {
+      const times = parseInt((g.split("×")[1] || "1"), 10);
+      return { label: g, value: g.startsWith("Ignored") ? -ACTION_EXCLUDE_PENALTY * times : g.startsWith("Sobbing") ? -SOBBING_PER_PIECE * times : -10 };
+    }),
   ].filter(Boolean);
 
   const breakdownHTML = `
@@ -9267,7 +9772,9 @@ function renderResult(client, score, wantResults, relDelta, moonCoinsEarned, bre
       bits.push(d.matchedAttrs.map((r) => r.label.toLowerCase()).join(", ") + ` (+${d.briefPts})`);
     }
     if (d.rarityPts > 0) bits.push(`${d.piece.rarity} (+${d.rarityPts})`);
-    const verdict = bits.length > 0 ? bits.join(" · ") : "no match, no bonus";
+    const verdict = d.broken
+      ? `broke ${d.broken.map((l) => `\u201C${l}\u201D`).join(", ")} (${d.penalty})`
+      : bits.length > 0 ? bits.join(" · ") : "no match, no bonus";
     return `<p><b>${d.piece.name}</b><br>${verdict}</p>`;
   }).join("");
   const bestId = breakdown.bestPiece ? breakdown.bestPiece.id : null;
@@ -9276,7 +9783,7 @@ function renderResult(client, score, wantResults, relDelta, moonCoinsEarned, bre
       <h4>How each piece performed</h4>
       <div class="result-piece-row">
         ${breakdown.pieceDetails.map((d) => {
-          const pts = d.briefPts + d.rarityPts;
+          const pts = d.broken ? d.penalty : d.briefPts + d.rarityPts;
           const best = d.piece.id === bestId;
           return `
             <figure class="result-piece${best ? " is-best" : ""}" title="${d.piece.name}">
@@ -9349,7 +9856,9 @@ function renderResult(client, score, wantResults, relDelta, moonCoinsEarned, bre
       </div>
       ${piecesRowHTML}
       <p class="breakdown-hint">${breakdown.playerChoice ? "No hard requirements this time. The whole score comes from her hidden preferences, at +15 each (capped at +60)." : "Each matched brief attribute is worth 25. One piece can only satisfy each attribute once, so wear more pieces that reinforce the ask to climb higher."}</p>
-      <button class="primary" onclick="advanceMonth()">Next client</button>
+      ${lastPrepOutcome
+        ? `<button class="primary" onclick="renderDangerResult()">Continue</button>`
+        : `<button class="primary" onclick="advanceMonth()">Next client</button>`}
     </div>
   `;
   updateTopBar("", true);
@@ -9566,7 +10075,8 @@ function resolveValerySolstice(score) {
     ];
     statusLine = { who: "NARRATION", t: "No key tonight — but Valery isn't finished with you yet." };
   }
-  renderCastleScene([...lines, statusLine], "Leave", "renderMap()");
+  renderCastleScene([...lines, statusLine], "Leave", "renderMap()",
+    specialRatingHTML("Valery\u2019s rating", score, [{ at: 70, means: "she likes it" }, { at: 90, means: "the key" }]));
 }
 
 function afterEventContinue() {
@@ -9759,6 +10269,11 @@ function renderDevPanel() {
     <div class="dev-section">
       <div class="dev-label">Angel rumours</div>
       <p class="dev-note">${devRumourStatus()}</p>
+      <p class="dev-note">Preparations played: ${peril.angelEncountersDone.join(", ") || "none"}. Next Studio visit (${coreFirstName(currentClientKey())}): ${(preparationFor(currentClientKey()) || {}).id || "no preparation"}${prepDone("e1") ? "" : " (E1 comes through R8)"}.</p>
+      <div class="dev-row"><button class="dev-btn" onclick="peril.lastPrepJob = -99; renderDevPanel()">Allow a preparation now</button></div>
+      <p class="dev-note">Grief: ${peril.deathOrder.length ? CLIENTS.map((c, k) => coreIsDead(k) ? "" : `${coreFirstName(k)} ${peril.deathOrder.map((d) => `${coreFirstName(d)} ${griefProgressOf(k, d)}/${GRIEF_VISITS}`).join(", ")}`).filter(Boolean).join(" \u00B7 ") : "nobody has died"}.</p>
+      <p class="dev-note">Angel jobs played: ${peril.angelStudioJobsDone.join(", ") || "none"}. Next Studio visit: ${(angelJobDue() || {}).id || "no Angel job"}${angelsMet() ? "" : " (not met yet)"}.</p>
+      <div class="dev-row"><button class="dev-btn" onclick="peril.lastAngelJob = -99; if (peril.arrivalJob !== null) peril.arrivalJob = -99; renderDevPanel()">Allow an Angel job now</button></div>
       <div class="dev-row">
         <button class="dev-btn" onclick="devRumourMonth()">Allow another this month</button>
         <button class="dev-btn" onclick="devRumourSkip()">Skip the next one</button>

@@ -1815,6 +1815,10 @@ const SECONDARY_PORTRAITS = {
   irina: "https://terrirossa.github.io/dead-gorgeous-assets/portraits/portrait_irina.png",
   lucia: "https://terrirossa.github.io/dead-gorgeous-assets/portraits/portrait_lucia.png",
 };
+// The guard ceremony's styling screen shows who you are dressing
+// (HELENA_VIRTUAL / JULIETTE_VIRTUAL are defined above this list).
+HELENA_VIRTUAL.portrait = SECONDARY_PORTRAITS.helena;
+JULIETTE_VIRTUAL.portrait = SECONDARY_PORTRAITS.juliette;
 
 const SECONDARY_PORTRAIT_ORDER = ["helena", "juliette", "maya", "octavia", "valery", "irina", "lucia"];
 
@@ -1885,7 +1889,7 @@ const EVENT_BONUSES = {
 const EVENT_LABELS = { flowerFest: "Flower Fest", summerSolstice: "Summer Solstice", moonFest: "Moon Fest", firstSnow: "First Snow", winterSolstice: "Winter Solstice" };
 
 const VALERY_VIRTUAL = {
-  name: "Valery", color: "#c9a15a",
+  name: "Valery", color: "#c9a15a", portrait: SECONDARY_PORTRAITS.valery,
   preferences: [pref("color", "Gold"), pref("color", "Pink"), pref("style", "Elegant"), pref("style", "Romantic"), pref("style", "Bold"), pref("fit", "Fitted")],
 };
 
@@ -2492,8 +2496,7 @@ const YEAR_END_TEXT = {
    - at most one per month, so they spread from spring to late Year 2
    - each only at its own place ("where"); a Studio beat only on her visit
    - fromMonth: not before that month of Year 2 (Year 3 is always late enough)
-   R8 (Ivy's first preparation) slots in between R7 and the arrival in the
-   next step. */
+   R8 is Ivy's first encounter preparation (E1). */
 const RUMOURS_FROM_MONTH = 2; // March, Year 2
 const ANGEL_RUMOURS = [
   { id: "r1", where: "oldquarter", lines: [
@@ -2556,6 +2559,20 @@ const ANGEL_RUMOURS = [
     { who: "YOU", t: "And what do they want?" },
     { who: "MAYA", t: "If I knew, I wouldn\u2019t tell you here." },
   ] },
+  // R8 is Ivy's first encounter preparation (E1): her visit opens with these
+  // lines and becomes that job. See ENCOUNTER_PREPS.
+  { id: "r8", where: "studio", client: 2, prep: "e1", lines: [
+    { who: "IVY", t: "I\u2019ve got a delivery in the Dawn District." },
+    { who: "YOU", t: "Okay?" },
+    { who: "IVY", t: "I need white." },
+    { who: "YOU", t: "You hate white." },
+    { who: "IVY", t: "I know." },
+    { who: "YOU", t: "Because of them?" },
+    { who: "NARRATION", t: "Ivy checks the Studio door." },
+    { who: "IVY", t: "Two pieces. No black." },
+    { who: "YOU", t: "Ivy\u2014" },
+    { who: "IVY", t: "Don\u2019t make me explain it twice." },
+  ] },
   { id: "arrival", where: "studio-arrival", fromMonth: 9, lines: [
     { who: "NARRATION", t: "The Studio door opens." },
     { who: "NARRATION", t: "The air turns cold." },
@@ -2591,3 +2608,506 @@ const ANGEL_RUMOURS = [
 
 // DRAFT (Claude): how Irina and Lucia appear in the Souls panel once met.
 const ANGEL_SOUL_NOTE = "They came to the Studio uninvited.";
+
+
+/* ---------------- ANGELS: ENCOUNTER PREPARATIONS ----------------
+   [brief] §9–§12. A Core Four character's own Studio visit, with a normal
+   brief AND survival rules. Styling score and survival are separate: all
+   rules met = SAFE, any rule missed = HIT (ENCOUNTER_HIT_HEARTS hearts).
+   E1 is R8 (Ivy's first) and opens with R8's lines -- see ANGEL_RUMOURS.
+   Scheduling (index.html, preparationFor()): her turn, first open entry
+   for her in this order, "requires" met, owned wardrobe can solve it, at
+   least PREP_MIN_GAP jobs since the last preparation, at most
+   PREPS_MAX_YEAR_TWO in Year 2. */
+const PREP_MIN_GAP = 3;          // never back to back; at most one in three jobs
+const PREPS_MAX_YEAR_TWO = 4;    // the rest wait for Year 3
+function atLeast(attr, value, n) { return { kind: "atLeast", attr, value, n }; }
+function noneOf(attr, value) { return { kind: "none", attr, value }; }
+
+// [brief] shown once, at the first preparation.
+const HEARTS_ARE_LIFE_LINE = "The people you grew close to have more to lose \u2014 and more chances to survive. From now on, hearts are also life.";
+
+const ENCOUNTER_PREPS = [
+  {
+    id: "e1", who: 2, title: "Dawn District delivery",
+    want: [req("style", "Cool"), req("fit", "Fitted")],
+    rules: [atLeast("color", "White", 2), noneOf("color", "Black")],
+    lines: null /* R8's lines open it (ANGEL_RUMOURS) */,
+    safe: [
+      { who: "IVY", t: "Didn\u2019t even turn their heads." },
+    ],
+    hit: [
+      { who: "IVY", t: "One of them looked straight at me. Next time, more white." },
+    ],
+  },
+  {
+    id: "e2", who: 3, title: "Castle banquet", requires: ["e1", "r9"],
+    want: [req("style", "Classic"), req("style", "Elegant")],
+    rules: [atLeast("style", "Armour", 1), noneOf("color", "Black")],
+    lines: [
+      { who: "HOLLY", t: "I need something formal. The Castle is holding a banquet." },
+      { who: "YOU", t: "You hate banquets." },
+      { who: "HOLLY", t: "This one is different." },
+      { who: "YOU", t: "How?" },
+      { who: "NARRATION", t: "Holly is quiet for a moment." },
+      { who: "HOLLY", t: "Angels will attend." },
+      { who: "YOU", t: "The ones Ivy was afraid of?" },
+      { who: "HOLLY", t: "Ivy was right to be cautious." },
+    ],
+    safe: [
+      { who: "HOLLY", t: "The armour was prudent." },
+    ],
+    hit: [
+      { who: "HOLLY", t: "I should have been better prepared." },
+    ],
+  },
+  {
+    id: "e3", who: 1, title: "White flowers", requires: ["e1"],
+    want: [req("style", "Romantic"), req("style", "Cozy")],
+    rules: [atLeast("color", "White", 1), atLeast("style", "Armour", 1), noneOf("color", "Black")],
+    lines: [
+      { who: "JUNIPER", t: "Octavia needs cuttings from the eastern beds." },
+      { who: "YOU", t: "You look worried." },
+      { who: "JUNIPER", t: "There have been Angels near the path." },
+      { who: "YOU", t: "Then don\u2019t go." },
+      { who: "JUNIPER", t: "The cuttings won\u2019t survive until tomorrow." },
+    ],
+    safe: [
+      { who: "JUNIPER", t: "I don\u2019t think they saw me." },
+    ],
+    hit: [
+      { who: "JUNIPER", t: "It knew I was there." },
+    ],
+  },
+  {
+    id: "e4", who: 0, title: "Castle consultation", requires: ["e1"],
+    want: [req("style", "Elegant"), req("style", "Classic")],
+    rules: [atLeast("color", "Blue", 1), atLeast("style", "Armour", 1), noneOf("color", "Black")],
+    lines: [
+      { who: "MARGO", t: "The Castle has requested a consultation." },
+      { who: "YOU", t: "You sound thrilled." },
+      { who: "MARGO", t: "Two Angels are expected." },
+      { who: "YOU", t: "Irina and Lucia?" },
+      { who: "MARGO", t: "Don\u2019t become proud of knowing their names." },
+    ],
+    safe: [
+      { who: "MARGO", t: "They watched the blue. Not me." },
+    ],
+    hit: [
+      { who: "MARGO", t: "Useful. Painful, but useful." },
+    ],
+  },
+  {
+    id: "e5", who: 2, title: "Second delivery", requires: ["e1"],
+    want: [req("style", "Cool"), req("style", "Daring")],
+    rules: [atLeast("color", "White", 2), noneOf("rarity", "Basic"), noneOf("color", "Black")],
+    lines: [
+      { who: "IVY", t: "Same district. Worse package." },
+      { who: "YOU", t: "More white?" },
+      { who: "IVY", t: "And nothing cheap. They notice cheap." },
+    ],
+    safe: [
+      { who: "IVY", t: "Clean run." },
+    ],
+    hit: [
+      { who: "IVY", t: "Too close." },
+    ],
+  },
+  {
+    id: "e6", who: 3, title: "Escort duty", requires: ["e2"],
+    want: [req("style", "Classic"), req("fit", "Fitted")],
+    rules: [atLeast("style", "Armour", 2), atLeast("color", "White", 1), noneOf("color", "Black")],
+    lines: [
+      { who: "HOLLY", t: "I\u2019m escorting someone through the Royal Quarter." },
+      { who: "YOU", t: "Who?" },
+      { who: "HOLLY", t: "Someone who would prefer not to be named." },
+    ],
+    safe: [
+      { who: "HOLLY", t: "No one was harmed." },
+    ],
+    hit: [
+      { who: "HOLLY", t: "I kept them safe. That will have to be enough." },
+    ],
+  },
+  {
+    id: "e7", who: 1, title: "Glass House at dawn", requires: ["e3"],
+    want: [req("style", "Romantic"), req("color", "Green")],
+    rules: [atLeast("color", "White", 2), atLeast("fit", "Fitted", 1), noneOf("color", "Black")],
+    lines: [
+      { who: "JUNIPER", t: "They\u2019ve started passing the Glass House at dawn." },
+      { who: "YOU", t: "Then don\u2019t go." },
+      { who: "JUNIPER", t: "The plants still need watering." },
+    ],
+    safe: [
+      { who: "JUNIPER", t: "They passed right by." },
+    ],
+    hit: [
+      { who: "JUNIPER", t: "I heard it stop behind me." },
+    ],
+  },
+  {
+    id: "e8", who: 0, title: "An Angel's request", requires: ["arrival"],
+    want: [req("style", "Elegant"), req("style", "Bold")],
+    rules: [atLeast("color", "Gold", 1), atLeast("style", "Armour", 1), noneOf("color", "Black"), noneOf("rarity", "Basic")],
+    lines: [
+      { who: "MARGO", t: "Irina requested something from the Nightgarden." },
+      { who: "YOU", t: "You\u2019re taking it to her?" },
+      { who: "MARGO", t: "I\u2019m taking something to her." },
+    ],
+    safe: [
+      { who: "MARGO", t: "Politeness remains a useful form of armour." },
+    ],
+    hit: [
+      { who: "MARGO", t: "She smiled. I preferred the alternative." },
+    ],
+  },
+  {
+    id: "e9", who: 2, title: "Castle exit", requires: ["e2"],
+    want: [req("style", "Cool"), req("style", "Bold")],
+    rules: [atLeast("color", "White", 2), atLeast("style", "Armour", 1), noneOf("color", "Black")],
+    lines: [
+      { who: "IVY", t: "I need to get somebody out after the banquet." },
+      { who: "YOU", t: "Somebody?" },
+      { who: "IVY", t: "You\u2019re getting better at not asking." },
+    ],
+    safe: [
+      { who: "IVY", t: "We made it." },
+    ],
+    hit: [
+      { who: "IVY", t: "We made it. Mostly." },
+    ],
+  },
+  {
+    id: "e10", who: 3, title: "Hold the door", requires: ["e6"],
+    want: [req("style", "Classic"), req("style", "Armour")],
+    rules: [atLeast("style", "Armour", 2), atLeast("color", "Blue", 1), noneOf("color", "Black"), noneOf("rarity", "Basic")],
+    lines: [
+      { who: "HOLLY", t: "If something happens tonight, people will need time to leave." },
+      { who: "YOU", t: "That sounds like you plan to stay behind." },
+      { who: "HOLLY", t: "Dress me." },
+    ],
+    safe: [
+      { who: "HOLLY", t: "Everyone got out." },
+    ],
+    hit: [
+      { who: "HOLLY", t: "Everyone got out." },
+      { who: "YOU", t: "Holly\u2014" },
+      { who: "HOLLY", t: "That was the task." },
+    ],
+  },
+];
+
+
+/* ---------------- ANGELS: STUDIO JOBS ----------------
+   [brief] §7–§8. Five authored jobs for Irina and Lucia, played as an extra
+   night on top of the rotation (the Core Four keep their nights). Fixed
+   brief, fixed Action Cards ("after": how many pieces are on the table),
+   black always banned. Below ANGEL_PASS_SCORE one worn wearable is cut in
+   half with a sword -- gone for the run. They have no hearts and pay nothing.
+   Scheduling (index.html, angelJobDue()): first one on the Studio visit
+   after the arrival, then at least ANGEL_JOB_GAP jobs apart, in order,
+   skipping any the owned wardrobe can't solve yet. */
+const ANGEL_PASS_SCORE = 70;
+const ANGEL_JOB_GAP = 5;
+
+const IRINA_VIRTUAL = { name: "Irina", color: "#dfe6f2", portrait: SECONDARY_PORTRAITS.irina,
+  preferences: [pref("color", "White"), pref("color", "Blue"), pref("color", "Gold"), pref("style", "Armour")] };
+const LUCIA_VIRTUAL = { name: "Lucia", color: "#dfe6f2", portrait: SECONDARY_PORTRAITS.lucia,
+  preferences: [pref("color", "White"), pref("color", "Blue"), pref("color", "Gold"), pref("style", "Armour")] };
+
+const ANGEL_JOBS = [
+  { id: "a1", client: "irina", title: "First fitting",
+    lines: [{ who: "IRINA", t: "White. Gold. Something fitted. I\u2019m told you\u2019re good at listening." }],
+    want: [req("color", "White"), req("color", "Gold"), req("fit", "Fitted")],
+    actions: [
+      { after: 1, kind: "add", attr: "style", value: "Armour", who: "IRINA", t: "Pretty is useful. Protected is useful longer." },
+      { after: 3, kind: "noBasics", who: "IRINA", t: "You can do better than ordinary." },
+    ],
+    success: [{ who: "IRINA", t: "Better than I expected." }, { who: "NARRATION", t: "A pause." }, { who: "IRINA", t: "That may become inconvenient." }],
+    failure: [{ who: "IRINA", t: "Oh." }, { who: "NARRATION", t: "She looks at the outfit again." }, { who: "IRINA", t: "They were generous about you." }] },
+  { id: "a2", client: "lucia", title: "Blue room",
+    lines: [{ who: "NARRATION", t: "Lucia looks at the cards for several seconds." }, { who: "LUCIA", t: "Blue. Gold." }],
+    want: [req("color", "Blue"), req("color", "Gold"), req("style", "Elegant")],
+    actions: [
+      { after: 2, kind: "add", attr: "fit", value: "Fitted", who: "LUCIA", t: "Closer." },
+      { after: 3, kind: "exclude", attr: "fit", value: "Oversized", who: "LUCIA", note: "Lucia moves one card half an inch away from herself.", t: "No." },
+    ],
+    success: [{ who: "NARRATION", t: "Lucia studies you instead of the outfit." }, { who: "LUCIA", t: "Again." }],
+    failure: [{ who: "LUCIA", t: "No." }, { who: "NARRATION", t: "She reaches for the sword." }] },
+  { id: "a3", client: "irina", title: "The invitation",
+    lines: [{ who: "IRINA", t: "The Castle asked for restraint. I thought we might give them the appearance of it." }],
+    want: [req("color", "White"), req("style", "Elegant"), req("style", "Armour")],
+    actions: [
+      { after: 1, kind: "add", attr: "color", value: "Gold", who: "IRINA", t: "A little ceremony never hurt anyone." },
+      { after: 2, kind: "exclude", attr: "style", value: "Romantic", who: "IRINA", t: "Not softness. They\u2019ll misunderstand." },
+    ],
+    success: [{ who: "IRINA", t: "You understand implication. That is rarer than taste." }],
+    failure: [{ who: "IRINA", t: "So that is your solution." }, { who: "NARRATION", t: "She smiles." }, { who: "IRINA", t: "How reassuring." }] },
+  { id: "a4", client: "lucia", title: "No shadow",
+    lines: [{ who: "NARRATION", t: "Lucia points to the lightest cards." }, { who: "LUCIA", t: "These." }],
+    want: [req("color", "White"), req("color", "Blue"), req("style", "Minimal")],
+    actions: [
+      { after: 1, kind: "exclude", attr: "style", value: "Daring", who: "LUCIA", t: "Quiet." },
+      { after: 3, kind: "add", attr: "style", value: "Armour", who: "LUCIA", t: "And that." },
+    ],
+    success: [{ who: "NARRATION", t: "Lucia looks at the outfit, then at you." }, { who: "LUCIA", t: "You learn quickly." }, { who: "NARRATION", t: "It does not sound like approval." }],
+    failure: [{ who: "LUCIA", t: "Too visible." }] },
+  { id: "a5", client: "irina", title: "Two opinions", // Irina is styled; Lucia stays in the scene
+    lines: [{ who: "IRINA", t: "Lucia and I disagree." }, { who: "LUCIA", t: "She does." }, { who: "IRINA", t: "Make us both happy." }],
+    want: [req("color", "Blue"), req("style", "Elegant"), req("fit", "Fitted")],
+    actions: [
+      { after: 1, kind: "add", attr: "color", value: "White", who: "LUCIA", t: "White." },
+      { after: 2, kind: "add", attr: "color", value: "Gold", who: "IRINA", t: "She\u2019s right. How irritating." },
+      { after: 3, kind: "noBasics", who: "LUCIA", t: "No." },
+    ],
+    success: [{ who: "IRINA", t: "Lucia, I think they may actually be good." }, { who: "LUCIA", t: "I noticed." }],
+    failure: [{ who: "IRINA", t: "We asked for very little." }, { who: "LUCIA", t: "And learned enough." }] },
+];
+
+
+/* ---------------- GRIEF ----------------
+   [brief] §16–§18, verbatim. GRIEF_REACTIONS[dead][survivor]: the Action
+   Card she plays on her first GRIEF_VISITS normal Studio visits after that
+   death, and what she says. card: { refuse: "<Color>" } is a hard "No
+   <color>" exclusion; { sobbing: true } costs SOBBING_PER_PIECE per worn
+   piece. Keys are the CLIENTS indices: 0 Margo, 1 Juniper, 2 Ivy, 3 Holly.
+   A grief card never contradicts her brief: a visit whose brief asks for
+   the refused colour is skipped and does not count (see griefForVisit()). */
+const GRIEF_VISITS = 3;
+const SOBBING_PER_PIECE = 10;
+const GRIEF_REACTIONS = {
+  3: { // Holly died
+    1: { card: { refuse: "Blue" }, lines: [{ who: "JUNIPER", t: "No blue. Please. Not today." }] },
+    2: { card: { refuse: "Blue" }, lines: [{ who: "IVY", t: "Not blue. I don\u2019t want to look at it." }] },
+    0: { card: { refuse: "Silver" }, lines: [{ who: "MARGO", t: "No silver. I have seen enough of it." }] },
+  },
+  2: { // Ivy died
+    1: { card: { sobbing: true }, lines: [{ who: "NARRATION", t: "Juniper tries to speak, stops, and wipes her face." }, { who: "JUNIPER", t: "Sorry. Keep going." }] },
+    3: { card: { refuse: "Black" }, lines: [{ who: "HOLLY", t: "Not black." }, { who: "YOU", t: "Why?" }, { who: "HOLLY", t: "I said not black." }] },
+    0: { card: { refuse: "Black" }, lines: [{ who: "MARGO", t: "No black. She would call it predictable." }] },
+  },
+  1: { // Juniper died
+    2: { card: { refuse: "Green" }, lines: [{ who: "IVY", t: "No green." }, { who: "YOU", t: "Juniper would have\u2014" }, { who: "IVY", t: "I know." }] },
+    3: { card: { refuse: "Green" }, lines: [{ who: "HOLLY", t: "No green today." }] },
+    0: { card: { sobbing: true }, lines: [{ who: "NARRATION", t: "Margo goes silent for a long time." }, { who: "MARGO", t: "Continue." }] },
+  },
+  0: { // Margo died
+    1: { card: { sobbing: true }, lines: [{ who: "JUNIPER", t: "She was supposed to teach me the rest." }] },
+    2: { card: { refuse: "Red" }, lines: [{ who: "IVY", t: "No red. She\u2019d have an opinion about it." }] },
+    3: { card: { refuse: "Red" }, lines: [{ who: "HOLLY", t: "Not red." }, { who: "YOU", t: "All right." }, { who: "HOLLY", t: "Thank you." }] },
+  },
+};
+
+
+/* DRAFT (written by Claude for review): twelve Year 3 preparations, three
+   per character, so danger stays real through Year 3 (the balance
+   simulation assumed about five per character). Same rules as E1-E10;
+   "year: 3" keeps them out of Year 2. Everything she asks for out loud is
+   in her brief or her survival rules. */
+ENCOUNTER_PREPS.push(
+  {
+    id: "e11", who: 0, year: 3, title: "Mourning in white", requires: ["e4"],
+    want: [req("style", "Elegant"), req("fit", "Fitted")],
+    rules: [atLeast("color", "White", 1), noneOf("color", "Black")],
+    lines: [
+      { who: "MARGO", t: "There is a funeral at the Castle. Angels will stand at the door." },
+      { who: "YOU", t: "Black, then." },
+      { who: "MARGO", t: "White. I will hate it." },
+      { who: "MARGO", t: "Make it fitted, so I can hate it properly." },
+    ],
+    safe: [
+      { who: "MARGO", t: "No one looked twice. For once, that was the goal." },
+    ],
+    hit: [
+      { who: "MARGO", t: "One of them bowed to me. I would rather have been ignored." },
+    ],
+  },
+  {
+    id: "e12", who: 0, year: 3, title: "The old workroom", requires: ["e11"],
+    want: [req("style", "Classic"), req("style", "Bold")],
+    rules: [atLeast("style", "Armour", 1), noneOf("color", "Black")],
+    lines: [
+      { who: "MARGO", t: "My old workroom is in the Royal Quarter. I want my scissors back." },
+      { who: "YOU", t: "The Royal Quarter is where they walk." },
+      { who: "MARGO", t: "Scissors do not care who walks where." },
+      { who: "MARGO", t: "Something classic. Something bold. And something that stops a blade." },
+    ],
+    safe: [
+      { who: "MARGO", t: "I have my scissors. The rest can stay buried." },
+    ],
+    hit: [
+      { who: "MARGO", t: "I have my scissors. I paid more for them this time." },
+    ],
+  },
+  {
+    id: "e13", who: 0, year: 3, title: "Asked for by name", requires: ["e8", "e12"],
+    want: [req("style", "Elegant"), req("style", "Classic")],
+    rules: [atLeast("color", "Gold", 1), atLeast("style", "Armour", 2), noneOf("color", "Black"), noneOf("rarity", "Basic")],
+    lines: [
+      { who: "MARGO", t: "Irina has asked for me by name." },
+      { who: "YOU", t: "Don\u2019t go." },
+      { who: "MARGO", t: "One does not refuse. One dresses for it." },
+      { who: "MARGO", t: "Gold, since she likes gold. Armour, since I like breathing. Nothing cheap." },
+    ],
+    safe: [
+      { who: "MARGO", t: "She asked about you. I told her nothing useful." },
+    ],
+    hit: [
+      { who: "MARGO", t: "She asked about you. I told her nothing. It cost me." },
+    ],
+  },
+  {
+    id: "e14", who: 1, year: 3, title: "Seed exchange", requires: ["e3"],
+    want: [req("style", "Cozy"), req("color", "Green")],
+    rules: [atLeast("color", "White", 2), noneOf("color", "Black")],
+    lines: [
+      { who: "JUNIPER", t: "There\u2019s a seed exchange by the east gate." },
+      { who: "JUNIPER", t: "Everyone goes in white now." },
+      { who: "YOU", t: "Everyone?" },
+      { who: "JUNIPER", t: "Everyone who wants to come back." },
+    ],
+    safe: [
+      { who: "JUNIPER", t: "I got the blue poppies. Nobody followed me home." },
+    ],
+    hit: [
+      { who: "JUNIPER", t: "I dropped half the seeds running. Some of them will grow anyway." },
+    ],
+  },
+  {
+    id: "e15", who: 1, year: 3, title: "Octavia\u2019s errand", requires: ["e7"],
+    want: [req("style", "Romantic"), req("style", "Cozy")],
+    rules: [atLeast("style", "Armour", 1), atLeast("fit", "Fitted", 1), noneOf("color", "Black")],
+    lines: [
+      { who: "JUNIPER", t: "Octavia wants something from the old orchard. She says it can\u2019t wait." },
+      { who: "YOU", t: "Can I say no for you?" },
+      { who: "JUNIPER", t: "Would you dress me instead?" },
+      { who: "JUNIPER", t: "Something soft on top. Something hard underneath. And close to the body, so nothing catches on the branches." },
+    ],
+    safe: [
+      { who: "JUNIPER", t: "Octavia said thank you. I don\u2019t think she\u2019s ever said that before." },
+    ],
+    hit: [
+      { who: "JUNIPER", t: "Octavia got what she wanted. I got a scar. She seemed to think that was fair." },
+    ],
+  },
+  {
+    id: "e16", who: 1, year: 3, title: "Night bloom", requires: ["e15"],
+    want: [req("style", "Romantic"), req("color", "Green")],
+    rules: [atLeast("color", "White", 1), atLeast("color", "Blue", 1), atLeast("style", "Armour", 1), noneOf("color", "Black")],
+    lines: [
+      { who: "JUNIPER", t: "The moon lilies only open once a year. Tonight." },
+      { who: "YOU", t: "And the Angels?" },
+      { who: "JUNIPER", t: "They like pale things. So I\u2019ll be pale." },
+      { who: "JUNIPER", t: "And a little blue, so I don\u2019t look like a lily. And armour. I\u2019m not stupid." },
+    ],
+    safe: [
+      { who: "JUNIPER", t: "They opened. I watched the whole thing." },
+    ],
+    hit: [
+      { who: "JUNIPER", t: "They opened. I only saw the end." },
+    ],
+  },
+  {
+    id: "e17", who: 2, year: 3, title: "Three drops", requires: ["e5"],
+    want: [req("style", "Cool"), req("style", "Daring")],
+    rules: [atLeast("color", "White", 2), noneOf("rarity", "Basic"), noneOf("color", "Black")],
+    lines: [
+      { who: "IVY", t: "Three drops tonight. All in the Dawn District." },
+      { who: "YOU", t: "Three?" },
+      { who: "IVY", t: "Nothing cheap. Nothing black. You know the rest." },
+    ],
+    safe: [
+      { who: "IVY", t: "Three for three." },
+    ],
+    hit: [
+      { who: "IVY", t: "Two for three. Don\u2019t ask about the third." },
+    ],
+  },
+  {
+    id: "e18", who: 2, year: 3, title: "The bike", requires: ["e9"],
+    want: [req("style", "Cool"), req("fit", "Fitted")],
+    rules: [atLeast("style", "Armour", 1), atLeast("color", "White", 1), noneOf("color", "Black")],
+    lines: [
+      { who: "IVY", t: "They\u2019ve taken an interest in the bike." },
+      { who: "YOU", t: "Who has?" },
+      { who: "IVY", t: "Take a guess. I\u2019m riding it past them anyway." },
+      { who: "IVY", t: "Armour. Some white. And make it fit, I can\u2019t ride in a tent." },
+    ],
+    safe: [
+      { who: "IVY", t: "The bike\u2019s fine. So am I, before you ask." },
+    ],
+    hit: [
+      { who: "IVY", t: "The bike\u2019s fine." },
+    ],
+  },
+  {
+    id: "e19", who: 2, year: 3, title: "Last parcel", requires: ["e17"],
+    want: [req("style", "Daring"), req("style", "Bold")],
+    rules: [atLeast("color", "White", 2), atLeast("style", "Armour", 1), noneOf("color", "Black"), noneOf("rarity", "Basic")],
+    lines: [
+      { who: "IVY", t: "Last delivery. After this I\u2019m done with the Dawn District." },
+      { who: "YOU", t: "You said that last time." },
+      { who: "IVY", t: "This time I mean it." },
+      { who: "IVY", t: "White. Lots of it. Nothing cheap. And something they\u2019d think twice about cutting." },
+    ],
+    safe: [
+      { who: "IVY", t: "Done. Actually done." },
+    ],
+    hit: [
+      { who: "IVY", t: "Done. Don\u2019t look at my arm." },
+    ],
+  },
+  {
+    id: "e20", who: 3, year: 3, title: "Inspection", requires: ["e6"],
+    want: [req("style", "Classic"), req("fit", "Fitted")],
+    rules: [atLeast("color", "Blue", 1), atLeast("style", "Armour", 1), noneOf("color", "Black")],
+    lines: [
+      { who: "HOLLY", t: "The Castle guard is changing. Angels will inspect us." },
+      { who: "YOU", t: "Inspect you for what?" },
+      { who: "HOLLY", t: "Weakness." },
+      { who: "HOLLY", t: "Silver won\u2019t do this time. Blue, and armour. Fitted. Classic." },
+    ],
+    safe: [
+      { who: "HOLLY", t: "We passed." },
+    ],
+    hit: [
+      { who: "HOLLY", t: "We passed. One of us did not stand straight afterwards." },
+    ],
+  },
+  {
+    id: "e21", who: 3, year: 3, title: "The vigil", requires: ["e20"],
+    want: [req("style", "Elegant"), req("style", "Classic")],
+    rules: [atLeast("color", "White", 1), atLeast("style", "Armour", 2), noneOf("color", "Black")],
+    lines: [
+      { who: "HOLLY", t: "There is a vigil tonight for those we lost." },
+      { who: "YOU", t: "And you\u2019re standing guard at it." },
+      { who: "HOLLY", t: "Someone has to." },
+      { who: "HOLLY", t: "White for them. Armour for me. Two pieces, if you can." },
+    ],
+    safe: [
+      { who: "HOLLY", t: "The candles lasted until morning." },
+    ],
+    hit: [
+      { who: "HOLLY", t: "The candles lasted until morning. I did not, quite." },
+    ],
+  },
+  {
+    id: "e22", who: 3, year: 3, title: "The inner gate", requires: ["e10", "e21"],
+    want: [req("style", "Classic"), req("style", "Armour")],
+    rules: [atLeast("style", "Armour", 2), atLeast("color", "White", 1), atLeast("color", "Blue", 1), noneOf("color", "Black"), noneOf("rarity", "Basic")],
+    lines: [
+      { who: "HOLLY", t: "They have asked the guard to open the inner gate." },
+      { who: "YOU", t: "Will you?" },
+      { who: "HOLLY", t: "I will be standing in it when they ask again." },
+      { who: "HOLLY", t: "Armour. White. Blue. Nothing ordinary." },
+    ],
+    safe: [
+      { who: "HOLLY", t: "The gate stayed shut." },
+    ],
+    hit: [
+      { who: "HOLLY", t: "The gate stayed shut." },
+      { who: "YOU", t: "And you?" },
+      { who: "HOLLY", t: "I am still standing in it." },
+    ],
+  },
+);

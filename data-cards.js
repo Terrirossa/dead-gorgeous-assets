@@ -381,6 +381,45 @@ const DECK = [
   { id: 437, name: "Zebra Mini Skirt", category: "Bottom", fit: "Fitted", style: "Daring", style2: "Bold", color: "Black", rarity: "Rare",
     lore: "Wears the print like it was daring you to say something.",
     fullArt: "https://terrirossa.github.io/dead-gorgeous-assets/cards/card_437_zebra_mini_skirt.svg" },
+
+  // PLACEHOLDERS (no art yet) -- white, armour and gold pieces so the Angel
+  // content is playable and can be balanced. Replace with real cards later;
+  // every one is marked placeholder: true so they are easy to find.
+  // Ids 950+ (900-904 belong to the friendship cards).
+  { id: 950, name: "White Moto Jacket", category: "Jacket", fit: "Fitted", style: "Cool", style2: "Daring", color: "White", rarity: "Uncommon", placeholder: true,
+    lore: "Placeholder card. Real art coming." },
+  { id: 951, name: "White Tailored Trousers", category: "Bottom", fit: "Fitted", style: "Classic", style2: "Minimal", color: "White", rarity: "Uncommon", placeholder: true,
+    lore: "Placeholder card. Real art coming." },
+  { id: 952, name: "White Column Dress", category: "Dress", fit: "Fitted", style: "Elegant", style2: "Minimal", color: "White", rarity: "Rare", placeholder: true,
+    lore: "Placeholder card. Real art coming." },
+  { id: 953, name: "White Ankle Boots", category: "Shoes", fit: "Regular", style: "Cool", style2: "Minimal", color: "White", rarity: "Uncommon", placeholder: true,
+    lore: "Placeholder card. Real art coming." },
+  { id: 954, name: "White Knit Top", category: "Top", fit: "Relaxed", style: "Cozy", style2: "Minimal", color: "White", rarity: "Basic", placeholder: true,
+    lore: "Placeholder card. Real art coming." },
+  { id: 955, name: "White Lace Blouse", category: "Top", fit: "Regular", style: "Romantic", style2: "Elegant", color: "White", rarity: "Uncommon", placeholder: true,
+    lore: "Placeholder card. Real art coming." },
+  { id: 956, name: "Chainmail Top", category: "Top", fit: "Regular", style: "Armour", style2: "Cool", color: "Silver", rarity: "Uncommon", placeholder: true,
+    lore: "Placeholder card. Real art coming." },
+  { id: 957, name: "White Breastplate", category: "Top", fit: "Fitted", style: "Armour", style2: "Elegant", color: "White", rarity: "Rare", placeholder: true,
+    lore: "Placeholder card. Real art coming." },
+  { id: 958, name: "Plated Skirt", category: "Bottom", fit: "Fitted", style: "Armour", style2: "Romantic", color: "White", rarity: "Uncommon", placeholder: true,
+    lore: "Placeholder card. Real art coming." },
+  { id: 959, name: "Plated Boots", category: "Shoes", fit: "Regular", style: "Armour", style2: "Classic", color: "Silver", rarity: "Uncommon", placeholder: true,
+    lore: "Placeholder card. Real art coming." },
+  { id: 960, name: "Blue Pauldron Jacket", category: "Jacket", fit: "Fitted", style: "Armour", style2: "Elegant", color: "Blue", rarity: "Rare", placeholder: true,
+    lore: "Placeholder card. Real art coming." },
+  { id: 961, name: "Blue Gauntlets", category: "Accessory", fit: "Regular", style: "Armour", style2: "Bold", color: "Blue", rarity: "Uncommon", placeholder: true,
+    lore: "Placeholder card. Real art coming." },
+  { id: 962, name: "Gold Vambrace", category: "Accessory", fit: "Regular", style: "Armour", style2: "Elegant", color: "Gold", rarity: "Rare", placeholder: true,
+    lore: "Placeholder card. Real art coming." },
+  { id: 963, name: "Gold Brocade Top", category: "Top", fit: "Fitted", style: "Elegant", style2: "Bold", color: "Gold", rarity: "Uncommon", placeholder: true,
+    lore: "Placeholder card. Real art coming." },
+  { id: 964, name: "Gold Heels", category: "Shoes", fit: "Regular", style: "Elegant", style2: "Classic", color: "Gold", rarity: "Rare", placeholder: true,
+    lore: "Placeholder card. Real art coming." },
+  { id: 965, name: "Gold Pleated Skirt", category: "Bottom", fit: "Regular", style: "Romantic", style2: "Elegant", color: "Gold", rarity: "Uncommon", placeholder: true,
+    lore: "Placeholder card. Real art coming." },
+  { id: 966, name: "Blue Fitted Coat", category: "Jacket", fit: "Fitted", style: "Classic", style2: "Elegant", color: "Blue", rarity: "Uncommon", placeholder: true,
+    lore: "Placeholder card. Real art coming." },
 ];
 
 const JOKER_CARDS = [
@@ -432,6 +471,6 @@ const FILTER_CATEGORIES = ["Top", "Bottom", "Dress", "Shoes", "Jacket", "Accesso
 
 const FILTER_RARITIES = ["Basic", "Uncommon", "Rare", "Iconic", "Legendary"];
 
-const FILTER_STYLES = ["Cool", "Sweet", "Cute", "Elegant", "Daring", "Romantic", "Cozy", "Bold", "Classic", "Minimal"];
+const FILTER_STYLES = ["Cool", "Sweet", "Cute", "Elegant", "Daring", "Romantic", "Cozy", "Bold", "Classic", "Minimal", "Armour"];
 
 const RARITY_FIT_BONUS = { Basic: 0, Uncommon: 2, Rare: 6, Iconic: 8, Legendary: 10 };
