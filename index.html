@@ -2191,6 +2191,64 @@
   @keyframes hintIn { from { opacity: 0; transform: translateY(6px) scale(0.96); } to { opacity: 1; transform: none; } }
   @media (prefers-reduced-motion: reduce) { .hint, .intro-text p, .intro-go { animation: none !important; } }
 
+  /* intro: one line per screen, answered with a reply */
+  .intro-text p.big { white-space: nowrap; font-size: min(11vw, 120px); }
+  .intro-reply { margin-top: 38px; min-width: 120px; background: rgba(255,255,255,0.1); animation: fadeUp 0.8s 1.3s ease both; }
+  .intro-reply:hover { background: rgba(255,255,255,0.2); }
+  .intro-seq { cursor: default; }
+
+  /* first night: only the Studio */
+  .map-tile.status-firstnight { opacity: 0.38; filter: grayscale(1); cursor: default; }
+  .map-tile.status-firstnight:hover { transform: none; }
+  .visit-counter.first-night .lanterns, .visit-counter.first-night .visit-count { display: none; }
+  .visit-counter.first-night .visit-label { color: var(--lamp); }
+
+  /* hints, restyled: a dark note like the rest of the interface */
+  .hint {
+    display: flex; gap: 12px; align-items: flex-start;
+    max-width: 320px; padding: 14px 18px 12px 14px; border-radius: 18px;
+    background: rgba(14,10,24,0.94); color: var(--paper);
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,0.16), 0 18px 44px rgba(0,0,0,0.55), 0 0 30px rgba(242,200,120,0.08);
+    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  }
+  .hint p { margin: 0 0 6px; font-size: 14px; line-height: 1.5; color: var(--paper); }
+  .hint-icon { flex-shrink: 0; width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: rgba(242,200,120,0.14); color: var(--lamp); margin-top: 1px; }
+  .hint-icon .ico { width: 15px; height: 15px; }
+  .hint-ok { font-size: 11px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--paper-3); }
+  .hint::after { background: rgba(14,10,24,0.94); box-shadow: 1px 1px 0 rgba(255,255,255,0.16); }
+  .hint.below::after { box-shadow: -1px -1px 0 rgba(255,255,255,0.16); }
+
+  .intro-reply { font-size: 17px; padding: 14px 36px; min-width: 150px; }
+
+  .shop-actions { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
+  .shop-actions .ghost { display: inline-flex; align-items: center; gap: 8px; }
+  .burn-ladder { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin: 0 0 22px; }
+  .burn-step { display: flex; flex-direction: column; align-items: center; gap: 2px; min-width: 64px; padding: 8px 10px; border-radius: 14px; background: var(--panel); box-shadow: inset 0 0 0 1px var(--panel-line); font-size: 12px; color: var(--paper-3); }
+  .burn-step b { font-size: 20px; color: var(--paper); }
+  .burn-step.on { box-shadow: inset 0 0 0 1.5px var(--lamp); color: var(--paper); }
+  .q-pick.burn-selected { box-shadow: 0 0 0 3px #f2a15f, 0 0 30px rgba(242,140,70,0.45); }
+
+  /* several action cards: cascade so every rule stays readable */
+  .action-card { justify-content: flex-start; gap: 8px; top: calc(var(--i) * var(--slot-w) * 0.36); transform: rotate(calc(3deg - var(--i) * 2.5deg)); }
+  .action-card .ac-from { margin-top: auto; }
+  @keyframes actionToTable {
+    0% { opacity: 0; transform: translate(-70vw, -30vh) rotate(-40deg) scale(0.7); }
+    75% { opacity: 1; transform: translate(0, 0) rotate(8deg) scale(1.04); }
+    100% { transform: rotate(calc(3deg - var(--i) * 2.5deg)); }
+  }
+  .style-speech { animation: none; }
+  .style-speech.fresh { animation: fadeUp 0.5s 0.5s ease both; }
+  @media (max-width: 899px) { .action-card { top: calc(var(--i) * 26px); } }
+
+  /* the illustrated styling table: shown as drawn, with only a soft edge
+     vignette so the brief and buttons in the corners stay readable */
+  .scene-bg[data-mode="table"] .scene-layer { filter: none; transform: none; }
+  .scene-bg[data-mode="table"] .scene-shade {
+    background:
+      radial-gradient(ellipse 85% 80% at 50% 50%, rgba(16,11,28,0) 55%, rgba(16,11,28,0.45) 100%),
+      linear-gradient(180deg, rgba(16,11,28,0.35) 0%, rgba(16,11,28,0) 18%, rgba(16,11,28,0) 80%, rgba(16,11,28,0.3) 100%);
+  }
+
 </style>
 </head>
 <body>
@@ -2583,6 +2641,7 @@ function evaluateAestheticAchievements(pieces) {
 const SCENE_ART_BASE = "https://terrirossa.github.io/dead-gorgeous-assets/backgrounds/";
 const SCENE_ART = {
   studio: "studio.png",
+  stylingtable: "background_stylingtable_default.png",
   city: "city_overview.png",
   cafe: "cafe.png",
   backroom: "cafe_backroom.png",
@@ -2602,15 +2661,15 @@ const SCENE_BY_TITLE = {
   "Night Castle": "castle", "Castle Wall": "castle",
   "Royal Garden": "rosegarden",
   "Old Quarter": "oldquarter",
-  "The Vendor": "store",
+  "The Vendor": "store", "The furnace": "store", "Ash": "store", "Sold.": "store",
   "Nightgarden": "nightgarden", "Glass House": "nightgarden",
 };
 
 function sceneForStage() {
   if (stage.querySelector(".title-screen")) return null; // the title keeps its own painting
   if (stage.querySelector(".map-screen, .intro-seq")) return ["city", "sharp"];
-  if (stage.querySelector("#outfitBoard")) return ["studio", "blur"];
-  if (stage.querySelector(".soul-scene")) return ["studio", "talk"];
+  if (stage.querySelector("#outfitBoard")) return ["stylingtable", "table"];
+  if (stage.querySelector(".soul-scene")) return ["studio", "sharp"];
   if (stage.querySelector(".result-scene, .shuffle")) return ["studio", "soft"];
   if (stage.querySelector(".q-table")) return ["cafe", "blur"];
   if (stage.querySelector(".q-reward, .q-result")) return ["cafe", "soft"];
@@ -2658,11 +2717,11 @@ function updateSceneBackground() {
   });
 }
 // Warm the cache with the places you'll see first.
-["city", "studio", "cafe"].forEach((k) => setTimeout(() => preloadSceneArt(k), 1500));
+["city", "studio", "stylingtable", "cafe"].forEach((k) => setTimeout(() => preloadSceneArt(k), 1500));
 
 // Shown small on the title screen, so it's easy to confirm which version
 // the browser actually loaded (GitHub Pages and browsers cache aggressively).
-const BUILD_ID = "2026-09-30 · intro and hints 1";
+const BUILD_ID = "2026-09-30 · styling table 1";
 const stage = document.getElementById("stage");
 
 /* ---------------- CONVERSATION PRESENTATION ----------------
@@ -2694,7 +2753,8 @@ let hintsSeen = new Set();
 let hintQueue = [];
 let hintOpen = null;
 const HINTS = [
-  { id: "visits", sel: ".visit-counter", text: "Each night you can make three visits. Then your next client is waiting in the Studio." },
+  { id: "firstClient", sel: ".map-tile.status-waiting", when: () => isFirstNight(), text: "Your first client is waiting in the Studio. The rest of the city can wait until tonight." },
+  { id: "visits", sel: ".visit-counter:not(.first-night)", text: "Each night you can make three visits. Then your next client is waiting in the Studio." },
   { id: "new", sel: ".map-new", text: "Something new is waiting here." },
   { id: "talk", sel: ".arrive-actions .primary:not([disabled])", text: "She has something on her mind. The more she likes you, the more she'll tell you." },
   { id: "brief", sel: ".soul-talk .want-tags", text: "Today's job. Every piece that matches what she asks for scores." },
@@ -2709,6 +2769,7 @@ const HINTS = [
   { id: "hearts", sel: ".bond-line", text: "Outfits she loves win her over. Hearts open up conversations, and more." },
   { id: "quartett", sel: ".q-modes", text: "Friendly costs nothing. High stakes pays better, but losing destroys a card." },
   { id: "shop", sel: ".purse", text: "New stock every month. Mooncoins come from outfits she loves." },
+  { id: "burn", sel: ".burn-ladder", text: "The more you burn at once, the more he pays. One or two cards get you nothing." },
 ];
 function queueHints() {
   HINTS.forEach((h) => {
@@ -2728,7 +2789,7 @@ function showNextHint() {
     if (r.width === 0) continue;
     const el = document.createElement("div");
     el.className = "hint";
-    el.innerHTML = `<p>${h.text}</p><span class="hint-ok">Got it</span>`;
+    el.innerHTML = `<span class="hint-icon">${icon("sparkle")}</span><div><p>${h.text}</p><span class="hint-ok">Tap to continue</span></div>`;
     document.body.appendChild(el);
     const w = el.offsetWidth, hgt = el.offsetHeight;
     const below = r.top < 140;
@@ -3280,9 +3341,9 @@ function beginGame() {
    After "Start game": black, three short lines, then the black lifts onto
    the city and the job begins. Tap anywhere to move on faster. */
 const INTRO_BEATS = [
-  { dark: true, text: "You died.", big: true, hold: 2600 },
-  { dark: true, text: "On a Tuesday.", big: true, hold: 2200 },
-  { dark: true, text: "Mildly inconvenient.", big: true, hold: 2600 },
+  { dark: true, text: "You died.", big: true, reply: "Oh." },
+  { dark: true, text: "On a Tuesday.", big: true, reply: "Okay." },
+  { dark: true, text: "Mildly inconvenient.", big: true, reply: "Odd." },
   { dark: false, lines: ["However work never ends.", "Now you got the job as the stylist of the afterlife — dressing souls for whatever comes now.", "And next."] },
 ];
 let introBeat = 0;
@@ -3290,7 +3351,7 @@ let introTimer = null;
 function renderIntroSequence() {
   introBeat = 0;
   stage.innerHTML = `
-    <div class="intro-seq" onclick="advanceIntro()">
+    <div class="intro-seq">
       <div class="intro-black"></div>
       <div class="intro-text" aria-live="polite"></div>
     </div>`;
@@ -3309,7 +3370,8 @@ function showIntroBeat() {
     box.innerHTML = beat.lines
       ? `${beat.lines.map((l, i) => `<p style="--d:${(1.4 + i * 1.1).toFixed(1)}s">${l}</p>`).join("")}
          <button class="primary intro-go" style="--d:${(1.4 + beat.lines.length * 1.1 + 0.4).toFixed(1)}s" onclick="event.stopPropagation(); finishIntro()">Begin</button>`
-      : `<p class="${beat.big ? "big" : ""}">${beat.text}</p>`;
+      : `<p class="${beat.big ? "big" : ""}">${beat.text}</p>
+         <button class="ghost intro-reply" onclick="advanceIntro()">${beat.reply}</button>`;
     box.className = `intro-text show ${beat.lines ? "lines" : ""}`;
     if (beat.hold) introTimer = setTimeout(advanceIntro, beat.hold);
   }, introBeat === 0 ? 500 : 450);
@@ -4214,7 +4276,9 @@ function firstNewEvent(events) {
   const e = events.find((ev) => { try { return ev.eligible(); } catch (err) { return false; } });
   return !!e && !e.ambient;
 }
+function isFirstNight() { return currentYear === 1 && clientRoundIndex === 0; }
 function locationStatus(key) {
+  if (isFirstNight()) return key === "studio" ? "waiting" : "firstnight";
   if (key === "studio") return storyBeatsRemaining <= 0 ? "waiting" : "";
   if (key === "garden" && !nightgardenOpen()) return "closed";
   if (storyBeatsRemaining <= 0) return "spent";
@@ -4232,7 +4296,7 @@ function locationStatus(key) {
   if (key === "oldquarter") return currentMannequinPuzzle() && !windowSolved[currentSeasonKey()] ? "puzzle" : "";
   return "";
 }
-const LOCATION_STATUS_LABEL = { new: "", quiet: "Quiet tonight", closed: "Closed for the season", puzzle: "The window is waiting", spent: "Tomorrow night" };
+const LOCATION_STATUS_LABEL = { new: "", quiet: "Quiet tonight", closed: "Closed for the season", puzzle: "The window is waiting", spent: "Tomorrow night", firstnight: "After your first client" };
 
 function renderMap() {
   // The map is the one stable "hub" screen -- no mid-job transient state to
@@ -4260,7 +4324,7 @@ function renderMap() {
     return `
     <button class="map-tile ${t.locked ? "locked" : ""} status-${status || "none"}"
          onclick="${t.locked ? `lockedTile('${t.key}')` : t.key === "studio" ? t.action : `enterLocation('${t.key}')`}"
-         ${status === "spent" ? "disabled" : ""}>
+         ${status === "spent" || status === "firstnight" ? "disabled" : ""}>
       ${status === "new" ? `<span class="map-new" aria-label="New">New</span>` : ""}
       <span class="map-tile-icon">${icon(t.locked ? "lock" : t.icon)}</span>
       <span class="map-tile-label">${t.label}</span>
@@ -4291,10 +4355,10 @@ function renderMap() {
       <div class="map-grid">${tilesHTML}</div>
       <div class="map-message">${mapMessage}</div>
     </div>
-    <div class="visit-counter ${storyBeatsRemaining <= 0 ? "spent" : ""}" aria-label="Visits tonight">
+    <div class="visit-counter ${storyBeatsRemaining <= 0 ? "spent" : ""} ${isFirstNight() ? "first-night" : ""}" aria-label="Visits tonight">
       <span class="lanterns">${lanterns}</span>
       <span class="visit-count"><b>${STORY_BEATS_PER_JOB - storyBeatsRemaining}</b>/${STORY_BEATS_PER_JOB}</span>
-      <span class="visit-label">${storyBeatsRemaining > 0 ? "visits tonight" : "Your next client is waiting"}</span>
+      <span class="visit-label">${isFirstNight() ? "Your first client is waiting" : storyBeatsRemaining > 0 ? "visits tonight" : "Your next client is waiting"}</span>
     </div>
   `;
   updateTopBar("", true);
@@ -4357,6 +4421,68 @@ function unusualKeyEligible() {
 
 const UNUSUAL_KEY_PRICE = 10;
 
+// ---- Burning cards at the Vendor ----
+let burnSelection = [];
+function burnableCards() {
+  return liveDeck.filter((c) => DECK.some((d) => d.id === c.id) && unlockedCardIds.has(c.id));
+}
+function renderBurnScreen() {
+  const cards = burnableCards();
+  const maxBurn = Math.max(0, Math.min(5, unlockedCardIds.size - BURN_MIN_COLLECTION));
+  burnSelection = burnSelection.filter((id) => cards.some((c) => c.id === id));
+  const n = burnSelection.length;
+  const reward = n > 0 ? BURN_REWARDS[n - 1] : 0;
+  const ladder = BURN_REWARDS.map((r, i) => `<span class="burn-step ${n === i + 1 ? "on" : ""}"><b>${i + 1}</b>${r > 0 ? coins(r) : "nothing"}</span>`).join("");
+  stage.innerHTML = `
+    <div class="center-col screen-pad q-pick-screen burn-screen">
+      <div class="soul-name">The furnace</div>
+      ${dialogueLineHTML({ who: "VENDOR", t: BURN_VENDOR_LINES.open }, "The Vendor")}
+      <p class="q-entry-sub">Choose up to five cards to burn. They're gone for good. You keep at least ${BURN_MIN_COLLECTION} cards.</p>
+      <div class="burn-ladder">${ladder}</div>
+      ${maxBurn === 0 ? `<p class="q-entry-sub">Your closet is too small to burn anything.</p>` : ""}
+      <div class="q-pick-grid">${cards.map((c) => {
+        const sel = burnSelection.includes(c.id);
+        const disabled = !sel && n >= maxBurn;
+        return `<button class="q-pick ${sel ? "selected burn-selected" : ""} ${disabled ? "disabled" : ""}" onclick="toggleBurn(${c.id})" aria-pressed="${sel}">${gcardLazyHTML(c)}</button>`;
+      }).join("")}</div>
+    </div>
+    <div class="q-pick-bar">
+      <button class="ghost" onclick="burnSelection = []; renderShop();">Back</button>
+      <div class="q-pick-count"><b>${n}</b> of 5 · ${reward > 0 ? coins(reward) : "nothing"}</div>
+      <button class="primary" ${n > 0 ? "" : "disabled"} onclick="confirmBurn()">${n > 0 ? `Burn ${n}` : "Choose cards"}</button>
+    </div>
+  `;
+  updateTopBar("", true);
+}
+function toggleBurn(id) {
+  const maxBurn = Math.max(0, Math.min(5, unlockedCardIds.size - BURN_MIN_COLLECTION));
+  if (burnSelection.includes(id)) burnSelection = burnSelection.filter((x) => x !== id);
+  else if (burnSelection.length < maxBurn) burnSelection.push(id);
+  renderBurnScreen();
+}
+function confirmBurn() {
+  const n = burnSelection.length;
+  if (!n) return;
+  const reward = BURN_REWARDS[n - 1] || 0;
+  document.querySelectorAll(".burn-selected").forEach((el) => el.classList.add("burning"));
+  document.querySelectorAll(".burn-screen button, .q-pick-bar button").forEach((b) => { b.disabled = true; });
+  setTimeout(() => {
+    burnSelection.forEach((id) => unlockedCardIds.delete(id));
+    rebuildLiveDeckFromUnlocked();
+    moonCoins += reward;
+    burnSelection = [];
+    saveGame();
+    stage.innerHTML = `
+      <div class="center-col screen-pad reveal-screen">
+        <div class="soul-name">Ash</div>
+        ${dialogueLineHTML({ who: "VENDOR", t: BURN_VENDOR_LINES.done }, "The Vendor")}
+        <p class="q-entry-sub">${n} card${n > 1 ? "s" : ""} burned. ${reward > 0 ? `You get ${coins(reward)} mooncoins.` : "Nothing in return."}</p>
+        <button class="primary" onclick="renderShop()">Back to the shop</button>
+      </div>`;
+    updateTopBar("", true);
+  }, 1400);
+}
+
 function renderShop() {
   refreshShopStock();
   const stockHTML = shopStock.length
@@ -4399,7 +4525,10 @@ function renderShop() {
           <button class="primary" ${moonCoins >= JOKER_PRICE ? "" : "disabled"} onclick="buyJoker()">Buy for ${coins(JOKER_PRICE)}</button>
         </div>
       </div>
-      <button class="ghost" onclick="renderMap()">Back to the map</button>
+      <div class="shop-actions">
+        <button class="ghost" onclick="burnSelection = []; renderBurnScreen()">${icon("candle")} Burn cards</button>
+        <button class="ghost" onclick="renderMap()">Back to the map</button>
+      </div>
     </div>
   `;
   updateTopBar("", true);
@@ -7552,7 +7681,7 @@ function renderStyle() {
         ${actionExclusions.some((x) => x.fromBrief) ? `<div class="style-not">Not: <b>${actionExclusions.filter((x) => x.fromBrief).map((x) => actionShort(x.attr, x.value).toLowerCase()).join(", ")}</b></div>` : ""}
       </div>
       ${client.portrait ? `<div class="portrait"><img src="${client.portrait}" alt="${firstName}"></div>` : ""}
-      ${lastActionLine ? `<div class="speech style-speech"><span class="speaker">${lastActionLine.name}</span>${lastActionLine.text}</div>` : ""}
+      ${lastActionLine ? `<div class="speech style-speech ${actionArriving >= 0 ? "fresh" : ""}"><span class="speaker">${lastActionLine.name}</span>${lastActionLine.text}</div>` : ""}
     </aside>
 
     <div class="style-table"><div class="outfit-board" id="outfitBoard">${slotsHTML}${actionStackHTML()}</div></div>
@@ -7625,10 +7754,16 @@ function planActionCards() {
   actionPlan = []; actionCards = []; actionExclusions = [];
   const g = overallJobNumber();
   const tier = ACTION_CARD_CHANCE.find((t) => g < t.beforeJob) || ACTION_CARD_CHANCE[ACTION_CARD_CHANCE.length - 1];
-  if (Math.random() < tier.chance) {
-    actionPlan.push({ afterPlaced: Math.random() < 0.5 ? 1 : 2, fired: false });
-    if (Math.random() < tier.second) actionPlan.push({ afterPlaced: 3, fired: false });
+  const guaranteed = !storyFlags.actionCardMet && g >= ACTION_CARD_GUARANTEE_BY;
+  let count = 0;
+  if (guaranteed || Math.random() < tier.chance) {
+    count = 1;
+    if (Math.random() < (tier.second || 0)) { count = 2; if (Math.random() < (tier.third || 0)) count = 3; }
   }
+  // When she interrupts: one card after your 1st or 2nd piece; two after the
+  // 1st/2nd and the 3rd; three after each of the first three.
+  const at = count === 3 ? [1, 2, 3] : count === 2 ? [Math.random() < 0.5 ? 1 : 2, 3] : count === 1 ? [Math.random() < 0.5 ? 1 : 2] : [];
+  at.forEach((n) => actionPlan.push({ afterPlaced: n, fired: false }));
 }
 
 function actionAttrValues(card, attr) {
@@ -7753,6 +7888,7 @@ function maybeFireActionCard() {
   const card = generateActionCard();
   if (!card) return;
   applyActionCard(card);
+  storyFlags.actionCardMet = true;
   const fire = () => {
     if (!document.getElementById("outfitBoard")) return;
     if (document.querySelector(".fan-card-wrap.dragging")) { setTimeout(fire, 300); return; }

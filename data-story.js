@@ -54,9 +54,7 @@ const CLIENTS = [
           { who: "YOU", t: "Are you feeling alright?" },
           { who: "MARGO", t: "Don't make me regret saying it." },
         ],
-        want: [req("style", "Elegant"), req("fit", "Regular")],
-        suppressPreference: ["Black"],
-        softDirection: "She specifically asked for no black — wearing black won't fail the outfit, but it won't earn her usual love for it here.",
+        want: [req("style", "Elegant"), req("fit", "Regular")], exclude: [{ attr: "color", value: "Black" }],
       },
       {
         dialogue: [
@@ -81,7 +79,7 @@ const CLIENTS = [
           { who: "MARGO", t: "I remember liking it once." },
           { who: "MARGO", t: "Don't ask." },
         ],
-        want: [req("style", "Classic"), req("fit", "Regular")],
+        want: [req("color", "Green"), req("style", "Classic")],
         hint: ["Green"],
       },
       {
@@ -145,7 +143,7 @@ const CLIENTS = [
           { who: "YOU", t: "Garden clothes?" },
           { who: "JUNIPER", t: "Everything is garden clothes if you're determined enough." },
         ],
-        want: [req("style", "Romantic"), req("fit", "Relaxed")],
+        want: [req("style", "Romantic"), req("color", "Green")],
         hint: ["Green", "Cozy"],
       },
       {
@@ -188,9 +186,7 @@ const CLIENTS = [
           { who: "YOU", t: "I didn't know you knew how." },
           { who: "JUNIPER", t: "Neither did I." },
         ],
-        want: [req("color", "Blue"), req("style", "Sweet")],
-        suppressPreference: ["Green"],
-        softDirection: "She asked to avoid green — wearing green won't fail the outfit, but it won't earn her usual love for it here.",
+        want: [req("color", "Blue"), req("style", "Sweet")], exclude: [{ attr: "color", value: "Green" }],
       },
       {
         dialogue: [
@@ -275,7 +271,7 @@ const CLIENTS = [
           { who: "YOU", t: "Anything specific?" },
           { who: "IVY", t: "Red, if you've got it." },
         ],
-        want: [req("style", "Daring"), req("fit", "Fitted")],
+        want: [req("style", "Daring"), req("color", "Red")],
         hint: ["Red"],
       },
       {
@@ -300,9 +296,7 @@ const CLIENTS = [
           { who: "YOU", t: "Who are you and what have you done with Ivy?" },
           { who: "IVY", t: "I knew this was a mistake." },
         ],
-        want: [req("color", "Blue"), req("style", "Cool")],
-        suppressPreference: ["Black"],
-        softDirection: "She asked for no black — wearing black won't fail the outfit, but it won't earn her usual love for it here.",
+        want: [req("color", "Blue"), req("style", "Cool")], exclude: [{ attr: "color", value: "Black" }],
       },
       {
         dialogue: [
@@ -384,7 +378,7 @@ const CLIENTS = [
           { who: "YOU", t: "Silver?" },
           { who: "HOLLY", t: "If you have it." },
         ],
-        want: [req("style", "Classic"), req("fit", "Regular")],
+        want: [req("style", "Classic"), req("color", "Silver")],
         hint: ["Silver"],
       },
       {
@@ -431,7 +425,7 @@ const CLIENTS = [
           { who: "YOU", t: "That's new." },
           { who: "HOLLY", t: "Red, if there is any." },
         ],
-        want: [req("style", "Daring"), req("style", "Classic")],
+        want: [req("style", "Daring"), req("color", "Red")],
         hint: ["Red"],
       },
       {
@@ -1922,17 +1916,22 @@ const STAGE_RULES = {
 // Stages in which she states what she wants to wear. Those visits use this
 // brief instead of a separate brief conversation, so she isn't asked twice.
 // usesBrief: the authored brief this stage replaces (so it isn't asked again).
+// exclude: things she said she doesn't want ("No pink") -- enforced like an
+// action card from the start of the job.
+// Anything a brief names in its dialogue is part of its requirements; the
+// game makes sure the hand holds at least one card for each requirement
+// (see ensureBriefIsDrawable in index.html).
 // Hard requirements follow the deck-balanced tiers of the briefing document;
 // scarce colours stay hints (softDirection), never hard requirements.
 const STAGE_ASKS = {
   0: {
-    3: { want: [req("style", "Elegant"), req("fit", "Fitted")], softDirection: "Nothing beige." },
-    5: { want: [req("style", "Elegant"), req("color", "Black")], softDirection: "No pink." },
+    3: { want: [req("style", "Elegant"), req("fit", "Fitted")], exclude: [{ attr: "color", value: "Beige" }] },
+    5: { want: [req("style", "Elegant"), req("color", "Black")], exclude: [{ attr: "color", value: "Pink" }] },
     9: { want: [req("fit", "Fitted"), req("color", "Black"), req("style", "Elegant")] },
   },
   1: {
-    1: { want: [req("style", "Romantic"), req("fit", "Relaxed")], softDirection: "Green, if you have it.", usesBrief: 0 },
-    7: { want: [req("style", "Romantic"), req("fit", "Fitted")], softDirection: "No pink." },
+    1: { want: [req("style", "Romantic"), req("color", "Green")], usesBrief: 0 },
+    7: { want: [req("style", "Romantic"), req("fit", "Fitted")], exclude: [{ attr: "color", value: "Pink" }] },
     11: { want: [req("color", "White"), req("style", "Elegant")] },
   },
   2: {
@@ -2009,7 +2008,7 @@ const YEAR_TWO_BRIEFS = {
     { dialogue: [{ who: "JUNIPER", t: "I want to look like I know things." }, { who: "YOU", t: "You do know things." }, { who: "JUNIPER", t: "Yes, but nobody believes a cardigan." }],
       want: [req("style", "Classic"), req("style", "Minimal")] },
     { months: [3, 4], dialogue: [{ who: "JUNIPER", t: "It's Flower Fest." }, { who: "YOU", t: "Pink?" }, { who: "JUNIPER", t: "Something that looks like it's hiding from pink." }],
-      want: [req("style", "Minimal"), req("color", "White")], softDirection: "No pink." },
+      want: [req("style", "Minimal"), req("color", "White")], exclude: [{ attr: "color", value: "Pink" }] },
     { season: ["winter"], dialogue: [{ who: "JUNIPER", t: "Keep me warm. The garden doesn't close for me." }, { who: "YOU", t: "I thought it closed for everyone." }, { who: "JUNIPER", t: "It does." }],
       want: [req("style", "Romantic"), req("fit", "Regular")], softDirection: "Cosy, if you have it." },
   ],
@@ -2037,9 +2036,9 @@ const YEAR_TWO_BRIEFS = {
     { dialogue: [{ who: "HOLLY", t: "Juniper asked me to help in the garden." }, { who: "YOU", t: "In those clothes?" }, { who: "HOLLY", t: "In whatever you give me. Choose accordingly." }],
       want: [req("fit", "Relaxed"), req("style", "Minimal")] },
     { dialogue: [{ who: "HOLLY", t: "Gold, perhaps." }, { who: "YOU", t: "You hate gold." }, { who: "HOLLY", t: "Someone I knew wore it well." }],
-      want: [req("style", "Romantic"), req("style", "Classic")], softDirection: "Gold, if there is any." },
+      want: [req("style", "Romantic"), req("color", "Gold")] },
     { months: [11, 0], dialogue: [{ who: "HOLLY", t: "Silver. For the Winter Solstice." }, { who: "YOU", t: "You'll be at the Castle?" }, { who: "HOLLY", t: "Outside it." }],
-      want: [req("style", "Classic"), req("color", "White")], softDirection: "Silver, if there is any." },
+      want: [req("color", "Silver"), req("style", "Classic")] },
   ],
 };
 
@@ -2309,21 +2308,25 @@ const ARMOUR_HOLLY_LINES = [
    They're always solvable with the cards in play: added or swapped-in
    values are taken from your hand, and an exclusion never removes so much
    that fewer than four usable cards remain.
-   How often: none in the first two months, then more as the cycle goes on
-   (ACTION_CARD_CHANCE, by overall job number); from Year Two a second card
-   can follow.
+   How often: never on the very first job, then now and then from January
+   on, more as the cycle goes on (ACTION_CARD_CHANCE, by overall job
+   number); from summer she may play a second card, and later a third
+   (second / third: chance of each extra card, given the one before). If none has come up by
+   ACTION_CARD_GUARANTEE_BY, one is guaranteed, so every player meets them
+   early.
    Lines: {v} = noun ("red", "romantic pieces", "regular cuts"),
           {a} = adjective ("red", "romantic", "regular"), {A} = capitalised,
           {old} = what it replaces.
    =========================================================================== */
 const ACTION_CARD_CHANCE = [
-  { beforeJob: 6, chance: 0, second: 0 },     // Jan-Feb, Year 1: learn the ropes
-  { beforeJob: 15, chance: 0.3, second: 0 },
-  { beforeJob: 27, chance: 0.5, second: 0 },
-  { beforeJob: 36, chance: 0.65, second: 0 },
-  { beforeJob: 54, chance: 0.8, second: 0.35 },
-  { beforeJob: 9999, chance: 0.85, second: 0.5 },
+  { beforeJob: 1, chance: 0, second: 0, third: 0 },          // the very first job: just learn to style
+  { beforeJob: 15, chance: 0.3, second: 0, third: 0 },        // January-May: now and then, one at a time
+  { beforeJob: 27, chance: 0.5, second: 0.25, third: 0 },     // summer: she may change her mind twice
+  { beforeJob: 36, chance: 0.65, second: 0.35, third: 0.1 },  // autumn/winter: sometimes three times
+  { beforeJob: 54, chance: 0.8, second: 0.45, third: 0.15 },
+  { beforeJob: 9999, chance: 0.85, second: 0.55, third: 0.25 },
 ];
+const ACTION_CARD_GUARANTEE_BY = 4; // job number (0 = first job)
 const ACTION_EXCLUDE_PENALTY = 15; // per worn piece that ignores an exclusion
 
 // Which kinds each character tends to play.
@@ -2363,4 +2366,17 @@ const ACTION_CARD_LINES = {
     swap: ["Not {old}. {A}. Circumstances have changed."],
     replies: ["Understood.", "Of course.", "Fine."],
   },
+};
+
+
+/* ---------------- BURNING CARDS (the Vendor) ----------------
+   Burn 1-5 cards you no longer want. BURN_REWARDS[n-1] = mooncoins for n.
+   Your collection never goes below BURN_MIN_COLLECTION, and one-of-a-kind
+   cards (friendship gifts, story pieces, keys, Jokers) can't be burned. */
+const BURN_REWARDS = [0, 0, 2, 3, 5];
+const BURN_MIN_COLLECTION = 15;
+// DRAFT (written by Claude for review).
+const BURN_VENDOR_LINES = {
+  open: "\u201CThings you don't need anymore? I'll take them. I always do.\u201D",
+  done: "\u201CGone. Don't ask where.\u201D",
 };
