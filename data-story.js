@@ -987,6 +987,7 @@ const OLD_QUARTER_ENCOUNTERS = {
   "1-spring": [
     {
       id: "juniper_octavia_y1",
+      cast: ["juniper"], // Core Four on screen: skipped once any of them has died
       eligible: () => metOctavia && !seenOldQuarterEncounters["juniper_octavia_y1"],
       render: () => renderOldQuarterEncounterLines("juniper_octavia_y1", [
         { who: "NARRATION", t: "Juniper and Octavia are standing outside the flower shop." },
@@ -1007,6 +1008,7 @@ const OLD_QUARTER_ENCOUNTERS = {
     },
     {
       id: "margo_juniper_plant_y1",
+      cast: ["margo", "juniper"], // Core Four on screen: skipped once any of them has died
       eligible: () => !seenOldQuarterEncounters["margo_juniper_plant_y1"],
       render: () => renderOldQuarterEncounterLines("margo_juniper_plant_y1", [
         { who: "NARRATION", t: "Juniper is holding a small potted plant. Margo is inspecting it like evidence." },
@@ -1027,6 +1029,7 @@ const OLD_QUARTER_ENCOUNTERS = {
   "1-summer": [
     {
       id: "holly_icecream_y1",
+      cast: ["holly"], // Core Four on screen: skipped once any of them has died
       eligible: () => !seenOldQuarterEncounters["holly_icecream_y1"],
       render: () => renderOldQuarterEncounterLines("holly_icecream_y1", [
         { who: "NARRATION", t: "Holly is sitting on the edge of a fountain, eating an ice cream." },
@@ -1042,6 +1045,7 @@ const OLD_QUARTER_ENCOUNTERS = {
     },
     {
       id: "juniper_ivy_ride_y1",
+      cast: ["juniper", "ivy"], // Core Four on screen: skipped once any of them has died
       eligible: () => !seenOldQuarterEncounters["juniper_ivy_ride_y1"],
       render: () => renderOldQuarterEncounterLines("juniper_ivy_ride_y1", [
         { who: "NARRATION", t: "Ivy's bike is parked by the fountain." },
@@ -1062,6 +1066,7 @@ const OLD_QUARTER_ENCOUNTERS = {
   "1-autumn": [
     {
       id: "margo_judging_y1",
+      cast: ["margo"], // Core Four on screen: skipped once any of them has died
       eligible: () => !seenOldQuarterEncounters["margo_judging_y1"],
       render: () => renderOldQuarterEncounterLines("margo_judging_y1", [
         { who: "NARRATION", t: "Margo is looking through the window of a very expensive-looking boutique." },
@@ -1073,6 +1078,7 @@ const OLD_QUARTER_ENCOUNTERS = {
     },
     {
       id: "margo_ivy_delivery_y1",
+      cast: ["margo", "ivy"], // Core Four on screen: skipped once any of them has died
       eligible: () => !seenOldQuarterEncounters["margo_ivy_delivery_y1"],
       render: () => renderOldQuarterEncounterLines("margo_ivy_delivery_y1", [
         { who: "NARRATION", t: "Ivy hands Margo a narrow parcel wrapped in brown paper." },
@@ -1094,6 +1100,7 @@ const OLD_QUARTER_ENCOUNTERS = {
   "1-winter": [
     {
       id: "ivy_bike_y1",
+      cast: ["ivy"], // Core Four on screen: skipped once any of them has died
       eligible: () => !seenOldQuarterEncounters["ivy_bike_y1"],
       render: () => renderOldQuarterIvyBikeScene(),
     },
@@ -1118,6 +1125,7 @@ const OLD_QUARTER_ENCOUNTERS = {
       // Continuity: if the Y1 scene was missed, play it now instead of the
       // Y2 follow-up; once Y1 is caught up, a later visit plays the real Y2 scene.
       id: "juniper_octavia_y2_slot",
+      cast: ["juniper"], // Core Four on screen: skipped once any of them has died
       eligible: () => metOctavia && !seenOldQuarterEncounters["juniper_octavia_y2"],
       render: () => {
         if (!seenOldQuarterEncounters["juniper_octavia_y1"]) {
@@ -1157,6 +1165,7 @@ const OLD_QUARTER_ENCOUNTERS = {
     },
     {
       id: "juniper_holly_repairs_y2",
+      cast: ["juniper", "holly"], // Core Four on screen: skipped once any of them has died
       eligible: () => !seenOldQuarterEncounters["juniper_holly_repairs_y2"],
       render: () => renderOldQuarterEncounterLines("juniper_holly_repairs_y2", [
         { who: "NARRATION", t: "Holly is tightening a loose hinge on a flower stand while Juniper holds the screws." },
@@ -1177,6 +1186,7 @@ const OLD_QUARTER_ENCOUNTERS = {
       // Continuity: no catch-up for this one -- if Y1 vanilla was missed,
       // this slot simply isn't eligible and an observation is used instead.
       id: "holly_pistachio_y2",
+      cast: ["holly"], // Core Four on screen: skipped once any of them has died
       eligible: () => !!seenOldQuarterEncounters["holly_icecream_y1"] && !seenOldQuarterEncounters["holly_pistachio_y2"],
       render: () => renderOldQuarterEncounterLines("holly_pistachio_y2", [
         { who: "NARRATION", t: "Holly is sitting by the fountain again." },
@@ -1191,6 +1201,7 @@ const OLD_QUARTER_ENCOUNTERS = {
     },
     {
       id: "ivy_holly_bike_question_y2",
+      cast: ["ivy", "holly"], // Core Four on screen: skipped once any of them has died
       eligible: () => !seenOldQuarterEncounters["ivy_holly_bike_question_y2"],
       render: () => renderOldQuarterEncounterLines("ivy_holly_bike_question_y2", [
         { who: "NARRATION", t: "Holly is standing beside Ivy's bike, studying it with alarming concentration." },
@@ -1210,6 +1221,7 @@ const OLD_QUARTER_ENCOUNTERS = {
     {
       // Continuity: has a Y1 catch-up, same pattern as juniper_octavia_y2_slot.
       id: "margo_judging_y2_slot",
+      cast: ["margo"], // Core Four on screen: skipped once any of them has died
       eligible: () => !seenOldQuarterEncounters["margo_judging_y2"],
       render: () => {
         if (!seenOldQuarterEncounters["margo_judging_y1"]) {
@@ -1236,6 +1248,7 @@ const OLD_QUARTER_ENCOUNTERS = {
     },
     {
       id: "margo_holly_rules_y2",
+      cast: ["margo", "holly"], // Core Four on screen: skipped once any of them has died
       eligible: () => !seenOldQuarterEncounters["margo_holly_rules_y2"],
       render: () => renderOldQuarterEncounterLines("margo_holly_rules_y2", [
         { who: "NARRATION", t: "Margo and Holly are standing beneath an old street sign." },
@@ -1256,6 +1269,7 @@ const OLD_QUARTER_ENCOUNTERS = {
       // Continuity: no catch-up -- if Y1 bike scene was missed, use an
       // observation instead (per the doc, unlike the other two Y2 follow-ups).
       id: "ivy_pickup_y2",
+      cast: ["ivy"], // Core Four on screen: skipped once any of them has died
       eligible: () => !!seenOldQuarterEncounters["ivy_bike_y1"] && !seenOldQuarterEncounters["ivy_pickup_y2"],
       render: () => renderOldQuarterEncounterLines("ivy_pickup_y2", [
         { who: "NARRATION", t: "Ivy's bike is parked in almost the same place as last winter." },
@@ -1274,6 +1288,7 @@ const OLD_QUARTER_ENCOUNTERS = {
     },
     {
       id: "margo_juniper_winter_plant_y2",
+      cast: ["margo", "juniper"], // Core Four on screen: skipped once any of them has died
       eligible: () => !seenOldQuarterEncounters["margo_juniper_winter_plant_y2"],
       render: () => renderOldQuarterEncounterLines("margo_juniper_winter_plant_y2", [
         { who: "NARRATION", t: "Juniper is showing Margo a tiny green shoot growing from a cracked stone planter." },
@@ -1797,9 +1812,11 @@ const SECONDARY_PORTRAITS = {
   maya: "https://terrirossa.github.io/dead-gorgeous-assets/portraits/portrait_maya.png",
   octavia: "https://terrirossa.github.io/dead-gorgeous-assets/portraits/portrait_octavia.png",
   valery: "https://terrirossa.github.io/dead-gorgeous-assets/portraits/portrait_valery.png",
+  irina: "https://terrirossa.github.io/dead-gorgeous-assets/portraits/portrait_irina.png",
+  lucia: "https://terrirossa.github.io/dead-gorgeous-assets/portraits/portrait_lucia.png",
 };
 
-const SECONDARY_PORTRAIT_ORDER = ["helena", "juliette", "maya", "octavia", "valery"];
+const SECONDARY_PORTRAIT_ORDER = ["helena", "juliette", "maya", "octavia", "valery", "irina", "lucia"];
 
 const EVENT_SCHEDULE = {
   "2-2": "flowerFestComing", "3-2": "flowerFest",
@@ -1810,6 +1827,11 @@ const EVENT_SCHEDULE = {
 };
 
 const EVENT_SCREENS = {
+  // [brief] Opens Year Three, straight after "Begin Year Three".
+  yearThreeOpening: {
+    lines: ["Three years.", "The city has stopped pretending nothing is changing.", "White figures have become common at the edge of crowds.", "The Castle closes its doors earlier.", "People have started carrying armour to dinner.", "And for the first time, the Studio receives a request that is not about looking good."],
+    button: "Return to Aftercity",
+  },
   flowerFestComing: {
     lines: ["Overnight, flowers have appeared across After City.", "Around lamp posts.", "Across balconies.", "Through cracks in the pavement.", "You're fairly certain some of those cracks weren't there yesterday."],
     button: "Continue",
@@ -2380,3 +2402,192 @@ const BURN_VENDOR_LINES = {
   open: "\u201CThings you don't need anymore? I'll take them. I always do.\u201D",
   done: "\u201CGone. Don't ask where.\u201D",
 };
+
+
+/* ============================================================
+   LIFE & DEATH (late Year 2 → Year 3 content pass)
+   Texts marked [brief] are Theresa's, verbatim from the late-Year-2 /
+   Angels / Year 3 brief. Everything marked DRAFT is Claude's, for review.
+   Core Four keys are the CLIENTS indices: 0 Margo, 1 Juniper, 2 Ivy, 3 Holly.
+   ============================================================ */
+
+// A failed Angel encounter costs this many hearts (one flat number, however
+// many survival rules were missed). Decided after the balance simulation.
+const ENCOUNTER_HIT_HEARTS = 2;
+
+// [brief] Death screen, one per Core Four character.
+const CORE_DEATH_TEXT = {
+  0: ["Margo does not come back to the Studio.", "For once, there is no correction.", "No last word.", "Somewhere in the Nightgarden, a place has been made for her."],
+  1: ["The greenhouse stays lit until morning.", "No one goes in.", "By afternoon, there is a new grave in the Nightgarden."],
+  2: ["The bike comes back without her.", "Nobody touches it.", "A place is made for Ivy in the Nightgarden."],
+  3: ["Holly does not return from the Castle.", "Her armour does.", "A place is made for her in the Nightgarden."],
+};
+
+// [brief] Graves: age at death and one fixed epitaph.
+const GRAVES = {
+  0: { age: 54, epitaph: "She had seen enough to know better. She came anyway." },
+  1: { age: 21, epitaph: "Something is growing here." },
+  2: { age: 28, epitaph: "She hated standing still." },
+  3: { age: 27, epitaph: "Duty ended here. Love did not." },
+};
+
+// [brief] The first time you find the Graveyard.
+const GRAVEYARD_FIRST_VISIT = [
+  { who: "NARRATION", t: "The path was not here before." },
+  { who: "NARRATION", t: "It runs behind the Nightgarden wall." },
+  { who: "NARRATION", t: "At the end of it is one grave." },
+  { who: "NARRATION", t: "There is room for more." },
+];
+
+// DRAFT (written by Claude for review). Her night in the rotation, after she
+// is gone: the Studio stays empty, the night still passes.
+const QUIET_NIGHT_LINES = {
+  0: [
+    { who: "NARRATION", t: "Her appointment is still in the book." },
+    { who: "NARRATION", t: "You don't cross it out." },
+    { who: "NARRATION", t: "The Studio is very quiet without anyone telling you what's wrong with it." },
+  ],
+  1: [
+    { who: "NARRATION", t: "Her cuttings are still on the windowsill." },
+    { who: "NARRATION", t: "You water them." },
+    { who: "NARRATION", t: "It's the only thing that happens tonight." },
+  ],
+  2: [
+    { who: "NARRATION", t: "Nobody knocks once and lets herself in." },
+    { who: "NARRATION", t: "You keep looking at the door anyway." },
+  ],
+  3: [
+    { who: "NARRATION", t: "At the usual hour, you find yourself standing up straighter." },
+    { who: "NARRATION", t: "No one comes to notice." },
+  ],
+};
+
+// End-of-year screens. Year 1 and 2 texts are the ones already in the game;
+// Year 3 is a DRAFT (written by Claude for review). LAST_YEAR is where this
+// content pass stops: its screen says "To be continued."
+const LAST_YEAR = 3;
+const YEAR_END_TEXT = {
+  1: {
+    heading: "One year in After City",
+    lines: ["One year.", "Thirty-six jobs.", "More cards than you started with.", "More questions too.", "After City feels less unfamiliar now.", "That may not be the same thing as understanding it."],
+  },
+  2: {
+    heading: "Two years in After City",
+    lines: ["Two years.", "Seventy-two jobs.", "Faces you now recognize on sight.", "Doors that used to be walls.", "After City still isn't explaining itself.", "You've stopped expecting it to."],
+  },
+  3: { // DRAFT
+    heading: "Three years in After City",
+    lines: ["Three years.", "A hundred and eight jobs.", "Some of them mattered more than they should have.", "The city watches its edges now.", "So do you."],
+  },
+};
+
+
+/* ---------------- ANGELS: THE RUMOUR LADDER ----------------
+   [brief] §4 and §6, verbatim; stage directions became NARRATION lines.
+   Before you meet them, nobody explains anything and the player never
+   brings Angels up first. The word itself arrives in R6.
+
+   Rules (see nextRumour() in index.html):
+   - played strictly in this order, from March of Year 2 (RUMOURS_FROM_MONTH)
+   - at most one per month, so they spread from spring to late Year 2
+   - each only at its own place ("where"); a Studio beat only on her visit
+   - fromMonth: not before that month of Year 2 (Year 3 is always late enough)
+   R8 (Ivy's first preparation) slots in between R7 and the arrival in the
+   next step. */
+const RUMOURS_FROM_MONTH = 2; // March, Year 2
+const ANGEL_RUMOURS = [
+  { id: "r1", where: "oldquarter", lines: [
+    { who: "NARRATION", t: "Two figures in white stand at the far end of the street." },
+    { who: "NARRATION", t: "Nobody walks past them." },
+    { who: "NARRATION", t: "When you look again, they are gone." },
+  ] },
+  { id: "r2", where: "cafe", lines: [
+    { who: "NARRATION", t: "The Café door opens." },
+    { who: "NARRATION", t: "Every conversation stops." },
+    { who: "NARRATION", t: "Maya looks toward the entrance, waits, then relaxes." },
+    { who: "YOU", t: "What was that?" },
+    { who: "MAYA", t: "Nothing." },
+    { who: "YOU", t: "Everyone stopped talking." },
+    { who: "MAYA", t: "Then enjoy the quiet." },
+  ] },
+  { id: "r3", where: "castle", lines: [
+    { who: "HELENA", t: "If you\u2019re coming to the Castle after dark, don\u2019t wear black." },
+    { who: "YOU", t: "Why?" },
+    { who: "HELENA", t: "Just don\u2019t." },
+    { who: "YOU", t: "That\u2019s not an answer." },
+    { who: "HELENA", t: "It\u2019s the one you\u2019re getting." },
+  ] },
+  { id: "r4", where: "studio", client: 0, lines: [
+    { who: "MARGO", t: "If anyone in white asks whether you know me, you don\u2019t." },
+    { who: "YOU", t: "Anyone in white?" },
+    { who: "MARGO", t: "Correct." },
+    { who: "YOU", t: "Margo." },
+    { who: "MARGO", t: "For once, take the easy instruction." },
+  ] },
+  { id: "r5", where: "studio", client: 1, lines: [
+    { who: "JUNIPER", t: "Can we close early?" },
+    { who: "YOU", t: "Why?" },
+    { who: "JUNIPER", t: "There was someone outside the Glass House." },
+    { who: "YOU", t: "Someone?" },
+    { who: "JUNIPER", t: "White clothes. White eyes." },
+    { who: "YOU", t: "Did they say anything?" },
+    { who: "JUNIPER", t: "No." },
+    { who: "YOU", t: "Then what happened?" },
+    { who: "JUNIPER", t: "Nothing." },
+    { who: "NARRATION", t: "A pause." },
+    { who: "JUNIPER", t: "That was worse." },
+  ] },
+  { id: "r6", where: "cafe", lines: [
+    { who: "MAYA", t: "They\u2019ve been seen near the Castle again." },
+    { who: "YOU", t: "The people in white?" },
+    { who: "NARRATION", t: "Maya looks at you." },
+    { who: "MAYA", t: "Angels." },
+    { who: "YOU", t: "Angels?" },
+    { who: "MAYA", t: "Quiet." },
+    { who: "YOU", t: "That\u2019s what they\u2019re called?" },
+    { who: "MAYA", t: "That\u2019s enough." },
+  ] },
+  { id: "r7", where: "cafe", lines: [
+    { who: "MAYA", t: "Two of them are staying close to the Castle." },
+    { who: "YOU", t: "The Angels?" },
+    { who: "MAYA", t: "Lower your voice." },
+    { who: "YOU", t: "Do they have names?" },
+    { who: "MAYA", t: "Irina. Lucia." },
+    { who: "YOU", t: "And what do they want?" },
+    { who: "MAYA", t: "If I knew, I wouldn\u2019t tell you here." },
+  ] },
+  { id: "arrival", where: "studio-arrival", fromMonth: 9, lines: [
+    { who: "NARRATION", t: "The Studio door opens." },
+    { who: "NARRATION", t: "The air turns cold." },
+    { who: "NARRATION", t: "Irina enters first. Lucia follows." },
+    { who: "NARRATION", t: "White. Blue. Gold. No black." },
+    { who: "NARRATION", t: "Their eyes are white as the moon." },
+    { who: "NARRATION", t: "They scan the room. Then you." },
+    { who: "IRINA", t: "So this is the stylist." },
+    { who: "LUCIA", t: "Hm." },
+    { who: "YOU", t: "Irina. Lucia." },
+    { who: "IRINA", t: "Good. They warned you." },
+    { who: "YOU", t: "About you?" },
+    { who: "IRINA", t: "About many things, I imagine." },
+    { who: "NARRATION", t: "Lucia picks up one of your cards. She turns it over once." },
+    { who: "LUCIA", t: "Small collection." },
+    { who: "YOU", t: "It does the job." },
+    { who: "NARRATION", t: "Lucia looks at you now." },
+    { who: "LUCIA", t: "Does it?" },
+    { who: "NARRATION", t: "Irina smiles." },
+    { who: "IRINA", t: "That\u2019s what we came to see." },
+    { who: "NARRATION", t: "They leave the door open behind them. The cold takes longer to go." }, // DRAFT (Claude): a way out of the scene
+  ] },
+  { id: "r9", where: "castle", lines: [
+    { who: "HELENA", t: "If Holly comes to you about the banquet, put armour on her." },
+    { who: "YOU", t: "At dinner?" },
+    { who: "HELENA", t: "Especially at dinner." },
+    { who: "YOU", t: "Because Angels will be there?" },
+    { who: "HELENA", t: "You\u2019re learning." },
+    { who: "YOU", t: "That didn\u2019t sound like praise." },
+    { who: "HELENA", t: "It wasn\u2019t." },
+  ] },
+];
+
+// DRAFT (Claude): how Irina and Lucia appear in the Souls panel once met.
+const ANGEL_SOUL_NOTE = "They came to the Studio uninvited.";

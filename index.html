@@ -1167,6 +1167,31 @@
   }
   .story-screen > .primary { animation: fadeUp 0.8s var(--d, 0s) ease both; }
 
+  /* ============ LIFE & DEATH ============ */
+  /* Death: the city drops away almost to black (scene mode "death"); the lines come slowly. */
+  .death-screen .story-lines p { animation-duration: 1.4s; }
+
+  .quiet-night .speech { max-width: 440px; }
+
+  .grave-row { display: flex; gap: 14px; flex-wrap: wrap; justify-content: center; margin: 22px 0 8px; }
+  .grave {
+    display: flex; flex-direction: column; align-items: center; gap: 6px;
+    min-width: 116px; padding: 26px 18px 16px;
+    border-radius: 58px 58px 10px 10px;               /* a headstone, not a card */
+    background: rgba(20,16,30,0.55); border: 1px solid rgba(255,255,255,0.22);
+    color: var(--paper); cursor: pointer; font-family: var(--font-ui);
+    transition: background 0.2s, border-color 0.2s;
+  }
+  .grave:hover { background: rgba(20,16,30,0.7); }
+  .grave.active { border-color: var(--paper); background: rgba(20,16,30,0.8); }
+  .grave-name { font-family: var(--font-display); font-size: 30px; line-height: 1; }
+  .grave-age { font-size: 13px; color: var(--paper-3); letter-spacing: 0.04em; }
+  .grave-epitaph {
+    max-width: 440px; margin: 10px auto 26px; font-size: 18px; line-height: 1.45;
+    font-style: italic; color: var(--paper); text-shadow: 0 2px 16px rgba(15,8,30,0.6); text-wrap: balance;
+  }
+  .soul-deceased { font-size: 13px; color: var(--paper-3); letter-spacing: 0.04em; }
+
   /* ============ SHUFFLE ============ */
   .shuffle h2 { font-size: clamp(56px, 10vw, 96px); line-height: 1; margin-bottom: 6px; }
   .shuffle p { color: var(--paper-2); }
@@ -1916,6 +1941,28 @@
 
   .build-stamp { position: fixed; left: 16px; bottom: 12px; font-size: 11px; letter-spacing: 0.06em; color: rgba(255,255,255,0.4); }
 
+  /* Test panel (playtesting only -- see DEV_TOOLS). Its own classes on purpose. */
+  .dev-panel {
+    position: fixed; top: 12px; right: 12px; z-index: 9999; width: min(340px, calc(100vw - 24px));
+    max-height: calc(100vh - 24px); overflow-y: auto; padding: 12px 14px 14px;
+    background: rgba(14,10,22,0.94); border: 1px solid rgba(255,255,255,0.25); border-radius: 12px;
+    color: #fff; font: 13px/1.35 var(--font-ui); box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+  }
+  .dev-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+  .dev-section { border-top: 1px solid rgba(255,255,255,0.14); padding-top: 8px; margin-top: 8px; }
+  .dev-label { font-size: 11px; color: rgba(255,255,255,0.55); margin-bottom: 6px; }
+  .dev-row { display: flex; align-items: center; gap: 6px; margin-bottom: 5px; flex-wrap: wrap; }
+  .dev-name { width: 64px; }
+  .dev-val { flex: 1; min-width: 80px; }
+  .dev-val small { color: rgba(255,255,255,0.5); }
+  .dev-note { margin: 4px 0 0; font-size: 11px; color: rgba(255,255,255,0.55); }
+  .dev-btn, .dev-panel select {
+    font: inherit; color: #fff; background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.25);
+    border-radius: 6px; padding: 3px 9px; min-height: 0; cursor: pointer; width: auto; margin: 0;
+  }
+  .dev-panel select option { color: #000; }
+  .dev-btn.dev-danger { border-color: rgba(255,120,120,0.6); }
+
   /* ============ LOCATION ARTWORK ============ */
   .scene-bg { position: fixed; inset: 0; z-index: -1; pointer-events: none; opacity: 0; transition: opacity 0.8s ease; }
   .scene-bg.on { opacity: 1; }
@@ -1936,6 +1983,11 @@
   .scene-bg[data-mode="talk"] .scene-layer { filter: blur(2.5px) brightness(0.7) saturate(1.05); transform: scale(1.03); }
   .scene-bg[data-mode="talk"] .scene-shade { background: radial-gradient(ellipse 55% 75% at 50% 55%, rgba(16,11,28,0.45), rgba(16,11,28,0.1) 75%), linear-gradient(180deg, rgba(16,11,28,0.2), rgba(16,11,28,0.4)); }
   /* soft: results and card reveals */
+  /* cold: Irina and Lucia in the Studio -- the room loses its warmth */
+  .scene-bg[data-mode="cold"] .scene-layer { filter: blur(2px) brightness(0.78) saturate(0.25) contrast(1.05); transform: scale(1.03); transition-duration: 2.2s; }
+  .scene-bg[data-mode="cold"] .scene-shade { background: radial-gradient(ellipse 70% 80% at 50% 45%, rgba(200,220,255,0.10), rgba(20,28,48,0.55) 75%); transition-duration: 2.2s; }
+  .scene-bg[data-mode="death"] .scene-layer { filter: blur(10px) brightness(0.22) saturate(0.6); transform: scale(1.08); transition-duration: 1.6s; }
+  .scene-bg[data-mode="death"] .scene-shade { background: rgba(8,5,14,0.55); }
   .scene-bg[data-mode="soft"] .scene-layer { filter: blur(7px) brightness(0.72) saturate(1.05); transform: scale(1.06); }
   .scene-bg[data-mode="soft"] .scene-shade { background: linear-gradient(180deg, rgba(16,11,28,0.25), rgba(16,11,28,0.45)); }
   /* blur: styling table, duel, story screens */
@@ -2393,7 +2445,7 @@ const BRIEF_VISIT_INDICES = [0, 1, 3, 4, 6, 7, 9, 10, 11];
 // numbered stages advanced one per visit. All four Core Four now have their
 // full 20-stage trees ported verbatim from the bible. A full year only uses
 // 9 studio visits (see BRIEF_VISIT_INDICES), and profile.visits is lifetime
-// (never reset at the Year 1→2 transition — see beginYearTwo()), so Year 2's
+// (never reset at the Year 1→2 transition — see enterNextYear()), so Year 2's
 // 9 visits naturally continue on to stages 10–18 of each tree for free.
 
 
@@ -2439,7 +2491,30 @@ let collectedSets = new Set();
 let hand = [];
 let outfit = [null, null, null, null]; // 4 free slots, any card in any slot
 let clientRoundIndex = 0;
-let relationships = {};
+let relationships = {};  // Core Four hearts, 0..5. Friendship AND, once Angels are about, life.
+let peakHearts = {};     // highest hearts each has ever reached -- what she has opened up stays open
+// Late Year 2 -> Year 3 danger state, one object so saving it stays one line.
+function freshPeril() {
+  return {
+    angelIntroStage: 0,       // 0 none, 1 rumours begun, 2 first preparation seen, 3 Irina/Lucia met
+    angelStudioJobsDone: [],  // ids of the five Angel Studio jobs already played
+    angelEncountersDone: [],  // ids of encounter preparations already played
+    dead: {},                 // coreKey -> true. Permanent for the run.
+    deathOrder: [],           // coreKeys, in the order they died
+    griefProgress: {},        // griefProgress[survivor][dead] = grief visits already played, 0..3
+    graveyardVisited: false,
+    rumoursSeen: [],          // ids from ANGEL_RUMOURS, in the order played
+    rumourMonth: null,        // yearMonthKey() of the last rumour -- one per month
+  };
+}
+let peril = freshPeril();
+// Every card destroyed this run (Angels, Quartett, Octavia, the Glass House,
+// the furnace). A destroyed card is gone for the run: no shop, reward or find
+// can bring it back -- see unobtainableIds().
+let destroyedCardIds = new Set();
+// The year-end reward is granted once per year, so reloading on the
+// year-end screen can't pay it out twice.
+let yearEndReward = { year: null, ids: [] };
 let soulProfiles = {};   // per-client: { visits, answered: [ids], facts: [{q,a}], discovered: ["color:Black", ...] }
 let roundIsFirstMeeting = false;
 let currentBrief = null; // one entry from CLIENTS[key].briefs — chosen fresh each round via BRIEF_VISIT_INDICES
@@ -2662,17 +2737,19 @@ const SCENE_BY_TITLE = {
   "Royal Garden": "rosegarden",
   "Old Quarter": "oldquarter",
   "The Vendor": "store", "The furnace": "store", "Ash": "store", "Sold.": "store",
-  "Nightgarden": "nightgarden", "Glass House": "nightgarden",
+  "Nightgarden": "nightgarden", "Glass House": "nightgarden", "Graveyard": "nightgarden",
 };
 
 function sceneForStage() {
   if (stage.querySelector(".title-screen")) return null; // the title keeps its own painting
   if (stage.querySelector(".map-screen, .intro-seq")) return ["city", "sharp"];
   if (stage.querySelector("#outfitBoard")) return ["stylingtable", "table"];
+  if (stage.querySelector(".angel-arrival")) return ["studio", "cold"];
   if (stage.querySelector(".soul-scene")) return ["studio", "sharp"];
-  if (stage.querySelector(".result-scene, .shuffle")) return ["studio", "soft"];
+  if (stage.querySelector(".result-scene, .shuffle, .quiet-night")) return ["studio", "soft"];
   if (stage.querySelector(".q-table")) return ["cafe", "blur"];
   if (stage.querySelector(".q-reward, .q-result")) return ["cafe", "soft"];
+  if (stage.querySelector(".death-screen")) return ["city", "death"];
   if (stage.querySelector(".story-screen")) return ["city", "blur"];
   const title = (stage.querySelector(".soul-name, h2")?.textContent || "").trim();
   let key = SCENE_BY_TITLE[title];
@@ -2721,7 +2798,7 @@ function updateSceneBackground() {
 
 // Shown small on the title screen, so it's easy to confirm which version
 // the browser actually loaded (GitHub Pages and browsers cache aggressively).
-const BUILD_ID = "2026-09-30 · styling table 1";
+const BUILD_ID = "2026-09-30 · angel rumours 1";
 const stage = document.getElementById("stage");
 
 /* ---------------- CONVERSATION PRESENTATION ----------------
@@ -3001,6 +3078,173 @@ function heartsHTML(n) {
   return `<span class="hearts-row" role="img" aria-label="Friendship ${clamped} of 5">${heart("full").repeat(fullCount)}${half}${heart("empty").repeat(emptyCount)}</span>`;
 }
 
+/* ---------------- LIFE & DEATH ----------------
+   One rule each:
+   - relationships[k] is the only hearts value. It is friendship, and once
+     Angels are about it is also life. setHearts() is the only writer.
+   - Anything hearts UNLOCK (talks, milestones, gifts, scenes) reads
+     heartsEarned(): the peak she ever reached. Losing hearts to danger
+     never takes back a conversation.
+   - A dead Core Four character is gone for the run: no Studio visits (her
+     night is a quiet night), and no scene that shows her on screen.
+   Texts live in data-story.js (CORE_DEATH_TEXT, GRAVES, QUIET_NIGHT_LINES). */
+
+function coreFirstName(k) { return CLIENTS[k].name.split(/[ ,]/)[0]; }
+function coreKeyByName(name) {
+  const n = String(name || "").toLowerCase();
+  return CLIENTS.findIndex((c, i) => coreFirstName(i).toLowerCase() === n);
+}
+function coreIsDead(k) { return !!peril.dead[k]; }
+function coreNameIsDead(name) { const k = coreKeyByName(name); return k >= 0 && coreIsDead(k); }
+function anyCoreDead() { return peril.deathOrder.length > 0; }
+function graveyardUnlocked() { return anyCoreDead(); }
+
+// Does this scene put a dead character on screen? Same presence rule the
+// portraits use: she speaks, or narration names her.
+function sceneShowsDead(lines) {
+  return anyCoreDead() && inferPortraitKeys(lines).some(coreNameIsDead);
+}
+
+function heartsEarned(k) { return Math.max(peakHearts[k] || 0, relationships[k] || 0); }
+function setHearts(k, value) {
+  if (coreIsDead(k)) { relationships[k] = 0; return 0; }
+  const v = Math.max(0, Math.min(5, Math.round(value * 2) / 2));
+  relationships[k] = v;
+  peakHearts[k] = Math.max(peakHearts[k] || 0, v);
+  return v;
+}
+
+// Applies her death and saves at once, before anything else is shown. The
+// caller renders the death screen (renderDeathScreen) next.
+function killCoreCharacter(k) {
+  if (coreIsDead(k)) return;
+  peril.dead[k] = true;
+  peril.deathOrder.push(k);
+  relationships[k] = 0;
+  saveGame();
+}
+
+function renderDeathScreen(k, onContinue) {
+  const lines = CORE_DEATH_TEXT[k] || [];
+  const linesHTML = lines.map((l, i) => `<p style="--d:${(0.6 + i * 0.9).toFixed(2)}s">${l}</p>`).join("");
+  stage.innerHTML = `
+    <div class="story-screen death-screen">
+      <div class="story-lines">${linesHTML}</div>
+      <button class="primary" style="--d:${(0.6 + lines.length * 0.9 + 0.4).toFixed(2)}s" onclick="${onContinue}">Continue</button>
+    </div>
+  `;
+  updateTopBar("", true);
+}
+
+// Her night in the rotation, once she's gone. Nobody comes; the night
+// still passes (no job, so no mooncoins and no hearts).
+function renderQuietNight() {
+  const k = currentClientKey();
+  storyBeatsRemaining = STORY_BEATS_PER_JOB; // a new night starts, as with any job
+  stage.innerHTML = `
+    <div class="center-col screen-pad quiet-night">
+      <div class="soul-name">${titleCase(coreFirstName(k))}</div>
+      ${sceneHTML(QUIET_NIGHT_LINES[k] || [], null)}
+      <button class="primary" style="margin-top:14px;" onclick="advanceMonth()">Close the Studio</button>
+    </div>
+  `;
+  updateTopBar("", true);
+}
+
+// GRAVEYARD: a Nightgarden sub-location, hidden until the first death.
+let selectedGrave = null;
+function renderGraveyard() {
+  if (!graveyardUnlocked()) { renderMap(); return; }
+  const firstVisit = !peril.graveyardVisited;
+  peril.graveyardVisited = true;
+  if (selectedGrave === null || !peril.dead[selectedGrave]) selectedGrave = peril.deathOrder[peril.deathOrder.length - 1];
+  const gravesHTML = peril.deathOrder.map((k) => `
+    <button class="grave ${k === selectedGrave ? "active" : ""}" onclick="selectGrave(${k})">
+      <span class="grave-name">${titleCase(coreFirstName(k))}</span>
+      <span class="grave-age">${GRAVES[k].age}</span>
+    </button>`).join("");
+  const g = GRAVES[selectedGrave];
+  stage.innerHTML = `
+    <div class="center-col screen-pad graveyard">
+      <div class="portrait token">${icon("candle")}</div>
+      <div class="soul-name">Graveyard</div>
+      ${firstVisit ? sceneHTML(GRAVEYARD_FIRST_VISIT, null) : ""}
+      <div class="grave-row">${gravesHTML}</div>
+      <p class="grave-epitaph">\u201C${g.epitaph}\u201D</p>
+      <button class="primary" onclick="renderMap()">Leave</button>
+    </div>
+  `;
+  updateTopBar("", true);
+  saveGame();
+}
+function selectGrave(k) { selectedGrave = k; renderGraveyard(); }
+
+// Ids no shop, reward or find may hand out: owned, or destroyed this run.
+function unobtainableIds() { return new Set([...unlockedCardIds, ...destroyedCardIds]); }
+
+/* ---------------- ANGELS: RUMOURS & ARRIVAL ----------------
+   Data and rules: ANGEL_RUMOURS in data-story.js. nextRumour() is the one
+   place that decides which beat is due; each location only asks whether
+   that beat is its own (rumourAt). */
+function angelsMet() { return peril.angelIntroStage >= 3; }
+
+function nextRumour() {
+  if (currentYear < 2 || (currentYear === 2 && currentMonthIndex() < RUMOURS_FROM_MONTH)) return null;
+  if (peril.rumourMonth === yearMonthKey()) return null;
+  const r = ANGEL_RUMOURS.find((x) => !peril.rumoursSeen.includes(x.id));
+  if (!r) return null;
+  if (r.fromMonth !== undefined && currentYear === 2 && currentMonthIndex() < r.fromMonth) return null;
+  return r;
+}
+function rumourAt(where) {
+  const r = nextRumour();
+  if (!r || r.where !== where) return null;
+  if (r.client !== undefined && (currentClientKey() !== r.client || coreIsDead(r.client))) return null;
+  if (sceneShowsDead(r.lines)) return null; // (none of the current beats can, but keep the rule)
+  return r;
+}
+function markRumourSeen(r) {
+  peril.rumoursSeen.push(r.id);
+  peril.rumourMonth = yearMonthKey();
+  if (peril.angelIntroStage < 1) peril.angelIntroStage = 1;
+  if (r.id === "arrival") peril.angelIntroStage = 3;
+}
+
+// The one way into the Studio from the map.
+function enterStudio() {
+  if (coreIsDead(currentClientKey())) { renderQuietNight(); return; }
+  const r = rumourAt("studio-arrival");
+  if (r) { renderAngelArrival(r); return; }
+  renderShuffle();
+}
+
+// The first time you see them: an intrusion before tonight's client arrives.
+function renderAngelArrival(r) {
+  markRumourSeen(r);
+  saveGame();
+  stage.innerHTML = `
+    <div class="center-col screen-pad angel-arrival">
+      <div class="portrait token">${icon("moon")}</div>
+      <div class="soul-name">Studio</div>
+      ${sceneHTML(r.lines, null)}
+      <button class="primary" style="margin-top:14px;" onclick="renderShuffle()">Continue</button>
+    </div>
+  `;
+  updateTopBar("", true);
+}
+
+function renderOldQuarterRumour(r) {
+  markRumourSeen(r);
+  stage.innerHTML = `
+    <div class="center-col screen-pad">
+      <div class="soul-name">Old Quarter</div>
+      ${sceneHTML(r.lines, null)}
+      <button class="primary" style="margin-top:18px;" onclick="visitOldQuarter()">Continue</button>
+    </div>
+  `;
+  updateTopBar("", true);
+}
+
 /* ---------------- ROUND SETUP ---------------- */
 
 function startRound() {
@@ -3016,7 +3260,7 @@ function startRound() {
   roundIsFirstMeeting = profile.visits === 0;
   profile.visits += 1; // lifetime visits — drives CLIENT_STAGES, never reset at Year 1→2
   // yearVisits drives which of the 9 authored briefs shows this visit and IS
-  // reset at the Year 1→2 transition (see enterYearTwo()), so Year 2 replays
+  // reset at the Year 1→2 transition (see enterNextYear()), so Year 2 replays
   // the same nine-visit brief schedule per the companion spec §17.1, while
   // CLIENT_STAGES keeps advancing on lifetime visits without a replayed
   // first-meeting greeting.
@@ -3046,6 +3290,14 @@ function startRound() {
   if (key === 3 && storyFlags.armourSightingSeen && !storyFlags.armourHollySeen) {
     storyFlags.armourHollySeen = true;
     specialTalkLines = ARMOUR_HOLLY_LINES;
+    talkedThisVisit = true;
+    soulStep = 0;
+  }
+  // Angel rumours told in the Studio (R4 Margo, R5 Juniper): her visit opens with it.
+  const studioRumour = !specialTalkLines && profile.visits > 1 ? rumourAt("studio") : null;
+  if (studioRumour) {
+    markRumourSeen(studioRumour);
+    specialTalkLines = studioRumour.lines;
     talkedThisVisit = true;
     soulStep = 0;
   }
@@ -3225,7 +3477,7 @@ function renderIntro() {
       <div class="title-panel">
         <h1 class="sr-only">Drop Dead Gorgeous</h1>
         <img class="title-logo" src="https://terrirossa.github.io/dead-gorgeous-assets/interface_elements/logo.svg" alt="">
-        <div class="build-stamp">Build ${BUILD_ID}</div>
+        <div class="build-stamp" ${DEV_TOOLS ? `onclick="toggleDevPanel()"` : ""}>Build ${BUILD_ID}</div>
         <div class="title-actions">
           <button class="primary" onclick="${hasSave ? "continueGame()" : "beginGame()"}">${hasSave ? "Continue" : "Start game"}</button>
           ${hasSave ? `<button class="ghost" onclick="startNewGame()">Start a new game</button>` : ""}
@@ -3277,7 +3529,7 @@ function pickStarterDeck() {
 }
 
 function unlockRandomCards(n) {
-  const lockedIds = new Set(unlockedCardIds);
+  const lockedIds = unobtainableIds();
   const pool = DECK.filter((c) => !lockedIds.has(c.id));
   const newly = weightedSample(pool, n);
   newly.forEach((c) => unlockedCardIds.add(c.id));
@@ -3324,6 +3576,10 @@ function beginGame() {
   deckPile = liveDeck.map((c) => c.id);
   discardPile = [];
   relationships = {};
+  peakHearts = {};
+  peril = freshPeril();
+  destroyedCardIds = new Set();
+  yearEndReward = { year: null, ids: [] };
   soulProfiles = {};
   CLIENTS.forEach((_, i) => { soulProfiles[i] = { visits: 0, yearVisits: 0, answered: [], facts: [], discovered: [], bestScore: null, bestPieces: [] }; });
   clientRoundIndex = 0;
@@ -3389,7 +3645,7 @@ function finishIntro() {
 
 // Full reset of every Year-2-content-pass flag, for a true "Restart prototype"
 // (whether that happens from Year 1 or after Year 2 — see renderEnd()).
-// enterYearTwo(), by contrast, deliberately does NOT call this: Year 2 keeps
+// enterNextYear(), by contrast, deliberately does NOT call this: Year 2 keeps
 // all of this state (see its own comment for exactly what does get reset).
 function resetSecondaryContentState() {
   castleGateCharactersUnlocked = false;
@@ -3527,6 +3783,7 @@ function serializeGameState() {
     clientRoundIndex,
     currentYear,
     relationships,
+    peakHearts,
     soulProfiles,
     totalScore,
     delightedCount,
@@ -3654,6 +3911,11 @@ function serializeGameState() {
     windowSolved,
     seenOldQuarterEncounters,
     lastOldQuarterObservation,
+
+    // Late Year 2 -> Year 3: Angels, deaths, grief, destroyed cards
+    peril,
+    destroyedCardIds: Array.from(destroyedCardIds),
+    yearEndReward,
   };
 }
 
@@ -3706,6 +3968,13 @@ function loadGame() {
   clientRoundIndex = data.clientRoundIndex || 0;
   currentYear = data.currentYear || 1;
   relationships = data.relationships || {};
+  // Saves from before peakHearts existed: what she has now is the best known peak.
+  peakHearts = data.peakHearts || { ...relationships };
+  // Saves from before this pass have no deaths, no Angels and nothing destroyed.
+  peril = { ...freshPeril(), ...(data.peril || {}) };
+  destroyedCardIds = new Set(data.destroyedCardIds || []);
+  yearEndReward = data.yearEndReward || { year: null, ids: [] };
+  Object.keys(peril.dead).forEach((k) => { if (peril.dead[k]) relationships[k] = 0; });
   soulProfiles = data.soulProfiles || {};
   // Old/partial saves might be missing an entry -- never let that crash the
   // Souls screen.
@@ -3827,6 +4096,7 @@ function continueGame() {
   const ok = loadGame();
   document.getElementById("topBar").classList.remove("hidden");
   if (!ok) { beginGame(); return; }
+  if (clientRoundIndex >= 36) { renderEnd(); return; } // saved on the year-end screen
   renderMap();
 }
 
@@ -4233,10 +4503,12 @@ function ivyBikeSecondChoice(choice) {
 
 
 function oldQuarterEligibleEncounters(seasonKey) {
-  return (OLD_QUARTER_ENCOUNTERS[seasonKey] || []).filter((e) => e.eligible());
+  return (OLD_QUARTER_ENCOUNTERS[seasonKey] || []).filter((e) => !(e.cast || []).some(coreNameIsDead) && e.eligible());
 }
 
 function renderOldQuarterLookAround() {
+  const rumour = rumourAt("oldquarter");
+  if (rumour) { renderOldQuarterRumour(rumour); return; }
   const key = currentSeasonKey();
   const eligible = oldQuarterEligibleEncounters(key);
   const rollEncounter = eligible.length > 0 && Math.random() < 0.3;
@@ -4293,6 +4565,7 @@ function locationStatus(key) {
     if (!castleGateCharactersUnlocked) return "new";
     return !tonight ? "quiet" : firstNewEvent(buildCastleEvents()) ? "new" : "";
   }
+  if (key === "oldquarter" && rumourAt("oldquarter")) return "new";
   if (key === "oldquarter") return currentMannequinPuzzle() && !windowSolved[currentSeasonKey()] ? "puzzle" : "";
   return "";
 }
@@ -4308,7 +4581,7 @@ function renderMap() {
   const monthName = MONTHS[currentMonthIndex()];
 
   const tiles = [
-    { key: "studio", label: "Studio", icon: "hanger", locked: false, action: "renderShuffle()" },
+    { key: "studio", label: "Studio", icon: "hanger", locked: false, action: "enterStudio()" },
     { key: "shop", label: "Shop", icon: "bag", locked: false, action: "renderShop()" },
     { key: "cafe", label: "Night Café", icon: "cup", locked: false, action: "visitCafe()" },
     { key: "castle", label: "Night Castle", icon: "castle", locked: restrictedPhase.castle < 4, action: "visitCastle()" },
@@ -4320,7 +4593,7 @@ function renderMap() {
   const nextName = client ? client.name.split(",")[0] : "";
   const tilesHTML = tiles.map((t) => {
     const status = t.locked ? "" : locationStatus(t.key);
-    const sub = t.key === "studio" ? `Next: ${nextName}` : (LOCATION_STATUS_LABEL[status] || "");
+    const sub = t.key === "studio" ? (coreIsDead(currentClientKey()) ? "A quiet night" : `Next: ${nextName}`) : (LOCATION_STATUS_LABEL[status] || "");
     return `
     <button class="map-tile ${t.locked ? "locked" : ""} status-${status || "none"}"
          onclick="${t.locked ? `lockedTile('${t.key}')` : t.key === "studio" ? t.action : `enterLocation('${t.key}')`}"
@@ -4388,7 +4661,7 @@ function refreshShopStock() {
   const ym = yearMonthKey();
   if (shopStockMonth === ym) { shopStock = shopStock.filter((id) => !unlockedCardIds.has(id)); return; }
   shopStockMonth = ym;
-  const owned = unlockedCardIds;
+  const owned = unobtainableIds();
   shopStock = SHOP_SLOTS.map((rarities) => {
     const pool = DECK.filter((c) => rarities.includes(c.rarity) && !owned.has(c.id));
     return pool.length ? weightedSample(pool, 1)[0].id : null;
@@ -4406,7 +4679,7 @@ function buyShopCard(id) {
 }
 
 function pickShopItem() {
-  const ownedIds = new Set(unlockedCardIds);
+  const ownedIds = unobtainableIds();
   const pool = DECK.filter((c) => SHOP_RARITIES.includes(c.rarity) && !ownedIds.has(c.id));
   if (pool.length === 0) return null;
   return weightedSample(pool, 1)[0];
@@ -4467,7 +4740,7 @@ function confirmBurn() {
   document.querySelectorAll(".burn-selected").forEach((el) => el.classList.add("burning"));
   document.querySelectorAll(".burn-screen button, .q-pick-bar button").forEach((b) => { b.disabled = true; });
   setTimeout(() => {
-    burnSelection.forEach((id) => unlockedCardIds.delete(id));
+    burnSelection.forEach((id) => destroyWearableCard(id));
     rebuildLiveDeckFromUnlocked();
     moonCoins += reward;
     burnSelection = [];
@@ -4692,8 +4965,8 @@ function nextCoreCafeEncounter() {
     const list = CORE_CAFE_ENCOUNTERS[k] || [];
     const idx = seen[k] || 0;
     const enc = list[idx];
-    if (!enc) continue;
-    if (enc.hearts && (relationships[k] || 0) < enc.hearts) continue;
+    if (!enc || coreIsDead(k) || sceneShowsDead(enc.lines)) continue;
+    if (enc.hearts && heartsEarned(k) < enc.hearts) continue;
     if (enc.season && !enc.season.includes(currentSeasonName())) continue;
     if (enc.after && !enc.after.every((ref) => { const [ck, ci] = parseStageRef(ref, k); return stageWasSeen(ck, ci); })) continue;
     return { key: k, idx, lines: enc.lines };
@@ -4711,14 +4984,21 @@ function playCoreCafeEncounter() {
 
 function buildCafeEvents() {
   const ym = yearMonthKey();
+  const rumour = metMaya ? rumourAt("cafe") : null; // the café beats are Maya's
   return [
+    ...(rumour ? [{
+      lines: rumour.lines, eligible: () => true,
+      run: () => { markRumourSeen(rumour); renderCafeScreen(rumour.lines, "Leave", "renderMap()"); },
+    }] : []),
     {
       // Bible: the four of them at one table, late in the year (Dead Day).
+      lines: CAFE_DEAD_DAY_GROUP_LINES,
       eligible: () => !storyFlags.cafeDeadDaySeen && currentMonthIndex() === 11,
       run: () => { storyFlags.cafeDeadDaySeen = true; renderCafeScreen(CAFE_DEAD_DAY_GROUP_LINES, "Leave", "renderMap()"); },
     },
     {
       // Bible: Ivy and Holly, the week before the Summer Solstice.
+      lines: CAFE_SOLSTICE_GROUP_LINES,
       eligible: () => !storyFlags.cafeSolsticeSeen && currentMonthIndex() === 5 && positionInMonth() < 2,
       run: () => { storyFlags.cafeSolsticeSeen = true; renderCafeScreen(CAFE_SOLSTICE_GROUP_LINES, "Leave", "renderMap()"); },
     },
@@ -4726,6 +5006,7 @@ function buildCafeEvents() {
     {
       // The bible's Garden Circle café scene (early spring), once you know
       // both of them are in it.
+      lines: GARDEN_CIRCLE_CAFE_LINES,
       eligible: () => !storyFlags.gardenCircleCafeSeen && ["spring"].includes(currentSeasonName()) && currentMonthIndex() <= 3 && stageWasSeen(0, 5) && stageWasSeen(1, 7),
       run: () => { storyFlags.gardenCircleCafeSeen = true; renderCafeScreen(GARDEN_CIRCLE_CAFE_LINES, "Leave", "renderMap()"); },
     },
@@ -4828,7 +5109,7 @@ let cacheSelectedCardIds = [];
 
 function renderCafeBackRoomCache() {
   if (cacheOfferedCardIds.length === 0) {
-    const owned = new Set(unlockedCardIds);
+    const owned = unobtainableIds();
     const pool = DECK.filter((c) => ["Rare", "Iconic", "Legendary"].includes(c.rarity) && !owned.has(c.id));
     cacheOfferedCardIds = shuffle(pool).slice(0, Math.min(4, pool.length)).map((c) => c.id);
     cacheSelectedCardIds = [];
@@ -4893,7 +5174,7 @@ function renderCafeBackRoom() {
 
   const ym = yearMonthKey();
   const boxAlreadyUsedThisMonth = backRoomBoxPurchasedYearMonth === ym;
-  const owned = new Set(unlockedCardIds);
+  const owned = unobtainableIds();
   const pool = DECK.filter((c) => ["Rare", "Iconic", "Legendary"].includes(c.rarity) && !owned.has(c.id));
   const canAfford = moonCoins >= 3;
 
@@ -4921,7 +5202,7 @@ function renderCafeBackRoom() {
 function openUnmarkedBox() {
   const ym = yearMonthKey();
   if (backRoomBoxUsesRemaining <= 0 || backRoomBoxPurchasedYearMonth === ym || moonCoins < 3) return;
-  const owned = new Set(unlockedCardIds);
+  const owned = unobtainableIds();
   const pool = DECK.filter((c) => ["Rare", "Iconic", "Legendary"].includes(c.rarity) && !owned.has(c.id));
   if (pool.length === 0) { renderCafeBackRoom(); return; }
   moonCoins -= 3;
@@ -5341,7 +5622,7 @@ function renderQuartettEntry() {
     ? "You don't have enough cards in your collection yet."
     : `${remaining} of ${QUARTETT_MAX_SESSIONS_PER_SEASON} matches left this season.`;
 
-  const opponentTilesHTML = Object.keys(QUARTETT_OPPONENTS).map((id, i) => {
+  const opponentTilesHTML = Object.keys(QUARTETT_OPPONENTS).filter((id) => !coreNameIsDead(id)).map((id, i) => {
     const opp = QUARTETT_OPPONENTS[id];
     return `
       <button class="q-opponent" style="--r:${((i % 2 ? 1 : -1) * (2 + (i % 3))).toFixed(0)}deg" onclick="startQuartettMatch('${id}')">
@@ -5714,7 +5995,7 @@ function quartettConfirmForfeit() {
   if (btn) btn.classList.add("burning");
   document.querySelectorAll(".q-forfeit button").forEach((b) => { b.disabled = true; });
   setTimeout(() => {
-    unlockedCardIds.delete(id);
+    destroyWearableCard(id);
     rebuildLiveDeckFromUnlocked();
     match.destroyedCardId = id;
     quartettForfeitChoice = null;
@@ -5794,7 +6075,7 @@ function quartettFinishMatch() {
 
   match.rewardCard = null;
   if (match.status === "playerWin") {
-    const unowned = DECK.filter((c) => !unlockedCardIds.has(c.id));
+    const unowned = DECK.filter((c) => !unobtainableIds().has(c.id));
     const tier = match.mode === "stakes" ? ["Rare", "Iconic", "Legendary"] : ["Basic", "Uncommon", "Rare"];
     const pool = unowned.filter((c) => tier.includes(c.rarity));
     const from = pool.length > 0 ? pool : unowned;
@@ -5849,7 +6130,7 @@ function resolveRepeatPoolVisit({ pool, pickFn, bonusId, getBonusLastYear, setBo
   if (chosen.id === bonusId) {
     // Set eagerly, win or lose -- see the once-per-year edge-case fix.
     setBonusLastYear(currentYear);
-    const owned = new Set(unlockedCardIds);
+    const owned = unobtainableIds();
     const eligible = eligibleCards().filter((c) => !owned.has(c.id));
     if (eligible.length > 0) {
       const awarded = eligible[Math.floor(Math.random() * eligible.length)];
@@ -5939,6 +6220,7 @@ function gardenSublocButtonsHTML() {
   const buttons = [];
   if (glassHouseUnlocked) buttons.push(`<button class="ghost" onclick="renderGlassHouse()">Glass House</button>`);
   else if (hasGlassHouseKey) buttons.push(`<button class="ghost" onclick="renderOvergrownPath()">Follow the overgrown path</button>`);
+  if (graveyardUnlocked()) buttons.push(`<button class="ghost" onclick="renderGraveyard()">Graveyard</button>`);
   if (buttons.length === 0) return "";
   return `<div class="subloc-row">${buttons.join("")}</div>`;
 }
@@ -5967,7 +6249,8 @@ function buildGardenEvents() {
     },
     {
       // DRAFT scene: the ritual itself, for high friendship with Margo (before her stage 18).
-      eligible: () => !storyFlags.gardenRitualSeen && storyFlags.gardenWalkSeen && stageWasSeen(0, 16) && (relationships[0] || 0) >= 3,
+      lines: GARDEN_RITUAL_LINES,
+      eligible: () => !storyFlags.gardenRitualSeen && storyFlags.gardenWalkSeen && stageWasSeen(0, 16) && heartsEarned(0) >= 3,
       run: () => { storyFlags.gardenRitualSeen = true; renderGardenScene(GARDEN_RITUAL_LINES, "Leave", "renderMap()"); },
     },
     { eligible: () => !metOctavia, run: () => renderGardenScene(OCT_FIRST_SCENE, "Leave", "afterOctaviaFirst()") },
@@ -6001,6 +6284,7 @@ function renderGarden() {
         <div class="portrait token">${icon("leaf")}</div>
         <div class="soul-name">Nightgarden</div>
         <div class="speech narration-line">The gate is locked for the season. The vines have grown through the ironwork. Whatever is inside will wait for spring.</div>
+        ${graveyardUnlocked() ? `<div class="subloc-row"><button class="ghost" onclick="renderGraveyard()">Graveyard</button></div>` : ""}
         <button class="ghost" style="margin-top:22px;" onclick="renderMap()">Leave</button>
       </div>
     `;
@@ -6081,6 +6365,7 @@ function finalizeOctaviaSacrifice(cardId) {
 // Never touches Key Cards, Jokers, or anything not already owned.
 function destroyWearableCard(cardId) {
   unlockedCardIds.delete(cardId);
+  destroyedCardIds.add(cardId); // gone for the run -- never offered again
   if (cardId === THORN_VEIL.id) thornVeilOwned = false;
   liveDeck = liveDeck.filter((c) => c.id !== cardId);
   deckPile = deckPile.filter((id) => id !== cardId);
@@ -6337,7 +6622,7 @@ function waterCultivation() {
 // first non-empty applicable pool; the last entry is the universal fallback.
 function harvestGlassHouseCultivation() {
   const src = glassHouseCultivationSourceAttributes || {};
-  const owned = new Set(unlockedCardIds);
+  const owned = unobtainableIds();
   const candidatePools = [];
   if (src.color === "Black") candidatePools.push(DECK.filter((c) => !owned.has(c.id) && (c.style === "Daring" || c.style === "Cool")));
   if (src.color === "Silver") candidatePools.push(DECK.filter((c) => !owned.has(c.id) && (c.style === "Armour" || c.style === "Elegant")));
@@ -6615,15 +6900,23 @@ function getFestivalReactionFor(characterId, metFlag) {
 // behavior of the if/return chain this replaces. The array order IS the
 // priority order; nothing else determines it, so the whole priority list is
 // readable top to bottom in one place instead of buried in nested ifs.
+// An event that names its scene (`lines`) is skipped while that scene
+// would show a dead Core Four character on screen.
 function runFirstEligibleEvent(events) {
   for (const event of events) {
+    if (event.lines && sceneShowsDead(event.lines)) continue;
     if (event.eligible()) { event.run(); return; }
   }
 }
 
 function buildCastleEvents() {
   const ym = yearMonthKey();
+  const rumour = metHelena ? rumourAt("castle") : null; // the Castle beats are Helena's
   return [
+    ...(rumour ? [{
+      lines: rumour.lines, eligible: () => true,
+      run: () => { markRumourSeen(rumour); renderCastleScene(rumour.lines, "Leave", "renderMap()"); },
+    }] : []),
     {
       eligible: () => !julietteShiftEventSeen && castleVisitsAfterMeeting >= 2,
       run: () => { julietteShiftEventSeen = true; renderCastleScene(JUL_SHIFT_END_SCENE, "Continue", "renderMap()"); },
@@ -7248,7 +7541,7 @@ function renderSoul() {
 
   let body;
   if (soulStep === "arrive") {
-    const hearts = relationships[key] || 0;
+    const hearts = heartsEarned(key); // what she has opened up stays open, even after danger costs hearts
     const needed = talkStageIndex !== null ? heartsNeededForTalk(talkStageIndex) : null;
     const canTalk = needed !== null && hearts >= needed;
     const talkHTML = needed === null
@@ -8204,7 +8497,7 @@ function renderSoulsOverlay() {
 // clients, so they have no hearts, preferences or outfits yet.
 function metSouls() {
   const list = CLIENTS.map((c, i) => ({ key: i, name: c.name.split(",")[0], portrait: c.portrait, client: true }));
-  const met = { helena: metHelena, juliette: metJuliette, maya: metMaya, octavia: metOctavia, valery: metValery };
+  const met = { helena: metHelena, juliette: metJuliette, maya: metMaya, octavia: metOctavia, valery: metValery, irina: angelsMet(), lucia: angelsMet() };
   SECONDARY_PORTRAIT_ORDER.forEach((k) => {
     if (met[k]) list.push({ key: k, name: k.charAt(0).toUpperCase() + k.slice(1), portrait: SECONDARY_PORTRAITS[k], client: false });
   });
@@ -8214,7 +8507,7 @@ function metSouls() {
 // What hearts open up with her -- so the player can see what they're
 // working toward.
 function friendshipMilestonesHTML(i) {
-  const h = relationships[i] || 0;
+  const h = heartsEarned(i);
   const gift = FRIENDSHIP_CARDS[i];
   const items = [
     { at: 1.5, text: "She talks about her life" },
@@ -8241,7 +8534,7 @@ function renderSoulsListHTML() {
       <span class="soul-thumb" style="background-image:url('${x.portrait}')"></span>
       <span class="soul-row-text">
         <span class="soul-row-name">${x.name}</span>
-        ${x.client ? `<span class="hearts">${heartsHTML(relationships[x.key] || 0)}</span>` : `<span class="soul-row-note">Not a client</span>`}
+        ${x.client && coreIsDead(x.key) ? `<span class="soul-row-note">Deceased</span>` : x.client ? `<span class="hearts">${heartsHTML(relationships[x.key] || 0)}</span>` : `<span class="soul-row-note">${["irina", "lucia"].includes(x.key) ? "Angel" : "Not a client"}</span>`}
       </span>
     </button>`).join("");
 
@@ -8282,6 +8575,7 @@ function renderSoulsListHTML() {
       <div class="soul-detail-head">
         <div class="soul-detail-name">${current.name}</div>
         <div class="hearts">${heartsHTML(relationships[i] || 0)}</div>
+        ${coreIsDead(i) ? `<div class="soul-deceased">Deceased</div>` : ""}
       </div>
       <section class="panel"><h4>Preferences</h4>${prefsHTML}</section>
       <section class="panel"><h4>Friendship</h4>${friendshipMilestonesHTML(i)}</section>
@@ -8294,7 +8588,7 @@ function renderSoulsListHTML() {
   } else {
     detailHTML = `
       <div class="soul-detail-head"><div class="soul-detail-name">${current.name}</div></div>
-      <section class="panel"><p class="panel-empty">You've met her around After City, but she hasn't come to the Studio.</p></section>
+      <section class="panel"><p class="panel-empty">${["irina", "lucia"].includes(current.key) ? ANGEL_SOUL_NOTE : "You've met her around After City, but she hasn't come to the Studio."}</p></section>
     `;
   }
 
@@ -8824,7 +9118,7 @@ function finishStyling() {
   // caps at 5 hearts total, since this is meant to be a year-long arc, not
   // something maxed out after a handful of good outfits.
   relDelta = Math.min(relDelta, 0.5);
-  relationships[key] = Math.min(5, (relationships[key] || 0) + relDelta);
+  setHearts(key, (relationships[key] || 0) + relDelta);
 
   // Track this client's best-ever outfit, cards and all, for her profile.
   if (profile.bestScore === null || scoreWithGaps > profile.bestScore) {
@@ -8868,7 +9162,7 @@ function finishStyling() {
   }
 
   renderResult(client, scoreWithGaps, wantResults, relDelta, moonCoinsEarned, breakdown, setBonusName);
-  if ((relationships[key] || 0) >= FRIENDSHIP_GIFT_HEARTS && FRIENDSHIP_CARDS[key] && !friendshipCardsOwned.includes(FRIENDSHIP_CARDS[key].id)) {
+  if (heartsEarned(key) >= FRIENDSHIP_GIFT_HEARTS && FRIENDSHIP_CARDS[key] && !friendshipCardsOwned.includes(FRIENDSHIP_CARDS[key].id)) {
     friendshipCardsOwned.push(FRIENDSHIP_CARDS[key].id);
     rebuildLiveDeckFromUnlocked();
     showFriendshipGift(key);
@@ -9329,71 +9623,41 @@ function afterSeasonReveal() {
 }
 
 function renderEnd() {
-  const rows = CLIENTS.map((c, i) => `
-    <div class="year-row"><span><span class="soul-swatch" style="background:${c.color};"></span> ${c.name}</span><span class="hearts">${heartsHTML(relationships[i] || 0)}</span></div>
-  `).join("");
-
   // Reward: one new piece for every 3 "Delighted" outcomes this year, drawn
   // from real still-uncollected wardrobe cards (same pool unlockRandomCards()
-  // uses for the quarterly unlocks) rather than a separate placeholder set.
-  const stillLocked = DECK.filter((c) => !unlockedCardIds.has(c.id)).length;
-  const rewardCount = Math.min(Math.floor(delightedCount / 3), stillLocked);
-  const earned = unlockRandomCards(rewardCount);
-  rebuildLiveDeckFromUnlocked();
+  // uses for the quarterly unlocks). Granted once per year: reloading on
+  // this screen shows the same reward instead of paying it out again.
+  if (yearEndReward.year !== currentYear) {
+    const stillLocked = DECK.filter((c) => !unobtainableIds().has(c.id)).length;
+    const rewardCount = Math.min(Math.floor(delightedCount / 3), stillLocked);
+    yearEndReward = { year: currentYear, ids: unlockRandomCards(rewardCount).map((c) => c.id) };
+    rebuildLiveDeckFromUnlocked();
+  }
+  const earned = yearEndReward.ids.map((id) => DECK.find((c) => c.id === id)).filter(Boolean);
 
-  // No renderMap() call happens on this screen until the player chooses to
-  // continue (Enter Year Two) or restarts, so checkpoint here too -- an
-  // exited tab right on this screen shouldn't lose the year-end reward.
+  // No renderMap() call happens on this screen until the player continues,
+  // so checkpoint here too (continueGame() comes back to this screen).
   saveGame();
 
-  const rewardLineUnused = earned.length > 0
-    ? `<p style="color:var(--gold);">Word got around about your work — ${earned.length} new piece${earned.length > 1 ? "s" : ""} joined your closet for next time: ${earned.map((c) => c.name).join(", ")}.</p>`
-    : `<p style="color:var(--muted);">No new pieces earned this year — delight more clients (3 "Delighted" outfits earns one) to grow your closet.</p>`;
-
-  const isYearOne = currentYear === 1;
-  const heading = isYearOne ? "One year in After City." : "Two years in After City.";
-  const narrativeLines = isYearOne
-    ? [
-        "One year.",
-        "Thirty-six jobs.",
-        "More cards than you started with.",
-        "More questions too.",
-        "After City feels less unfamiliar now.",
-        "That may not be the same thing as understanding it.",
-      ]
-    : [
-        "Two years.",
-        "Seventy-two jobs.",
-        "Faces you now recognize on sight.",
-        "Doors that used to be walls.",
-        "After City still isn't explaining itself.",
-        "You've stopped expecting it to.",
-      ];
-  const narrativeHTML = narrativeLines.map((l) => `<p style="margin:4px 0;">${l}</p>`).join("");
-
-  const closingLine = isYearOne ? "" : "To be continued.";
-
-  // Year 1 offers a real choice (continue the same run into Year 2, or start
-  // over). Year 2 is the end of this content pass, so only Restart remains —
-  // per spec, do NOT start Year 3 here.
-  const buttonsHTML = isYearOne
-    ? `
-      <button class="primary" onclick="enterYearTwo()">Begin Year Two</button>
-    `
-    : `<button class="ghost" onclick="renderIntro()">Back to the title</button>`;
+  const text = YEAR_END_TEXT[currentYear] || YEAR_END_TEXT[LAST_YEAR];
+  const isLastYear = currentYear >= LAST_YEAR;
+  const nextYearWord = { 1: "Two", 2: "Three" }[currentYear];
+  const buttonsHTML = isLastYear
+    ? `<button class="ghost" onclick="renderIntro()">Back to the title</button>`
+    : `<button class="primary" onclick="enterNextYear()">Begin Year ${nextYearWord}</button>`;
 
   const soulsHTML = CLIENTS.map((c, i) => `
     <div class="year-soul">
       <span class="soul-thumb" style="background-image:url('${c.portrait}')"></span>
       <span class="year-soul-name">${c.name.split(",")[0]}</span>
-      <span class="hearts">${heartsHTML(relationships[i] || 0)}</span>
+      ${coreIsDead(i) ? `<span class="soul-row-note">Deceased</span>` : `<span class="hearts">${heartsHTML(relationships[i] || 0)}</span>`}
     </div>`).join("");
-  const storyHTML = narrativeLines.map((l, i) => `<p style="--d:${(i * 0.5).toFixed(2)}s">${l}</p>`).join("");
-  const after = (narrativeLines.length * 0.5 + 0.3).toFixed(2);
+  const storyHTML = text.lines.map((l, i) => `<p style="--d:${(i * 0.5).toFixed(2)}s">${l}</p>`).join("");
+  const after = (text.lines.length * 0.5 + 0.3).toFixed(2);
 
   stage.innerHTML = `
     <div class="story-screen year-end">
-      <div class="year-end-title">${heading.replace(/\.$/, "")}</div>
+      <div class="year-end-title">${text.heading}</div>
       <div class="story-lines">${storyHTML}</div>
       <div class="year-end-panel" style="--d:${after}s">
         <div class="year-stats">
@@ -9404,31 +9668,165 @@ function renderEnd() {
         ${earned.length > 0
           ? `<p class="year-reward">${icon("sparkle")} Word got around. ${earned.length} new piece${earned.length > 1 ? "s" : ""} joined your closet: ${earned.map((c) => c.name).join(", ")}.</p>`
           : `<p class="year-reward muted">Delight three clients to earn a new piece at year's end.</p>`}
-        ${closingLine ? `<p class="year-closing">${closingLine}</p>` : ""}
+        ${isLastYear ? `<p class="year-closing">To be continued.</p>` : ""}
         <div class="q-result-actions">${buttonsHTML}</div>
       </div>
     </div>
   `;
 }
 
-// Year 1→2 transition (Characters spec §17). This is a CONTINUATION of the
-// same run, not a call into beginGame() — collection, Moon Coins,
-// relationships, discovered facts, keys, unlocked locations and
-// secondary-character flags all survive. Only the yearly counters reset.
-function enterYearTwo() {
-  currentYear = 2;
+// Year N -> N+1 (Characters spec §17). A CONTINUATION of the same run, not a
+// call into beginGame(): collection, Moon Coins, hearts, deaths, grief,
+// discovered facts, keys, unlocked locations and every story flag survive.
+// Only the yearly counters reset. Dead stay dead; hearts are not refilled.
+function enterNextYear() {
+  currentYear += 1;
   clientRoundIndex = 0;
   totalScore = 0;
   delightedCount = 0;
   pendingSeasonEnd = false;
   currentShopItem = null;
   shopStockMonth = null;
+  storyBeatsRemaining = STORY_BEATS_PER_JOB;
   Object.keys(soulProfiles).forEach((key) => { soulProfiles[key].yearVisits = 0; });
-  // Pick up any cards earned as the Year 1 reward (see renderEnd()) so they're
-  // actually drawable from the very first Year 2 Studio visit.
+  // Pick up any cards earned as the year-end reward so they're drawable
+  // from the very first Studio visit of the new year.
   rebuildLiveDeckFromUnlocked();
+  saveGame();
+  if (currentYear === 3) { renderStoryScreen("yearThreeOpening", "renderMap()"); return; }
   renderMap();
 }
+
+/* ---------------- TEST PANEL ----------------
+   For playtesting only: open it with the key left of "1" (^ on a German
+   keyboard, ` on an English one) or by clicking the build stamp on the
+   title screen. Set DEV_TOOLS to false for a release build (Steam). */
+const DEV_TOOLS = true;
+
+function devInGame() { return Object.keys(soulProfiles).length > 0 && !!CLIENTS; }
+function toggleDevPanel() {
+  if (!DEV_TOOLS) return;
+  const el = document.getElementById("devPanel");
+  if (el) { el.remove(); return; }
+  renderDevPanel();
+}
+function renderDevPanel() {
+  let el = document.getElementById("devPanel");
+  if (!el) {
+    el = document.createElement("div");
+    el.id = "devPanel";
+    el.className = "dev-panel";
+    el.setAttribute("role", "dialog");
+    el.setAttribute("aria-label", "Test panel");
+    document.body.appendChild(el);
+  }
+  if (!devInGame()) {
+    el.innerHTML = `
+      <div class="dev-head"><b>Test panel</b><button class="dev-btn" onclick="toggleDevPanel()">Close</button></div>
+      <p class="dev-note">Start or continue a game first.</p>`;
+    return;
+  }
+  const monthOpts = MONTHS.map((m, i) => `<option value="${i}" ${i === currentMonthIndex() ? "selected" : ""}>${m}</option>`).join("");
+  const yearOpts = [1, 2, 3].map((y) => `<option value="${y}" ${y === currentYear ? "selected" : ""}>Year ${y}</option>`).join("");
+  const rows = CLIENTS.map((c, k) => {
+    const dead = coreIsDead(k);
+    return `
+    <div class="dev-row">
+      <span class="dev-name">${coreFirstName(k)}</span>
+      <span class="dev-val">${dead ? "dead" : `${relationships[k] || 0} <small>(peak ${peakHearts[k] || 0})</small>`}</span>
+      ${dead
+        ? `<button class="dev-btn" onclick="devRevive(${k})">Revive</button>`
+        : `<button class="dev-btn" onclick="devHearts(${k}, -0.5)">&minus;</button>
+           <button class="dev-btn" onclick="devHearts(${k}, 0.5)">+</button>
+           <button class="dev-btn dev-danger" onclick="devKill(${k})">Kill</button>`}
+    </div>`;
+  }).join("");
+  el.innerHTML = `
+    <div class="dev-head"><b>Test panel</b><button class="dev-btn" onclick="toggleDevPanel()">Close</button></div>
+    <div class="dev-section">
+      <div class="dev-label">Jump to</div>
+      <div class="dev-row">
+        <select id="devYear">${yearOpts}</select>
+        <select id="devMonth">${monthOpts}</select>
+        <button class="dev-btn" onclick="devJump()">Go</button>
+      </div>
+      <p class="dev-note">Now: ${MONTHS[currentMonthIndex()]}, Year ${currentYear}, job ${clientRoundIndex + 1} of 36. Story flags are not changed.</p>
+    </div>
+    <div class="dev-section">
+      <div class="dev-label">Hearts</div>
+      ${rows}
+    </div>
+    <div class="dev-section">
+      <div class="dev-label">Angel rumours</div>
+      <p class="dev-note">${devRumourStatus()}</p>
+      <div class="dev-row">
+        <button class="dev-btn" onclick="devRumourMonth()">Allow another this month</button>
+        <button class="dev-btn" onclick="devRumourSkip()">Skip the next one</button>
+      </div>
+    </div>
+    <div class="dev-section">
+      <div class="dev-label">Collection</div>
+      <div class="dev-row">
+        <button class="dev-btn" onclick="devGrantAll()">Own every card</button>
+        <button class="dev-btn" onclick="devCoins()">+50 mooncoins</button>
+      </div>
+      <p class="dev-note">${unlockedCardIds.size} owned, ${destroyedCardIds.size} destroyed, ${moonCoins} mooncoins.</p>
+    </div>`;
+}
+function devRumourStatus() {
+  const r = ANGEL_RUMOURS.find((x) => !peril.rumoursSeen.includes(x.id));
+  const seen = peril.rumoursSeen.length ? peril.rumoursSeen.join(", ") : "none";
+  if (!r) return `Seen: ${seen}. All played.`;
+  const where = r.client !== undefined ? `Studio, on ${coreFirstName(r.client)}'s visit` : { oldquarter: "Old Quarter, Look around", cafe: "Night Café (Maya)", castle: "Night Castle (Helena)", "studio-arrival": "Studio, before the client" }[r.where];
+  const dueNow = nextRumour() === r;
+  return `Seen: ${seen}. Next: ${r.id} at ${where}${dueNow ? " (due now)" : " (not yet: " + (peril.rumourMonth === yearMonthKey() ? "one already this month" : "too early") + ")"}.`;
+}
+function devRumourMonth() { peril.rumourMonth = null; renderMap(); renderDevPanel(); }
+function devRumourSkip() {
+  const r = ANGEL_RUMOURS.find((x) => !peril.rumoursSeen.includes(x.id));
+  if (r) { markRumourSeen(r); peril.rumourMonth = null; }
+  saveGame(); renderMap(); renderDevPanel();
+}
+function devJump() {
+  const y = parseInt(document.getElementById("devYear").value, 10);
+  const m = parseInt(document.getElementById("devMonth").value, 10);
+  currentYear = y;
+  clientRoundIndex = m * 3;
+  pendingSeasonEnd = false;
+  storyBeatsRemaining = STORY_BEATS_PER_JOB;
+  shopStockMonth = null;
+  renderMap();
+  renderDevPanel();
+}
+function devHearts(k, d) { setHearts(k, (relationships[k] || 0) + d); saveGame(); renderDevPanel(); }
+function devKill(k) {
+  toggleDevPanel();
+  killCoreCharacter(k);
+  renderDeathScreen(k, "renderMap()");
+}
+// Test only -- the game itself never revives anyone.
+function devRevive(k) {
+  delete peril.dead[k];
+  peril.deathOrder = peril.deathOrder.filter((x) => x !== k);
+  setHearts(k, 1);
+  saveGame();
+  renderMap();
+  renderDevPanel();
+}
+function devGrantAll() {
+  DECK.forEach((c) => { if (!destroyedCardIds.has(c.id)) unlockedCardIds.add(c.id); });
+  rebuildLiveDeckFromUnlocked();
+  saveGame();
+  renderDevPanel();
+}
+function devCoins() { moonCoins += 50; saveGame(); renderDevPanel(); updateTopBar("", true); }
+document.addEventListener("keydown", (e) => {
+  if (!DEV_TOOLS || e.code !== "Backquote") return;
+  const t = e.target;
+  if (t && t.matches && t.matches("input, textarea, select")) return;
+  e.preventDefault();
+  toggleDevPanel();
+});
 
 renderIntro();
 </script>
