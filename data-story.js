@@ -3111,3 +3111,72 @@ ENCOUNTER_PREPS.push(
     ],
   },
 );
+
+
+/* DRAFT (written by Claude for review): YEAR_THREE_BRIEFS, six per
+   character, used from Year 3 after her earlier briefs (ids "y3-n").
+   Everything she names is in "want"; nobody mentions another of the Core
+   Four by name, so a death never leaves a brief talking about her. */
+const YEAR_THREE_BRIEFS = {
+  0: [ // Margo
+    { dialogue: [{ who: "MARGO", t: "Everyone is wearing white now." }, { who: "YOU", t: "And you?" }, { who: "MARGO", t: "Red. Someone has to remind this city it has a pulse." }], want: [req("color", "Red"), req("style", "Bold")] },
+    { dialogue: [{ who: "MARGO", t: "I have a client of my own tonight." }, { who: "YOU", t: "You have clients?" }, { who: "MARGO", t: "I had them before you. Classic. Fitted. Nothing that apologises." }], want: [req("style", "Classic"), req("fit", "Fitted")] },
+    { dialogue: [{ who: "MARGO", t: "The Castle has a new curfew." }, { who: "YOU", t: "Will you keep it?" }, { who: "MARGO", t: "Of course not. Make me look elegant enough that nobody asks." }], want: [req("style", "Elegant"), req("style", "Classic")] },
+    { dialogue: [{ who: "MARGO", t: "Black." }, { who: "YOU", t: "Tonight?" }, { who: "MARGO", t: "Especially tonight. I refuse to dress for them in my own time. Elegant, too." }], want: [req("color", "Black"), req("style", "Elegant")] },
+    { months: [11, 0], dialogue: [{ who: "MARGO", t: "The Solstice again." }, { who: "YOU", t: "You hate the Solstice." }, { who: "MARGO", t: "I hate crowds. Something with an edge. Fitted, obviously." }], want: [req("style", "Bold"), req("fit", "Fitted")], softDirection: "Something warm, if you have it." },
+    { months: [3, 4], dialogue: [{ who: "MARGO", t: "The roses are out early." }, { who: "YOU", t: "Is that good?" }, { who: "MARGO", t: "Nothing in this city is early by accident. Red. Romantic, if you must." }], want: [req("color", "Red"), req("style", "Romantic")] },
+  ],
+  1: [ // Juniper
+    { dialogue: [{ who: "JUNIPER", t: "I\u2019ve started a list of plants that survive anything." }, { who: "YOU", t: "What\u2019s on it?" }, { who: "JUNIPER", t: "Not much. Dress me like I\u2019m on it. Green. And classic, so it lasts." }], want: [req("color", "Green"), req("style", "Classic")] },
+    { dialogue: [{ who: "JUNIPER", t: "Octavia smiled at me today." }, { who: "YOU", t: "Is that bad?" }, { who: "JUNIPER", t: "I don\u2019t know yet. Something cosy and romantic, in case it is." }], want: [req("style", "Cozy"), req("style", "Romantic")] },
+    { dialogue: [{ who: "JUNIPER", t: "I\u2019m giving a talk at the Glass House." }, { who: "YOU", t: "Who\u2019s coming?" }, { who: "JUNIPER", t: "Three people and a beetle. Make me elegant anyway. And green, so the beetle feels at home." }], want: [req("style", "Elegant"), req("color", "Green")] },
+    { dialogue: [{ who: "JUNIPER", t: "Can I borrow some confidence?" }, { who: "YOU", t: "From the wardrobe?" }, { who: "JUNIPER", t: "From anywhere. Something bold. Something that fits like I meant it." }], want: [req("style", "Bold"), req("fit", "Fitted")] },
+    { months: [2, 3], dialogue: [{ who: "JUNIPER", t: "The first shoots are up." }, { who: "YOU", t: "Already?" }, { who: "JUNIPER", t: "Something light and romantic. White, for the frost that isn\u2019t coming." }], want: [req("color", "White"), req("style", "Romantic")] },
+    { season: ["autumn"], dialogue: [{ who: "JUNIPER", t: "The Glass House is loud in autumn. Everything dies at once." }, { who: "YOU", t: "That sounds sad." }, { who: "JUNIPER", t: "It\u2019s just busy. Something cosy and minimal. I\u2019ll be on my knees all night." }], want: [req("style", "Cozy"), req("style", "Minimal")] },
+  ],
+  2: [ // Ivy
+    { dialogue: [{ who: "IVY", t: "New route." }, { who: "YOU", t: "Where?" }, { who: "IVY", t: "Can\u2019t say. Somewhere cold. Make it cool. And tight, I don\u2019t want anything flapping." }], want: [req("style", "Cool"), req("fit", "Tight")] },
+    { dialogue: [{ who: "IVY", t: "I\u2019ve been asked to a party." }, { who: "YOU", t: "Asked, or ordered?" }, { who: "IVY", t: "Asked. Nobody orders me. Daring. And elegant, so they let me in." }], want: [req("style", "Daring"), req("style", "Elegant")] },
+    { dialogue: [{ who: "IVY", t: "Black." }, { who: "YOU", t: "Is that safe?" }, { who: "IVY", t: "Not out there. This isn\u2019t for out there. Black and cool, it\u2019s for me." }], want: [req("color", "Black"), req("style", "Cool")] },
+    { dialogue: [{ who: "IVY", t: "Something with a pocket that closes." }, { who: "YOU", t: "Something valuable?" }, { who: "IVY", t: "Something fragile. Classic. Regular fit. Nothing that draws the eye." }], want: [req("style", "Classic"), req("fit", "Regular")] },
+    { months: [9, 10], dialogue: [{ who: "IVY", t: "Dead Day soon. Everyone gets sentimental." }, { who: "YOU", t: "And you?" }, { who: "IVY", t: "I get busy. Minimal. Cool." }], want: [req("style", "Minimal"), req("style", "Cool")] },
+    { season: ["summer"], dialogue: [{ who: "IVY", t: "Hot run tonight." }, { who: "YOU", t: "Hot?" }, { who: "IVY", t: "Fast. Relaxed, so I can breathe. Daring, so I don\u2019t regret it." }], want: [req("fit", "Relaxed"), req("style", "Daring")] },
+  ],
+  3: [ // Holly
+    { dialogue: [{ who: "HOLLY", t: "Parade duty." }, { who: "YOU", t: "A parade? Now?" }, { who: "HOLLY", t: "Especially now. The city needs to see us. Silver. Classic." }], want: [req("color", "Silver"), req("style", "Classic")] },
+    { dialogue: [{ who: "HOLLY", t: "My day off." }, { who: "YOU", t: "You have those?" }, { who: "HOLLY", t: "One. Something cosy. Romantic, if you think it suits me." }], want: [req("style", "Cozy"), req("style", "Romantic")] },
+    { dialogue: [{ who: "HOLLY", t: "Captain\u2019s review tomorrow." }, { who: "YOU", t: "Nervous?" }, { who: "HOLLY", t: "Prepared. Fitted. Blue." }], want: [req("fit", "Fitted"), req("color", "Blue")] },
+    { dialogue: [{ who: "HOLLY", t: "I have been asked to dinner." }, { who: "YOU", t: "By whom?" }, { who: "HOLLY", t: "Someone who doesn\u2019t wear a uniform. Elegant. Classic. Not armour." }], want: [req("style", "Elegant"), req("style", "Classic")], exclude: [{ attr: "style", value: "Armour" }] },
+    { months: [11, 0], dialogue: [{ who: "HOLLY", t: "Solstice watch." }, { who: "YOU", t: "All night?" }, { who: "HOLLY", t: "All night. White. And cosy, since no one will see it but the stars." }], want: [req("color", "White"), req("style", "Cozy")] },
+    { months: [6, 7], dialogue: [{ who: "HOLLY", t: "Summer tournament at the Castle." }, { who: "YOU", t: "Are you competing?" }, { who: "HOLLY", t: "I am judging. That is worse. Bold. Silver." }], want: [req("style", "Bold"), req("color", "Silver")] },
+  ],
+};
+
+/* DRAFT (written by Claude for review): three Year 3 talk stages per
+   character, stages 21-23, in order, only in Year 3 (STAGE_RULES year: 3).
+   Offered through "Talk" at TALK_HEARTS' last tier. */
+CLIENT_STAGES[0].push([{ who: "MARGO", t: "You\u2019ve stopped flinching when the door opens." }, { who: "YOU", t: "Have I?" }, { who: "MARGO", t: "It suits you. Don\u2019t let it become carelessness." }, { who: "YOU", t: "Was that advice?" }, { who: "MARGO", t: "It was an observation. Advice costs extra." }]);
+STAGE_RULES[0][21] = { year: 3, after: [20] };
+CLIENT_STAGES[0].push([{ who: "YOU", t: "Why do they hate black?" }, { who: "MARGO", t: "They don\u2019t hate it. They notice it." }, { who: "YOU", t: "Is that worse?" }, { who: "MARGO", t: "In this city, being noticed is the only thing that is ever worse." }]);
+STAGE_RULES[0][22] = { year: 3, after: [21] };
+CLIENT_STAGES[0].push([{ who: "MARGO", t: "When I arrived here, I made a list of everything I would never do again." }, { who: "YOU", t: "How\u2019s the list?" }, { who: "MARGO", t: "Shorter. I keep crossing things off." }, { who: "YOU", t: "Doing them again?" }, { who: "MARGO", t: "Surviving them." }]);
+STAGE_RULES[0][23] = { year: 3, after: [22] };
+CLIENT_STAGES[1].push([{ who: "JUNIPER", t: "Do you think Angels grow anything?" }, { who: "YOU", t: "I don\u2019t think they stay anywhere long enough." }, { who: "JUNIPER", t: "That\u2019s the saddest thing I\u2019ve heard all week." }, { who: "YOU", t: "It\u2019s Tuesday." }, { who: "JUNIPER", t: "It\u2019s been a long week." }]);
+STAGE_RULES[1][21] = { year: 3, after: [20] };
+CLIENT_STAGES[1].push([{ who: "JUNIPER", t: "I\u2019ve started sleeping in the Glass House." }, { who: "YOU", t: "Is that safe?" }, { who: "JUNIPER", t: "Safer than the street. The glass hums when someone\u2019s coming." }, { who: "YOU", t: "And if it hums?" }, { who: "JUNIPER", t: "Then I hide behind the tomatoes. They\u2019re very loyal." }]);
+STAGE_RULES[1][22] = { year: 3, after: [21] };
+CLIENT_STAGES[1].push([{ who: "JUNIPER", t: "You never tell me what you were before." }, { who: "YOU", t: "Neither do you." }, { who: "JUNIPER", t: "I grew things, I think. My hands remember it better than I do." }, { who: "YOU", t: "Then that\u2019s what you were." }, { who: "JUNIPER", t: "That\u2019s a kind thing to say to someone with dirt under her nails." }]);
+STAGE_RULES[1][23] = { year: 3, after: [22] };
+CLIENT_STAGES[2].push([{ who: "IVY", t: "They stopped me on the bridge last night." }, { who: "YOU", t: "Who?" }, { who: "IVY", t: "Who do you think. They asked where I was going." }, { who: "YOU", t: "What did you say?" }, { who: "IVY", t: "Somewhere you\u2019re not. They laughed. I didn\u2019t like that." }]);
+STAGE_RULES[2][21] = { year: 3, after: [20] };
+CLIENT_STAGES[2].push([{ who: "YOU", t: "You could stop, you know. The deliveries." }, { who: "IVY", t: "And do what? Sit still?" }, { who: "YOU", t: "People do." }, { who: "IVY", t: "People who can afford to. Next question." }]);
+STAGE_RULES[2][22] = { year: 3, after: [21] };
+CLIENT_STAGES[2].push([{ who: "IVY", t: "If I don\u2019t come back one night\u2014" }, { who: "YOU", t: "Don\u2019t." }, { who: "IVY", t: "\u2014the bike goes to someone who\u2019ll ride it fast. Not a collector." }, { who: "YOU", t: "Ivy." }, { who: "IVY", t: "It\u2019s just logistics. Pin something white on me and stop looking like that." }]);
+STAGE_RULES[2][23] = { year: 3, after: [22] };
+CLIENT_STAGES[3].push([{ who: "HOLLY", t: "The guard has new orders." }, { who: "YOU", t: "What do they say?" }, { who: "HOLLY", t: "Assist our guests. Do not obstruct them." }, { who: "YOU", t: "The Angels are guests?" }, { who: "HOLLY", t: "That is what the orders say." }]);
+STAGE_RULES[3][21] = { year: 3, after: [20] };
+CLIENT_STAGES[3].push([{ who: "YOU", t: "Do you believe in what you\u2019re guarding?" }, { who: "HOLLY", t: "I believe in the people behind me." }, { who: "YOU", t: "That\u2019s not the same thing." }, { who: "HOLLY", t: "No. It is better." }]);
+STAGE_RULES[3][22] = { year: 3, after: [21] };
+CLIENT_STAGES[3].push([{ who: "HOLLY", t: "I kept a list of names once. Everyone I was responsible for." }, { who: "YOU", t: "Once?" }, { who: "HOLLY", t: "It got long. Now I keep it in my head." }, { who: "YOU", t: "Is there room for one more?" }, { who: "HOLLY", t: "You were on it before you asked." }]);
+STAGE_RULES[3][23] = { year: 3, after: [22] };
+TALK_HEARTS.push({ upTo: 23, hearts: 4 });

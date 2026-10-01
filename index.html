@@ -2013,6 +2013,14 @@
   .build-stamp { position: fixed; left: 16px; bottom: 12px; font-size: 11px; letter-spacing: 0.06em; color: rgba(255,255,255,0.4); }
 
   /* Test panel (playtesting only -- see DEV_TOOLS). Its own classes on purpose. */
+  .dev-quickstart .dev-note { text-align: left; margin: 6px 0 2px; text-shadow: none; max-width: none; }
+  .dev-quickstart { margin: 22px auto 0; width: min(320px, 90vw); box-sizing: border-box; text-align: left; font: 13px/1.35 var(--font-ui); color: #fff;
+    background: rgba(14,10,22,0.8); border: 1px solid rgba(255,255,255,0.25); border-radius: 12px; padding: 8px 12px; }
+  .dev-quickstart summary { cursor: pointer; color: rgba(255,255,255,0.75); }
+  .dev-quickstart[open] summary { margin-bottom: 8px; }
+  .dev-quickstart select { font: inherit; color: #fff; background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.25); border-radius: 6px; padding: 3px 6px; }
+  .dev-quickstart select option { color: #000; }
+  .dev-quickstart .dev-btn { margin-top: 4px; }
   .dev-panel {
     position: fixed; top: 12px; right: 12px; z-index: 9999; width: min(340px, calc(100vw - 24px));
     max-height: calc(100vh - 24px); overflow-y: auto; padding: 12px 14px 14px;
@@ -2894,7 +2902,7 @@ function updateSceneBackground() {
 
 // Shown small on the title screen, so it's easy to confirm which version
 // the browser actually loaded (GitHub Pages and browsers cache aggressively).
-const BUILD_ID = "2026-09-30 · year three preparations 1";
+const BUILD_ID = "2026-09-30 · test start 1";
 const stage = document.getElementById("stage");
 
 /* ---------------- CONVERSATION PRESENTATION ----------------
@@ -3922,6 +3930,7 @@ function renderIntro() {
           <button class="primary" onclick="${hasSave ? "continueGame()" : "beginGame()"}">${hasSave ? "Continue" : "Start game"}</button>
           ${hasSave ? `<button class="ghost" onclick="startNewGame()">Start a new game</button>` : ""}
         </div>
+        ${DEV_TOOLS ? devQuickStartHTML() : ""}
       </div>
     </div>
   `;
@@ -8125,6 +8134,7 @@ function stageWasSeen(clientKey, idx) {
 function stageReady(key, idx, visitIdx) {
   const rule = ((STAGE_RULES[key] || {})[idx + 1]) || {};
   if (rule.trigger) return false;
+  if (rule.year && currentYear < rule.year) return false;
   if (visitIdx < idx - 3) return false;
   if (rule.season && !rule.season.includes(currentSeasonName())) return false;
   if (rule.flag && !storyFlags[rule.flag]) return false;
@@ -8166,6 +8176,7 @@ function chooseBriefForVisit(key, stageIdx) {
     ...briefs.map((b, i) => i).filter((i) => !briefs[i].playerChoice).map((i) => ({ id: i, brief: briefs[i] })),
     ...briefs.map((b, i) => i).filter((i) => briefs[i].playerChoice).map((i) => ({ id: i, brief: briefs[i] })),
     ...(currentYear >= 2 ? (YEAR_TWO_BRIEFS[key] || []).map((b, n) => ({ id: `y2-${n}`, brief: b })) : []),
+    ...(currentYear >= 3 ? (YEAR_THREE_BRIEFS[key] || []).map((b, n) => ({ id: `y3-${n}`, brief: b })) : []),
   ];
   const season = currentSeasonName();
   const month = currentMonthIndex();
@@ -10212,6 +10223,88 @@ function enterNextYear() {
    keyboard, ` on an English one) or by clicking the build stamp on the
    title screen. Set DEV_TOOLS to false for a release build (Steam). */
 const DEV_TOOLS = true;
+
+// QUICK START (test only): a new game that begins later in the run, with
+// the story up to that date treated as played. Overwrites the saved game.
+function devQuickStartHTML() {
+  const months = MONTHS.map((m, i) => `<option value="${i}">${m}</option>`).join("");
+  return `
+    <details class="dev-quickstart">
+      <summary>Test start (skip ahead)</summary>
+      <div class="dev-row">
+        <select id="qsYear"><option value="1">Year 1</option><option value="2" selected>Year 2</option><option value="3">Year 3</option></select>
+        <select id="qsMonth">${months}</select>
+      </div>
+      <div class="dev-row">
+        <select id="qsHearts"><option value="1">Hearts 1</option><option value="2">Hearts 2</option><option value="3" selected>Hearts 3</option><option value="5">Hearts 5</option></select>
+        <select id="qsCards"><option value="typical" selected>Typical collection</option><option value="all">Every card</option></select>
+      </div>
+      <button class="dev-btn" onclick="devQuickStart()">Start there</button>
+      <p class="dev-note">Overwrites the saved game. Fine-tune afterwards with the test panel (^ key).</p>
+    </details>`;
+}
+// When each Angel beat happens at the earliest in Year 2 (month index).
+const DEV_RUMOUR_MONTHS = { r1: 2, r2: 3, r3: 4, r4: 5, r5: 6, r6: 7, r7: 8, r8: 9, arrival: 10, r9: 11 };
+function devQuickStart() {
+  const year = parseInt(document.getElementById("qsYear").value, 10);
+  const month = parseInt(document.getElementById("qsMonth").value, 10);
+  const hearts = parseFloat(document.getElementById("qsHearts").value);
+  const cards = document.getElementById("qsCards").value;
+  clearSavedGame();
+  moonCoins = 30;
+  discoveredAestheticAchievements = new Set();
+  beginGame(); // fresh state (its intro screen is replaced below)
+
+  currentYear = year;
+  clientRoundIndex = month * 3;
+  storyBeatsRemaining = STORY_BEATS_PER_JOB;
+  const jobsBefore = (year - 1) * 36 + month * 3;
+
+  // Collection
+  let n = 0;
+  DECK.forEach((c) => {
+    const keep = cards === "all" || c.rarity === "Basic" || c.rarity === "Uncommon" || (c.rarity === "Rare" && n++ % 2 === 0);
+    if (keep && jobsBefore > 0) unlockedCardIds.add(c.id);
+  });
+  rebuildLiveDeckFromUnlocked();
+  deckPile = liveDeck.map((c) => c.id);
+
+  // People: met, and the Castle open
+  if (jobsBefore > 0) {
+    metMaya = metHelena = metJuliette = metOctavia = metValery = true;
+    castleGateCharactersUnlocked = true;
+    restrictedPhase = { castle: 4, garden: 4 };
+    storyFlags.actionCardMet = true;
+  }
+
+  // The Core Four: visits, talks and briefs up to this date
+  CLIENTS.forEach((c, k) => {
+    const p = soulProfiles[k];
+    p.visits = Math.floor(jobsBefore / 4);
+    p.yearVisits = Math.floor((month * 3) / 4);
+    const talks = year >= 3 ? 20 : Math.min(20, Math.max(0, p.visits - 1));
+    p.stagesSeen = [...Array(talks).keys()];
+    p.briefsHeard = year >= 2
+      ? [...CLIENTS[k].briefs.map((b, i) => i), ...(year >= 3 ? (YEAR_TWO_BRIEFS[k] || []).map((b, i) => `y2-${i}`) : [])]
+      : CLIENTS[k].briefs.map((b, i) => i).slice(0, Math.max(0, p.visits - 1));
+    if (jobsBefore > 0) setHearts(k, hearts);
+  });
+
+  // Angels: every beat whose month has passed
+  const passed = (id) => year >= 3 || (year === 2 && DEV_RUMOUR_MONTHS[id] < month);
+  peril.rumoursSeen = ANGEL_RUMOURS.map((r) => r.id).filter(passed);
+  if (peril.rumoursSeen.length) peril.angelIntroStage = 1;
+  if (peril.rumoursSeen.includes("r8")) { peril.angelEncountersDone.push("e1"); peril.angelIntroStage = 2; peril.heartsAreLifeShown = true; peril.prepsYearTwo = 1; }
+  if (peril.rumoursSeen.includes("arrival")) { peril.angelIntroStage = 3; peril.arrivalJob = -1; }
+  if (year >= 3) {
+    peril.angelEncountersDone = ["e1", "e2", "e3", "e4"];
+    peril.prepsYearTwo = 4;
+    peril.angelStudioJobsDone = ["a1"];
+  }
+
+  saveGame();
+  renderMap();
+}
 
 function devInGame() { return Object.keys(soulProfiles).length > 0 && !!CLIENTS; }
 function toggleDevPanel() {
