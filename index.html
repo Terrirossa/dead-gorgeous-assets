@@ -1198,11 +1198,53 @@
   .grave.active { border-color: var(--paper); background: rgba(20,16,30,0.8); }
   .grave-name { font-family: var(--font-display); font-size: 30px; line-height: 1; }
   .grave-age { font-size: 13px; color: var(--paper-3); letter-spacing: 0.04em; }
+  .grave-memory { max-width: 440px; margin: 0 auto 14px; font-size: 16px; line-height: 1.5; color: var(--paper-2); animation: pyreIn 0.8s both; }
+  .grave-candles { display: flex; gap: 6px; justify-content: center; margin: 0 0 12px; min-height: 22px; }
+  .grave-candles .ico { width: 20px; height: 20px; color: var(--lamp); filter: drop-shadow(0 0 6px rgba(242,200,120,0.6)); }
+  .grave-lit { color: var(--paper-3); font-size: 14px; margin: 0 0 14px; }
+  .armory-row { display: flex; gap: 16px; flex-wrap: wrap; justify-content: center; margin: 14px 0 6px; }
+  .armory-pick { width: clamp(130px, 16vw, 200px); }
   .grave-epitaph {
     max-width: 440px; margin: 10px auto 26px; font-size: 18px; line-height: 1.45;
     font-style: italic; color: var(--paper); text-shadow: 0 2px 16px rgba(15,8,30,0.6); text-wrap: balance;
   }
   .action-card.kind-sobbing { background: linear-gradient(160deg, #3b4152, #262a36); }
+  .offer-furnace { background: #120d16; box-shadow: inset 0 0 0 1px rgba(255,255,255,0.18); text-align: center; }
+  .offer-furnace .furnace-icon .ico { width: 34px; height: 34px; color: var(--paper); }
+  .offer-furnace .furnace-title { font-family: var(--font-display); font-size: 30px; margin: 6px 0 4px; color: #fff; }
+  /* collectibles */
+  .collect-toasts { position: fixed; left: 50%; bottom: 26px; transform: translateX(-50%); z-index: 960; display: flex; flex-direction: column; gap: 8px; align-items: center; }
+  .collect-toast {
+    display: flex; align-items: center; gap: 12px; padding: 8px 16px 8px 8px; border-radius: 14px; cursor: pointer;
+    background: rgba(16,11,28,0.92); color: #fff; border: 1px solid rgba(242,200,120,0.55); box-shadow: 0 12px 34px rgba(0,0,0,0.45);
+    font: inherit; text-align: left; min-height: 0; width: auto;
+    animation: pyreIn 0.6s calc(var(--i) * 0.25s) both;
+  }
+  .collect-thumb { width: 44px; height: 60px; border-radius: 6px; background: center / cover no-repeat #241b30; flex: none; }
+  .collect-thumb.wide { width: 76px; height: 52px; }
+  .collect-text { display: flex; flex-direction: column; }
+  .collect-label { font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--lamp); }
+  .collect-title { font-size: 15px; }
+  .collect-wrap { padding: 4px 4px 20px; }
+  .collect-count { color: var(--paper-2); margin: 0 0 16px; }
+  .scene-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 16px; }
+  .scene-slot, .portrait-slot { position: relative; border-radius: 12px; padding: 0; margin: 0; min-height: 0; width: auto; overflow: hidden; }
+  .scene-slot { aspect-ratio: 1264 / 864; }
+  .scene-slot.found { cursor: pointer; border: none; background: #000; box-shadow: 0 10px 24px rgba(0,0,0,0.35); transition: transform 0.2s ease; }
+  .scene-slot.found:hover, .portrait-slot.found:hover { transform: translateY(-3px); }
+  .scene-img, .portrait-img { position: absolute; inset: 0; background: center / cover no-repeat; }
+  .scene-title { position: absolute; left: 0; right: 0; bottom: 0; padding: 18px 10px 8px; font-size: 13px; color: #fff; background: linear-gradient(transparent, rgba(0,0,0,0.7)); text-align: left; }
+  .scene-slot.unknown, .portrait-slot.unknown { border: 1.5px dashed rgba(255,255,255,0.35); background: transparent; display: flex; align-items: center; justify-content: center; }
+  .scene-q { font-family: var(--font-display); font-size: 34px; color: rgba(255,255,255,0.45); }
+  .portrait-slots { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; }
+  .portrait-slot { aspect-ratio: 595.28 / 841.9; }
+  .portrait-slot.found { cursor: pointer; border: 2px solid transparent; background: #1a1424; transition: transform 0.2s ease, border-color 0.2s; }
+  .portrait-slot.chosen { border-color: var(--lamp); box-shadow: 0 0 0 2px rgba(242,200,120,0.25); }
+  .tilt-card.collect-card img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; border-radius: inherit; display: block; }
+  .tilt-card.collect-scene { width: min(90vw, 980px) !important; height: auto !important; aspect-ratio: 1264 / 864; }
+  .tilt-card.collect-portrait { aspect-ratio: 595.28 / 841.9; }
+  .tilt-card.collect-card .tilt-foil { opacity: calc(var(--ga, 0) * 0.5); }
+  @media (min-width: 900px) { .card-viewer:has(.collect-scene) { flex-direction: column; gap: 18px; } .card-viewer:has(.collect-scene) .card-viewer-info { text-align: center; } }
   .style-note { display: block; font-style: italic; opacity: 0.8; margin-bottom: 4px; }
   /* the sword */
   .sword-scene { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 60px 16px; box-sizing: border-box; }
@@ -1230,11 +1272,59 @@
     .sword-half-a, .sword-half-b { animation-duration: 0.3s; animation-delay: 0.3s; }
     .sword-caption, .sword-continue { animation-delay: 0.4s; }
   }
+  /* Angels entering: black, a white flash, a shaking room */
+  .angel-entrance { position: fixed; inset: 0; z-index: 3000; pointer-events: none; background: #000; animation: angelEnter 2.2s ease forwards; }
+  .angel-entrance.reduced { animation: angelEnterSoft 0.8s ease forwards; }
+  @keyframes angelEnter {
+    0% { background: #000; opacity: 1; }
+    30% { background: #000; opacity: 1; }
+    34% { background: #f4f8ff; opacity: 1; }
+    44% { background: #dfe8ff; opacity: 0.9; }
+    100% { background: #dfe8ff; opacity: 0; }
+  }
+  @keyframes angelEnterSoft { from { opacity: 1; } to { opacity: 0; } }
+  .angel-shake { animation: angelShake 0.9s 0.7s cubic-bezier(.36,.07,.19,.97) both; }
+  @keyframes angelShake {
+    10%, 90% { transform: translate(-2px, 1px); }
+    20%, 80% { transform: translate(4px, -2px); }
+    30%, 50%, 70% { transform: translate(-7px, 3px); }
+    40%, 60% { transform: translate(7px, -3px); }
+  }
+  /* Hearts lost: big, alone, on black */
+  .heart-loss { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 40px 16px; box-sizing: border-box; position: relative; }
+  .heart-loss-name { font-family: var(--font-display); font-size: clamp(56px, 10vw, 110px); color: #fff; margin-bottom: 26px; opacity: 0; animation: pyreIn 0.8s 0.2s both; }
+  .heart-loss-row { display: flex; gap: 10px; justify-content: center; }
+  .heart-loss-stack { position: relative; }
+  .heart-loss-row .heart { width: clamp(44px, 7vw, 72px); height: auto; aspect-ratio: 17 / 15; }
+  .heart-loss-row .heart svg { width: 100%; height: 100%; display: block; }
+  .heart-loss-row:not(.heart-loss-after) { animation: heartsBreak 1.3s 1.2s ease forwards; }
+  .heart-loss-after { position: absolute; inset: 0; opacity: 0; animation: heartsReveal 0.7s 2.3s ease forwards; }
+  @keyframes heartsBreak { 0% { transform: none; opacity: 1; } 15% { transform: translateX(-8px); } 30% { transform: translateX(8px); } 45% { transform: translateX(-5px); } 60% { transform: none; opacity: 1; } 100% { opacity: 0; transform: scale(0.96); } }
+  .heart-loss-amount { margin-top: 30px; font-size: clamp(22px, 3vw, 30px); color: #fff; letter-spacing: 0.04em; opacity: 0; animation: pyreIn 0.6s 2.6s both; }
+  .heart-loss-continue { margin-top: 34px; opacity: 0; animation: pyreIn 0.5s 3.1s both; }
+  /* Death: her portrait card, cut in two */
+  .death-card { margin: 0 auto 34px; width: clamp(170px, 20vw, 260px); }
+  .death-portrait { width: 100%; height: 100%; border-radius: 6%; overflow: hidden; background: #1a1424; box-shadow: 0 18px 50px rgba(0,0,0,0.55); }
+  .death-portrait img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  @media (prefers-reduced-motion: reduce) {
+    .angel-shake { animation: none; }
+    .heart-loss-row:not(.heart-loss-after) { animation: none; opacity: 0; }
+    .heart-loss-after, .heart-loss-amount, .heart-loss-continue, .heart-loss-name { animation-duration: 0.2s; animation-delay: 0s; }
+  }
   .survival-panel {
     margin: 16px 0 18px; padding: 12px 16px; border-radius: 16px; max-width: 420px;
     background: rgba(230,238,255,0.08); box-shadow: inset 0 0 0 1px rgba(220,232,255,0.35);
   }
   .survival-panel.compact { margin: 10px 0 0; padding: 8px 12px; }
+  /* Wide screens: her portrait card covers the top-left, so the survival
+     rules float top-centre above everything on the styling screen. */
+  @media (min-width: 900px) {
+    .survival-panel.compact {
+      position: fixed; top: 22px; left: 50%; transform: translateX(-50%); z-index: 650;
+      margin: 0; background: rgba(16,11,28,0.86); box-shadow: inset 0 0 0 1px rgba(220,232,255,0.55), 0 10px 30px rgba(0,0,0,0.35);
+    }
+    .survival-panel.compact .survival-rules { justify-content: center; }
+  }
   .survival-title { font-size: 12px; letter-spacing: 0.06em; color: #dfe8ff; margin-bottom: 8px; }
   .survival-rules { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
   .survival-panel.compact .survival-rules { justify-content: flex-start; }
@@ -2066,7 +2156,9 @@
   .scene-bg[data-mode="cold"] .scene-layer { filter: blur(2px) brightness(0.78) saturate(0.25) contrast(1.05); transform: scale(1.03); transition-duration: 2.2s; }
   .scene-bg[data-mode="cold"] .scene-shade { background: radial-gradient(ellipse 70% 80% at 50% 45%, rgba(200,220,255,0.10), rgba(20,28,48,0.55) 75%); transition-duration: 2.2s; }
   .scene-bg[data-mode="death"] .scene-layer { filter: blur(10px) brightness(0.22) saturate(0.6); transform: scale(1.08); transition-duration: 1.6s; }
-  .scene-bg[data-mode="death"] .scene-shade { background: rgba(8,5,14,0.55); }
+  /* death and lost hearts: black, whatever the city behind it */
+  .scene-bg[data-mode="death"] { opacity: 1; }
+  .scene-bg[data-mode="death"] .scene-shade { background: #000; opacity: 1; transition: background 1.2s ease; }
   .scene-bg[data-mode="soft"] .scene-layer { filter: blur(7px) brightness(0.72) saturate(1.05); transform: scale(1.06); }
   .scene-bg[data-mode="soft"] .scene-shade { background: linear-gradient(180deg, rgba(16,11,28,0.25), rgba(16,11,28,0.45)); }
   /* blur: styling table, duel, story screens */
@@ -2129,12 +2221,19 @@
   .burn-pyre-card .gcard { width: 100%; height: 100%; }
   .burn-pyre-card.burning { animation: pyreBurn 1.6s ease-in forwards; }
   @keyframes pyreIn { from { opacity: 0; transform: translateY(30px) scale(0.86); } to { opacity: 1; transform: none; } }
+  /* burning = charring: the card goes black from the edges, then falls apart as ash */
   @keyframes pyreBurn {
     0% { filter: none; transform: none; opacity: 1; }
-    25% { filter: brightness(1.5) sepia(0.7) saturate(3.5) hue-rotate(-25deg) drop-shadow(0 0 26px rgba(255,140,40,0.85)); transform: translateY(-4px); }
-    60% { filter: brightness(0.6) sepia(1) saturate(2) drop-shadow(0 0 18px rgba(255,90,20,0.6)); opacity: 0.8; }
-    100% { filter: brightness(0) blur(8px); opacity: 0; transform: translateY(-50px) scale(0.92) rotate(-3deg); }
+    35% { filter: grayscale(1) brightness(0.45) contrast(1.4); transform: translateY(-2px); }
+    65% { filter: grayscale(1) brightness(0.08); opacity: 0.95; }
+    100% { filter: grayscale(1) brightness(0) blur(10px); opacity: 0; transform: translateY(40px) scale(0.9) rotate(-2deg); }
   }
+  .burn-pyre-card { position: relative; }
+  .burn-pyre-card.burning::after {
+    content: ""; position: absolute; inset: 0; border-radius: 6%; pointer-events: none;
+    box-shadow: inset 0 0 0 0 #000; animation: charEdges 1.6s ease-in forwards;
+  }
+  @keyframes charEdges { to { box-shadow: inset 0 0 60px 40px #000; } }
   .burn-pyre-note { margin-top: 26px; color: var(--paper-2); font-size: 15px; animation: pyreIn 0.7s 0.3s both; }
   @media (prefers-reduced-motion: reduce) { .burn-pyre-card, .burn-pyre-card.burning, .burn-pyre-note { animation-duration: 0.3s; } }
   @keyframes burnAway {
@@ -2604,6 +2703,10 @@ function freshPeril() {
     griefProgress: {},        // griefProgress[survivor][dead] = grief visits already played, 0..3
     graveyardVisited: false,
     rumoursSeen: [],          // ids from ANGEL_RUMOURS, in the order played
+    mourned: [],              // coreKeys the café has mourned (CAFE_MOURNING)
+    graveCandles: {},         // coreKey -> { count, lastSeason }
+    armoryOpen: false,        // you have the armory key (Holly, or Helena)
+    armorySeason: null,       // currentSeasonKey() of the last piece taken
     lastPrepJob: -99,         // overallJobNumber() of the last encounter preparation
     arrivalJob: null,         // overallJobNumber() when Irina and Lucia first came in
     lastAngelJob: -99,        // overallJobNumber() of the last Angel Studio job
@@ -2612,6 +2715,11 @@ function freshPeril() {
   };
 }
 let peril = freshPeril();
+// Collectibles: scene cards and alternative portraits found, and which
+// portrait each character shows. See SCENE_CARDS / ALT_PORTRAITS.
+function freshCollection() { return { scenes: [], portraits: [], chosen: {} }; }
+let collection = freshCollection();
+let collectToasts = []; // found since the map was last shown
 // Every card destroyed this run (Angels, Quartett, Octavia, the Glass House,
 // the furnace). A destroyed card is gone for the run: no shop, reward or find
 // can bring it back -- see unobtainableIds().
@@ -2853,7 +2961,7 @@ function sceneForStage() {
   if (stage.querySelector(".result-scene, .shuffle, .quiet-night")) return ["studio", "soft"];
   if (stage.querySelector(".q-table")) return ["cafe", "blur"];
   if (stage.querySelector(".q-reward, .q-result")) return ["cafe", "soft"];
-  if (stage.querySelector(".death-screen")) return ["city", "death"];
+  if (stage.querySelector(".death-screen, .heart-loss")) return ["city", "death"];
   if (stage.querySelector(".story-screen")) return ["city", "blur"];
   const title = (stage.querySelector(".soul-name, h2")?.textContent || "").trim();
   let key = SCENE_BY_TITLE[title];
@@ -2902,7 +3010,7 @@ function updateSceneBackground() {
 
 // Shown small on the title screen, so it's easy to confirm which version
 // the browser actually loaded (GitHub Pages and browsers cache aggressively).
-const BUILD_ID = "2026-09-30 · test start 2";
+const BUILD_ID = "2026-10-01 · city content 3";
 const stage = document.getElementById("stage");
 
 /* ---------------- CONVERSATION PRESENTATION ----------------
@@ -3231,11 +3339,18 @@ function killCoreCharacter(k) {
 
 function renderDeathScreen(k, onContinue) {
   const lines = CORE_DEATH_TEXT[k] || [];
-  const linesHTML = lines.map((l, i) => `<p style="--d:${(0.6 + i * 0.9).toFixed(2)}s">${l}</p>`).join("");
+  const T0 = 3.4; // the words start once the card has fallen apart
+  const linesHTML = lines.map((l, i) => `<p style="--d:${(T0 + i * 0.9).toFixed(2)}s">${l}</p>`).join("");
+  const img = `<img src="${CLIENTS[k].portrait}" alt="">`;
   stage.innerHTML = `
     <div class="story-screen death-screen">
+      <div class="sword-card death-card" aria-label="${coreFirstName(k)}">
+        <div class="sword-half sword-half-a"><div class="death-portrait">${img}</div></div>
+        <div class="sword-half sword-half-b"><div class="death-portrait">${img}</div></div>
+        <div class="sword-blade" aria-hidden="true"></div>
+      </div>
       <div class="story-lines">${linesHTML}</div>
-      <button class="primary" style="--d:${(0.6 + lines.length * 0.9 + 0.4).toFixed(2)}s" onclick="${onContinue}">Continue</button>
+      <button class="primary" style="--d:${(T0 + lines.length * 0.9 + 0.4).toFixed(2)}s" onclick="${onContinue}">Continue</button>
     </div>
   `;
   updateTopBar("", true);
@@ -3276,13 +3391,34 @@ function renderGraveyard() {
       ${firstVisit ? sceneHTML(GRAVEYARD_FIRST_VISIT, null) : ""}
       <div class="grave-row">${gravesHTML}</div>
       <p class="grave-epitaph">\u201C${g.epitaph}\u201D</p>
-      <button class="primary" onclick="renderMap()">Leave</button>
+      ${graveCandleHTML(selectedGrave)}
+      <button class="ghost" onclick="renderMap()">Leave</button>
     </div>
   `;
   updateTopBar("", true);
   saveGame();
 }
 function selectGrave(k) { selectedGrave = k; renderGraveyard(); }
+// A candle for her, once a season; each one brings back a memory (GRAVE_MEMORIES).
+let graveMemoryShown = null;
+function graveCandleHTML(k) {
+  const c = peril.graveCandles[k] || { count: 0, lastSeason: null };
+  const lit = c.lastSeason === currentSeasonKey();
+  const memory = graveMemoryShown === k ? `<p class="grave-memory">${GRAVE_MEMORIES[k][(c.count - 1) % GRAVE_MEMORIES[k].length]}</p>` : "";
+  graveMemoryShown = null;
+  return `
+    ${memory}
+    <div class="grave-candles" aria-label="${c.count} candles">${Array.from({ length: Math.min(c.count, 12) }, () => icon("candle")).join("")}</div>
+    ${lit ? `<p class="grave-lit">Your candle is still burning.</p>` : `<button class="primary" onclick="lightGraveCandle(${k})">Light a candle</button>`}`;
+}
+function lightGraveCandle(k) {
+  const c = peril.graveCandles[k] || { count: 0, lastSeason: null };
+  if (c.lastSeason === currentSeasonKey()) return;
+  peril.graveCandles[k] = { count: c.count + 1, lastSeason: currentSeasonKey() };
+  graveMemoryShown = k;
+  saveGame();
+  renderGraveyard();
+}
 
 // Ids no shop, reward or find may hand out: owned, or destroyed this run.
 function unobtainableIds() { return new Set([...unlockedCardIds, ...destroyedCardIds]); }
@@ -3293,13 +3429,24 @@ function unobtainableIds() { return new Set([...unlockedCardIds, ...destroyedCar
    that beat is its own (rumourAt). */
 function angelsMet() { return peril.angelIntroStage >= 3; }
 
+function monthNumber() { return (currentYear - 1) * 12 + currentMonthIndex(); }
 function nextRumour() {
   if (currentYear < 2 || (currentYear === 2 && currentMonthIndex() < RUMOURS_FROM_MONTH)) return null;
   if (peril.rumourMonth === yearMonthKey()) return null;
-  const r = ANGEL_RUMOURS.find((x) => !peril.rumoursSeen.includes(x.id));
-  if (!r) return null;
-  if (r.fromMonth !== undefined && currentYear === 2 && currentMonthIndex() < r.fromMonth) return null;
-  return r;
+  for (;;) {
+    const r = ANGEL_RUMOURS.find((x) => !peril.rumoursSeen.includes(x.id));
+    if (!r) return null;
+    if (r.fromMonth !== undefined && currentYear === 2 && currentMonthIndex() < r.fromMonth) return null;
+    // A beat that only one place can tell waits there at most RUMOUR_SKIP_MONTHS.
+    if (peril.rumourWaiting !== r.id) { peril.rumourWaiting = r.id; peril.rumourWaitingSince = monthNumber(); }
+    if (r.skippable && monthNumber() - peril.rumourWaitingSince >= RUMOUR_SKIP_MONTHS) {
+      peril.rumoursSeen.push(r.id);
+      peril.rumoursSkipped = [...(peril.rumoursSkipped || []), r.id];
+      if (peril.angelIntroStage < 1) peril.angelIntroStage = 1;
+      continue;
+    }
+    return r;
+  }
 }
 function rumourAt(where) {
   const r = nextRumour();
@@ -3329,6 +3476,22 @@ function studioAfterArrival() {
   renderShuffle();
 }
 
+// Every time Irina and Lucia come into the Studio: the screen drops to black,
+// a white flash, the room shakes, then the scene. Pure overlay; the scene
+// underneath is already rendered.
+function playAngelEntrance() {
+  const reduced = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const fx = document.createElement("div");
+  fx.className = "angel-entrance" + (reduced ? " reduced" : "");
+  fx.setAttribute("aria-hidden", "true");
+  document.body.appendChild(fx);
+  if (!reduced) {
+    stage.classList.add("angel-shake");
+    setTimeout(() => stage.classList.remove("angel-shake"), 1900);
+  }
+  setTimeout(() => fx.remove(), reduced ? 900 : 2300);
+}
+
 // The first time you see them: an intrusion before tonight's client arrives.
 function renderAngelArrival(r) {
   markRumourSeen(r);
@@ -3342,6 +3505,7 @@ function renderAngelArrival(r) {
     </div>
   `;
   updateTopBar("", true);
+  playAngelEntrance();
 }
 
 function renderOldQuarterRumour(r) {
@@ -3428,8 +3592,8 @@ function preparationFor(key) {
 }
 
 // Turns this visit into the preparation: its brief, no Action Cards, no
-// Talk, her lines first. The hand gets one Joker card per piece the
-// smallest solution needs, so a solution is always reachable.
+// Talk, her lines first. The hand always holds one Joker card (balance
+// pass: one per needed piece made survival certain, so nobody ever died).
 function beginPreparation(prep, openingLines) {
   currentPrep = prep;
   currentBrief = { id: prep.id, want: [...prep.want], dialogue: [] };
@@ -3445,8 +3609,7 @@ function beginPreparation(prep, openingLines) {
   if (peril.angelIntroStage < 2) peril.angelIntroStage = 2;
 }
 function dealPreparationJokers() {
-  const need = (smallestSolution(currentPrep.rules) || []).length;
-  const jokers = JOKER_CARDS.slice(0, need).map((j) => j.id).filter((id) => !hand.includes(id));
+  const jokers = [JOKER_CARDS[0].id].filter((id) => !hand.includes(id));
   deckPile = deckPile.filter((id) => !jokers.includes(id));
   hand = [...hand, ...jokers];
 }
@@ -3488,26 +3651,46 @@ function resolvePreparation(pieces, key) {
 function renderDangerResult() {
   const o = lastPrepOutcome;
   if (!o) { advanceMonth(); return; }
+  lastPrepOutcome = null;
+  dangerLinesPending = o;
+  if (o.safe) { renderDangerLines(); return; }
+  // HIT: first the hearts, big on black. Then her line.
+  const before = o.before;
+  const lost = before - o.after;
+  stage.innerHTML = `
+    <div class="heart-loss" role="status" aria-label="${coreFirstName(o.key)} lost ${lost} hearts">
+      <div class="heart-loss-name">${titleCase(coreFirstName(o.key))}</div>
+      <div class="heart-loss-stack">
+        <div class="heart-loss-row">${heartsHTML(before)}</div>
+        <div class="heart-loss-row heart-loss-after">${heartsHTML(o.after)}</div>
+      </div>
+      <div class="heart-loss-amount">\u2212${lost} ${lost === 1 ? "heart" : "hearts"}</div>
+      <button class="primary heart-loss-continue" onclick="renderDangerLines()">Continue</button>
+    </div>`;
+  updateTopBar("", true);
+}
+// Her SAFE or HIT line after a preparation.
+let dangerLinesPending = null;
+function renderDangerLines() {
+  const o = dangerLinesPending;
+  if (!o) { advanceMonth(); return; }
+  const prep = o.prep;
   const client = CLIENTS[o.key];
   const firstName = coreFirstName(o.key);
-  const lines = o.safe ? o.prep.safe : o.prep.hit;
+  const lines = o.safe ? prep.safe : prep.hit;
   const next = o.died ? `renderDeathScreen(${o.key}, 'advanceMonth()')` : "advanceMonth()";
   stage.innerHTML = `
     <div class="soul-scene danger-result ${o.safe ? "is-safe" : "is-hit"}">
       <div class="portrait-col"><div class="portrait"><img src="${client.portrait}" alt="${firstName}"></div></div>
       <div class="soul-talk">
-        <div class="soul-hearts danger-hearts">
-          <span class="hearts-before">${heartsHTML(o.before)}</span>
-          ${o.safe ? "" : `<span class="hearts-after">${heartsHTML(o.after)}</span>`}
-        </div>
+        <div class="soul-hearts">${heartsHTML(o.after)}</div>
         <div class="soul-name">${titleCase(o.safe ? "Safe" : "Hurt")}</div>
-        <div class="danger-verdict">${o.prep.title}${o.safe ? "" : ` \u00B7 \u2212${ENCOUNTER_HIT_HEARTS} hearts`}</div>
+        <div class="danger-verdict">${prep.title}</div>
         ${sceneHTML(lines, firstName)}
         <button class="primary" style="margin-top:14px;" onclick="${next}">Continue</button>
       </div>
     </div>`;
   updateTopBar("", true);
-  lastPrepOutcome = null;
 }
 
 /* ---------------- ANGELS: STUDIO JOBS ----------------
@@ -3538,13 +3721,12 @@ function angelJobDue() {
   return ANGEL_JOBS.find((j) => !peril.angelStudioJobsDone.includes(j.id) && angelJobSolvable(j)) || null;
 }
 
+// The job only counts once it is resolved (resolveAngelJob), so reloading
+// mid-job brings the same job back with a new hand, never an escape.
 function beginAngelJob(job) {
-  peril.angelStudioJobsDone.push(job.id);
-  peril.lastAngelJob = overallJobNumber();
   startSpecialRound(angelVirtual(job), { want: [...job.want] }, { type: "angel", job });
   actionExclusions = [{ ...ANGEL_BLACK_BAN }];
   actionPlan = job.actions.map((a) => ({ afterPlaced: a.after, fired: false, scripted: a }));
-  saveGame();
   renderAngelJobIntro();
 }
 function scriptedActionCard(a) {
@@ -3571,6 +3753,7 @@ function renderAngelJobIntro() {
       </div>
     </div>`;
   updateTopBar("", true);
+  playAngelEntrance();
 }
 
 function resolveAngelJob(pieces, score) {
@@ -3584,6 +3767,8 @@ function resolveAngelJob(pieces, score) {
     if (victim) { destroyWearableCard(victim.id); rebuildLiveDeckFromUnlocked(); }
   }
   lastAngelOutcome = { job, client: specialJob.virtualClient, score, success, victim };
+  peril.angelStudioJobsDone.push(job.id);
+  peril.lastAngelJob = overallJobNumber();
   specialJob = null;
   saveGame();
   renderAngelResult();
@@ -3668,6 +3853,167 @@ function applyGriefCard(survivor, grief) {
 }
 function griefSobbing() { return !!(griefThisVisit && griefThisVisit.reaction.card.sobbing); }
 
+/* ---------------- COLLECTIBLES ----------------
+   Data: SCENE_CARDS and ALT_PORTRAITS in data-story.js. A chosen portrait
+   replaces the character's portrait everywhere it is drawn
+   (applyPortraitChoices), so every scene and screen follows it. */
+const DEFAULT_PORTRAITS = (() => {
+  const d = {};
+  CLIENTS.forEach((c, k) => { d[c.name.split(/[ ,]/)[0].toLowerCase()] = c.portrait; });
+  Object.keys(SECONDARY_PORTRAITS).forEach((k) => { d[k] = SECONDARY_PORTRAITS[k]; });
+  return d;
+})();
+function charKeyOf(soulKey) { return typeof soulKey === "number" ? coreFirstName(soulKey).toLowerCase() : soulKey; }
+function sceneUrl(card) { return `${ASSETS_BASE}portraits/scenes/${card.file}`; }
+function altPortraitUrl(alt) { return `${ASSETS_BASE}portraits/alternativeportraits/${alt.file}`; }
+function chosenPortraitUrl(ck) {
+  const alt = (ALT_PORTRAITS[ck] || []).find((a) => a.id === collection.chosen[ck]);
+  return alt && collection.portraits.includes(alt.id) ? altPortraitUrl(alt) : DEFAULT_PORTRAITS[ck];
+}
+function applyPortraitChoices() {
+  CLIENTS.forEach((c, k) => { c.portrait = chosenPortraitUrl(charKeyOf(k)); });
+  Object.keys(SECONDARY_PORTRAITS).forEach((k) => {
+    SECONDARY_PORTRAITS[k] = chosenPortraitUrl(k);
+    if (QUARTETT_OPPONENTS[k]) QUARTETT_OPPONENTS[k].portrait = SECONDARY_PORTRAITS[k];
+  });
+  CLIENTS.forEach((c, k) => { const q = QUARTETT_OPPONENTS[charKeyOf(k)]; if (q) q.portrait = c.portrait; });
+  [[HELENA_VIRTUAL, "helena"], [JULIETTE_VIRTUAL, "juliette"], [VALERY_VIRTUAL, "valery"], [IRINA_VIRTUAL, "irina"], [LUCIA_VIRTUAL, "lucia"]]
+    .forEach(([v, k]) => { v.portrait = SECONDARY_PORTRAITS[k]; });
+}
+function choosePortrait(ck, altId) {
+  collection.chosen[ck] = altId;
+  applyPortraitChoices();
+  saveGame();
+  renderSoulsOverlay();
+}
+
+// Award by where it comes from (see SCENE_CARDS "from").
+function awardSceneFrom(kind, id) {
+  SCENE_CARDS.filter((c) => c.from[0] === kind && c.from[1] === id && !collection.scenes.includes(c.id)).forEach((c) => {
+    collection.scenes.push(c.id);
+    collectToasts.push({ label: "Scene card found", title: c.title, img: sceneUrl(c), wide: true });
+  });
+}
+function awardPortraitFrom(kind, id) {
+  Object.keys(ALT_PORTRAITS).forEach((ck) => ALT_PORTRAITS[ck]
+    .filter((a) => a.from && a.from[0] === kind && a.from[1] === id && !collection.portraits.includes(a.id))
+    .forEach((a) => {
+      collection.portraits.push(a.id);
+      collectToasts.push({ label: "Portrait found", title: a.title, img: altPortraitUrl(a), wide: false });
+    }));
+}
+// Shown when the map comes back, so a find never interrupts its own scene.
+function showCollectToasts() {
+  if (!collectToasts.length) return;
+  const items = collectToasts.splice(0);
+  let box = document.getElementById("collectToasts");
+  if (!box) { box = document.createElement("div"); box.id = "collectToasts"; box.className = "collect-toasts"; document.body.appendChild(box); }
+  items.forEach((t, i) => {
+    const el = document.createElement("button");
+    el.className = "collect-toast";
+    el.style.setProperty("--i", i);
+    el.onclick = () => { el.remove(); openSouls(t.wide ? "scenes" : "souls"); };
+    el.innerHTML = `<span class="collect-thumb ${t.wide ? "wide" : ""}" style="background-image:url('${t.img}')"></span><span class="collect-text"><span class="collect-label">${t.label}</span><span class="collect-title">${t.title}</span></span>`;
+    box.appendChild(el);
+    setTimeout(() => el.remove(), 7000 + i * 600);
+  });
+}
+
+// Big view of a found scene or portrait: the same tiltable viewer as cards.
+function openCollectibleViewer(img, title, wide) {
+  const detail = document.getElementById("cardDetail");
+  detail.innerHTML = `
+    <div class="card-detail-backdrop" onclick="closeCardDetail()"></div>
+    <div class="card-viewer" role="dialog" aria-label="${title}">
+      <div class="tilt-stage" id="tiltStage">
+        <div class="tilt-card collect-card ${wide ? "collect-scene" : "collect-portrait"}" id="tiltCard">
+          <img src="${img}" alt="${title}">
+          <div class="tilt-foil" aria-hidden="true"></div>
+          <div class="tilt-glow" aria-hidden="true"></div>
+        </div>
+      </div>
+      <div class="card-viewer-info">
+        <div class="card-viewer-rarity">${wide ? "Scene" : "Portrait"}</div>
+        <h3 class="card-viewer-name">${titleCase(title)}</h3>
+      </div>
+      <button class="deck-close card-viewer-close" onclick="closeCardDetail()" aria-label="Close">${icon("close")}</button>
+    </div>`;
+  detail.classList.add("open");
+  initCardTilt(document.getElementById("tiltStage"), document.getElementById("tiltCard"));
+}
+function openSceneViewer(id) { const c = SCENE_CARDS.find((x) => x.id === id); if (c) openCollectibleViewer(sceneUrl(c), c.title, true); }
+
+function renderScenesTabHTML() {
+  const found = SCENE_CARDS.filter((c) => collection.scenes.includes(c.id)).length;
+  const slots = SCENE_CARDS.map((c) => collection.scenes.includes(c.id)
+    ? `<button class="scene-slot found" onclick="openSceneViewer('${c.id}')" aria-label="${c.title}"><span class="scene-img" style="background-image:url('${sceneUrl(c)}')"></span><span class="scene-title">${c.title}</span></button>`
+    : `<div class="scene-slot unknown" aria-label="Not found yet"><span class="scene-q">?</span></div>`).join("");
+  return `
+    <div class="collect-wrap">
+      <p class="collect-count">${found} of ${SCENE_CARDS.length} scenes found. Moments you were there for.</p>
+      <div class="scene-grid">${slots}</div>
+    </div>`;
+}
+function portraitSlotsHTML(soulKey) {
+  const ck = charKeyOf(soulKey);
+  const alts = ALT_PORTRAITS[ck] || [];
+  const chosen = collection.chosen[ck] || null;
+  const slot = (url, altId, title) => `
+    <button class="portrait-slot found ${chosen === altId ? "chosen" : ""}" onclick="choosePortrait('${ck}', ${altId ? `'${altId}'` : "null"})" aria-pressed="${chosen === altId}" aria-label="${title}">
+      <span class="portrait-img" style="background-image:url('${url}')"></span>
+    </button>`;
+  let html = slot(DEFAULT_PORTRAITS[ck], null, "Default portrait");
+  for (let n = 0; n < ALT_PORTRAIT_SLOTS; n++) {
+    const a = alts[n];
+    html += a && collection.portraits.includes(a.id)
+      ? slot(altPortraitUrl(a), a.id, a.title)
+      : `<div class="portrait-slot unknown" aria-label="Not found yet"><span class="scene-q">?</span></div>`;
+  }
+  return `<section class="panel"><h4>Portraits<span class="panel-aside">the one you pick is shown in conversations</span></h4><div class="portrait-slots">${html}</div></section>`;
+}
+
+/* ---------------- HOLLY'S ARMORY ----------------
+   Behind the Castle Wall door (Royal Garden), or through the Castle gate.
+   One armour piece a season, from three you don't own yet (Uncommon and
+   Rare first, so it's a real supply). Text: HOLLY_ARMORY_LINES etc. */
+let armoryOffer = [];
+function renderArmory() {
+  const season = currentSeasonKey();
+  const firstTime = !storyFlags.armorySeen;
+  storyFlags.armorySeen = true;
+  let body;
+  if (peril.armorySeason === season) {
+    body = `<div class="speech narration-line">${ARMORY_TAKEN_LINE}</div>`;
+  } else {
+    const owned = unobtainableIds();
+    const order = { Uncommon: 0, Rare: 1, Basic: 2, Iconic: 3, Legendary: 4 };
+    const pool = DECK.filter((c) => c.style === "Armour" && !owned.has(c.id));
+    armoryOffer = shuffle(pool).sort((a, b) => (order[a.rarity] ?? 5) - (order[b.rarity] ?? 5)).slice(0, 3);
+    body = armoryOffer.length
+      ? `<div class="armory-row">${armoryOffer.map((c) => `<button class="q-pick armory-pick" onclick="takeArmour(${c.id})" aria-label="Take ${c.name}">${gcardHTML(c)}</button>`).join("")}</div>
+         <p class="q-entry-sub">Take one. The rest stays here until next season.</p>`
+      : `<div class="speech narration-line">${ARMORY_EMPTY_LINE}</div>`;
+  }
+  stage.innerHTML = `
+    <div class="center-col screen-pad armory">
+      <div class="portrait token">${icon("castle")}</div>
+      <div class="soul-name">Armory</div>
+      ${firstTime ? sceneHTML(ARMORY_FIRST_LINES, null) : ""}
+      ${body}
+      <button class="ghost" style="margin-top:16px;" onclick="renderMap()">Leave</button>
+    </div>`;
+  updateTopBar("", true);
+}
+function takeArmour(id) {
+  const card = armoryOffer.find((c) => c.id === id);
+  if (!card || peril.armorySeason === currentSeasonKey()) return;
+  peril.armorySeason = currentSeasonKey();
+  unlockedCardIds.add(id);
+  rebuildLiveDeckFromUnlocked();
+  saveGame();
+  renderCardAcquiredScreen("Armory", card, "Leave");
+}
+
 /* ---------------- ROUND SETUP ---------------- */
 
 function startRound() {
@@ -3713,7 +4059,7 @@ function startRound() {
   if (!currentPrep) {
     talkStageIndex = chooseStageForVisit(key, "talk");
     const askIdx = chooseStageForVisit(key, "ask");
-    if (askIdx !== null) profile.stagesSeen.push(askIdx);
+    if (askIdx !== null) { profile.stagesSeen.push(askIdx); awardSceneFrom("stage", `${key}:${askIdx + 1}`); }
     const chosen = chooseBriefForVisit(key, askIdx);
     currentBrief = chosen.brief;
     currentBriefSilent = chosen.silent;
@@ -3727,7 +4073,13 @@ function startRound() {
   const grief = !currentPrep && anyCoreDead() ? griefForVisit(key) : null;
   if (grief) applyGriefCard(key, grief);
   // Bible: after the armour sighting, Holly's next job opens with it.
-  if (!currentPrep && key === 3 && storyFlags.armourSightingSeen && !storyFlags.armourHollySeen) {
+  if (!currentPrep && key === 3 && !peril.armoryOpen && prepDone("e2") && !specialTalkLines) {
+    peril.armoryOpen = true;
+    specialTalkLines = HOLLY_ARMORY_LINES;
+    talkedThisVisit = true;
+    soulStep = 0;
+  }
+  if (!currentPrep && !specialTalkLines && key === 3 && storyFlags.armourSightingSeen && !storyFlags.armourHollySeen) {
     storyFlags.armourHollySeen = true;
     specialTalkLines = ARMOUR_HOLLY_LINES;
     talkedThisVisit = true;
@@ -3753,7 +4105,7 @@ function startRound() {
   // in a row (everything of one kind sitting in the discard pile), which is
   // exactly what caused unfair hands like five pairs of shoes with no tops
   // available to draw at all.
-  deckPile = liveDeck.map((c) => c.id); // Joker cards included -- see drawInitialHand()
+  deckPile = freshDrawPile();
   discardPile = [];
   const handIds = drawInitialHand(deckPile);
   deckPile = deckPile.filter((id) => !handIds.includes(id));
@@ -3817,6 +4169,15 @@ function drawBalancedHand(pool, targetSize = HAND_SIZE) {
 // genuinely make a hand worse — they are NOT exempted or capped. A raw random
 // sample of the full pool decides how many Key Cards (0..HAND_SIZE) land in
 // this hand; whatever's left is filled with the normal balanced wearable draw.
+// Joker cards actually in this run's deck: one, plus one per Joker bought.
+function jokersInPlayIds() { return new Set(JOKER_CARDS.slice(0, 1 + Math.min(ownedJokerCount, JOKER_CARDS.length - 1)).map((j) => j.id)); }
+// The draw pile for a job: every owned card, but only the Jokers in play
+// (the others must not turn up through a redraw or the coin).
+function freshDrawPile() {
+  const all = new Set(JOKER_CARDS.map((j) => j.id));
+  const inPlay = jokersInPlayIds();
+  return liveDeck.map((c) => c.id).filter((id) => !all.has(id) || inPlay.has(id));
+}
 function drawInitialHand(pool) {
   const keyIdSet = new Set(KEY_CARDS.map((k) => k.id));
   const jokerIdSet = new Set(JOKER_CARDS.map((j) => j.id));
@@ -3824,7 +4185,7 @@ function drawInitialHand(pool) {
   // bought from the Vendor (up to all three). They're drawn with the same
   // raw-sample odds as Keys -- roughly one hand in five with a single Joker
   // -- and capped at one per starting hand. Tap one in hand to pick any card.
-  const jokersInPlay = new Set(JOKER_CARDS.slice(0, 1 + Math.min(ownedJokerCount, JOKER_CARDS.length - 1)).map((j) => j.id));
+  const jokersInPlay = jokersInPlayIds();
   const samplePool = pool.filter((id) => !jokerIdSet.has(id) || jokersInPlay.has(id));
   const rawSample = shuffle(samplePool).slice(0, HAND_SIZE);
   const reservedKeys = rawSample.filter((id) => keyIdSet.has(id));
@@ -3850,7 +4211,7 @@ function startSpecialRound(virtualClient, brief, jobMeta) {
   storyBeatsRemaining = STORY_BEATS_PER_JOB; // same rule as a normal job -- see startRound()
   actionPlan = []; actionCards = []; actionExclusions = []; // special jobs keep their own rules
 
-  deckPile = liveDeck.map((c) => c.id); // Joker cards included -- see drawInitialHand()
+  deckPile = freshDrawPile();
   discardPile = [];
   const handIds = drawInitialHand(deckPile);
   deckPile = deckPile.filter((id) => !handIds.includes(id));
@@ -4027,6 +4388,9 @@ function beginGame() {
   relationships = {};
   peakHearts = {};
   peril = freshPeril();
+  collection = freshCollection();
+  collectToasts = [];
+  applyPortraitChoices();
   destroyedCardIds = new Set();
   yearEndReward = { year: null, ids: [] };
   soulProfiles = {};
@@ -4363,6 +4727,7 @@ function serializeGameState() {
 
     // Late Year 2 -> Year 3: Angels, deaths, grief, destroyed cards
     peril,
+    collection,
     destroyedCardIds: Array.from(destroyedCardIds),
     yearEndReward,
   };
@@ -4421,6 +4786,8 @@ function loadGame() {
   peakHearts = data.peakHearts || { ...relationships };
   // Saves from before this pass have no deaths, no Angels and nothing destroyed.
   peril = { ...freshPeril(), ...(data.peril || {}) };
+  collection = { ...freshCollection(), ...(data.collection || {}) };
+  applyPortraitChoices();
   // Saves from before Angel jobs existed: they already met them.
   if (peril.arrivalJob === null && peril.rumoursSeen.includes("arrival")) peril.arrivalJob = -1;
   destroyedCardIds = new Set(data.destroyedCardIds || []);
@@ -4840,6 +5207,8 @@ function renderMannequinReward(card, puzzle) {
 
 
 function renderOldQuarterEncounterLines(id, lines) {
+  awardSceneFrom("encounter", id);
+  awardPortraitFrom("encounter", id);
   stage.innerHTML = `
     <div class="center-col screen-pad">
       <div class="soul-name">Old Quarter</div>
@@ -4960,6 +5329,11 @@ function oldQuarterEligibleEncounters(seasonKey) {
 function renderOldQuarterLookAround() {
   const rumour = rumourAt("oldquarter");
   if (rumour) { renderOldQuarterRumour(rumour); return; }
+  // A chance meeting: Ivy, smoking (once, and only once you know her).
+  if (!seenOldQuarterEncounters.ivy_smoking && !coreIsDead(2) && (soulProfiles[2] || {}).visits > 0 && Math.random() < IVY_SMOKING_CHANCE) {
+    renderOldQuarterEncounterLines("ivy_smoking", IVY_SMOKING_SCENE);
+    return;
+  }
   const key = currentSeasonKey();
   const eligible = oldQuarterEligibleEncounters(key);
   const rollEncounter = eligible.length > 0 && Math.random() < 0.3;
@@ -5025,6 +5399,7 @@ const LOCATION_STATUS_LABEL = { new: "", quiet: "Quiet tonight", closed: "Closed
 function renderMap() {
   // The map is always in-game: its top bar (Souls, Deck) is always shown.
   document.getElementById("topBar").classList.remove("hidden");
+  setTimeout(showCollectToasts, 400);
   // The map is the one stable "hub" screen -- no mid-job transient state to
   // worry about here, so this is the single autosave checkpoint that covers
   // the whole gameplay loop (after a result, after shopping, after a season
@@ -5268,8 +5643,13 @@ function renderShop() {
           <button class="primary" ${moonCoins >= JOKER_PRICE ? "" : "disabled"} onclick="buyJoker()">Buy for ${coins(JOKER_PRICE)}</button>
         </div>
       </div>
+      <div class="offer offer-furnace">
+        <div class="furnace-icon">${icon("candle")}</div>
+        <p class="furnace-title">The furnace</p>
+        <p>Burn 1\u20135 cards you no longer want. Gone for good.<br>3 cards: ${coins(BURN_REWARDS[2])} \u00B7 4 cards: ${coins(BURN_REWARDS[3])} \u00B7 5 cards: ${coins(BURN_REWARDS[4])}</p>
+        <button class="primary" onclick="burnSelection = []; renderBurnScreen()">Burn cards</button>
+      </div>
       <div class="shop-actions">
-        <button class="ghost" onclick="burnSelection = []; renderBurnScreen()">${icon("candle")} Burn cards</button>
         <button class="ghost" onclick="renderMap()">Back to the map</button>
       </div>
     </div>
@@ -5458,10 +5838,16 @@ function playCoreCafeEncounter() {
 function buildCafeEvents() {
   const ym = yearMonthKey();
   const rumour = metMaya ? rumourAt("cafe") : null; // the café beats are Maya's
+  const toMourn = metMaya ? peril.deathOrder.find((k) => !peril.mourned.includes(k)) : undefined;
   return [
     ...(rumour ? [{
       lines: rumour.lines, eligible: () => true,
       run: () => { markRumourSeen(rumour); renderCafeScreen(rumour.lines, "Leave", "renderMap()"); },
+    }] : []),
+    ...(toMourn !== undefined ? [{
+      // The first café visit after a death (DRAFT, CAFE_MOURNING).
+      eligible: () => true,
+      run: () => { peril.mourned.push(toMourn); renderCafeScreen(CAFE_MOURNING[toMourn], "Leave", "renderMap()"); },
     }] : []),
     {
       // Bible: the four of them at one table, late in the year (Dead Day).
@@ -5476,6 +5862,16 @@ function buildCafeEvents() {
       run: () => { storyFlags.cafeSolsticeSeen = true; renderCafeScreen(CAFE_SOLSTICE_GROUP_LINES, "Leave", "renderMap()"); },
     },
     { eligible: () => !!nextCoreCafeEncounter(), run: playCoreCafeEncounter },
+    {
+      // Year 3: Maya's own thread, one a month, in order (DRAFT, MAYA_Y3_CAFE).
+      eligible: () => metMaya && currentYear >= 3 && storyFlags.mayaY3Month !== ym && (storyFlags.mayaY3Seen || 0) < MAYA_Y3_CAFE.length,
+      run: () => {
+        const lines = MAYA_Y3_CAFE[storyFlags.mayaY3Seen || 0];
+        storyFlags.mayaY3Seen = (storyFlags.mayaY3Seen || 0) + 1;
+        storyFlags.mayaY3Month = ym;
+        renderCafeScreen(lines, "Leave", "renderMap()");
+      },
+    },
     {
       // The bible's Garden Circle café scene (early spring), once you know
       // both of them are in it.
@@ -6372,7 +6768,7 @@ function renderQuartettResult() {
   const opp = QUARTETT_OPPONENTS[match.opponentId];
   const remaining = quartettSessionsRemaining();
   let title, lines;
-  if (match.status === "playerWin") { title = "You win"; lines = quartettPickLine(opp.lines.matchPlayerWin); }
+  if (match.status === "playerWin") { title = "You win"; lines = quartettPickLine(opp.lines.matchPlayerWin); awardPortraitFrom("quartettWin", match.opponentId); }
   else if (match.status === "opponentWin") { title = `${opp.name} wins`; lines = quartettPickLine(opp.lines.matchPlayerLoss); }
   else { title = "A draw"; lines = quartettPickLine(opp.lines.matchDraw); }
 
@@ -7093,17 +7489,19 @@ function waterCultivation() {
 
 // Reward pool bias per spec §4.7 -- checked in this exact order, using the
 // first non-empty applicable pool; the last entry is the universal fallback.
+// What grows in the Nightgarden is Legendary: every pool below is Legendary
+// only; Iconic is the fallback once no Legendary is left to grow.
 function harvestGlassHouseCultivation() {
   const src = glassHouseCultivationSourceAttributes || {};
   const owned = unobtainableIds();
+  const legendaryLeft = DECK.some((c) => !owned.has(c.id) && c.rarity === "Legendary");
+  const grown = (c) => c.rarity === (legendaryLeft ? "Legendary" : "Iconic");
   const candidatePools = [];
   if (src.color === "Black") candidatePools.push(DECK.filter((c) => !owned.has(c.id) && (c.style === "Daring" || c.style === "Cool")));
   if (src.color === "Silver") candidatePools.push(DECK.filter((c) => !owned.has(c.id) && (c.style === "Armour" || c.style === "Elegant")));
   if (src.style === "Romantic") candidatePools.push(DECK.filter((c) => !owned.has(c.id) && c.category === "Accessory" && c.style === "Romantic"));
-  if (["Rare", "Iconic", "Legendary"].includes(src.rarity)) candidatePools.push(DECK.filter((c) => !owned.has(c.id) && ["Rare", "Iconic", "Legendary"].includes(c.rarity)));
-  candidatePools.push(DECK.filter((c) => !owned.has(c.id) && ["Uncommon", "Rare", "Iconic", "Legendary"].includes(c.rarity)));
-
-  const pool = candidatePools.find((p) => p.length > 0) || [];
+  candidatePools.push(DECK.filter((c) => !owned.has(c.id)));
+  const pool = candidatePools.map((p) => p.filter(grown)).find((p) => p.length > 0) || [];
   glassHouseCultivationPending = false;
   glassHouseCultivationLastHarvestYear = currentYear;
   glassHouseCultivationPlantedYear = null;
@@ -7165,6 +7563,7 @@ function yearMonthKey() { return `${currentYear}-${currentMonthIndex()}`; }
 
 function castleSublocButtonsHTML() {
   const buttons = [];
+  if (peril.armoryOpen) buttons.push(`<button class="ghost" onclick="renderArmory()">Armory</button>`);
   if (royalGardenUnlocked) buttons.push(`<button class="ghost" onclick="renderRoyalGarden()">Royal Garden</button>`);
   else if (hasRoyalGardenKey) buttons.push(`<button class="ghost" onclick="renderRoyalGardenGate()">Royal Garden Gate</button>`);
   if (buttons.length === 0) return "";
@@ -7281,18 +7680,18 @@ function closeGuardCeremony(combinedScore) {
         { who: "HELENA", t: "Don't get used to it." },
         { who: "NARRATION", t: "Juliette is already looking toward the gate again." },
       ]
-    : [
-        { who: "HELENA", t: "That will do." },
-        { who: "YOU", t: "High praise." },
-        { who: "HELENA", t: "Don't get used to it." },
-        { who: "NARRATION", t: "Juliette is already looking toward the gate again." },
+    : [ // DRAFT (Claude): the old failure lines read like a pass
+        { who: "HELENA", t: "No." },
+        { who: "NARRATION", t: "Juliette looks down at herself, then at Helena." },
+        { who: "HELENA", t: "We'll stand the ceremony in our own uniforms." },
+        { who: "NARRATION", t: "Neither of them looks at you on the way back to the gate." },
       ];
   if (succeeded) {
     moonCoins += 5;
     lines.push({ who: "NARRATION", t: "Earned 5 mooncoins for the ceremony." });
   }
   renderCastleScene(lines, "Leave", "renderMap()",
-    specialRatingHTML("Helena and Juliette, together", combinedScore, [{ at: 70, means: "they approve" }]));
+    specialRatingHTML(succeeded ? "Approved" : "Not approved", combinedScore, [{ at: 70, means: "they approve" }]));
 }
 
 // The one-time retry (§8.1): a smaller Juliette-only single-card fitting,
@@ -7402,6 +7801,17 @@ function buildCastleEvents() {
       lines: rumour.lines, eligible: () => true,
       run: () => { markRumourSeen(rumour); renderCastleScene(rumour.lines, "Leave", "renderMap()"); },
     }] : []),
+    {
+      // Holly died before she could give you the key: Helena does.
+      lines: HELENA_ARMORY_LINES,
+      eligible: () => metHelena && coreIsDead(3) && !peril.armoryOpen && prepDone("e2"),
+      run: () => { peril.armoryOpen = true; renderCastleScene(HELENA_ARMORY_LINES, "Leave", "renderMap()"); },
+    },
+    {
+      lines: JULIETTE_STARS_SCENE,
+      eligible: () => metJuliette && castleGateCharactersUnlocked && !storyFlags.julietteStarsSeen && castleVisitsAfterMeeting >= 3,
+      run: () => { storyFlags.julietteStarsSeen = true; awardSceneFrom("castle", "juliette_stars"); renderCastleScene(JULIETTE_STARS_SCENE, "Leave", "renderMap()"); },
+    },
     {
       eligible: () => !julietteShiftEventSeen && castleVisitsAfterMeeting >= 2,
       run: () => { julietteShiftEventSeen = true; renderCastleScene(JUL_SHIFT_END_SCENE, "Continue", "renderMap()"); },
@@ -7611,6 +8021,7 @@ function renderRoyalGardenScene(lines) {
 }
 
 function renderCastleWallDoor() {
+  if (peril.armoryOpen) { renderArmory(); return; } // Holly's key fits
   const alreadySeen = royalGardenSealedDoorSeen;
   royalGardenSealedDoorSeen = true;
   const lines = alreadySeen
@@ -7711,6 +8122,7 @@ function buildRoyalGardenEvents() {
       eligible: () => !julietteRoyalGardenFlowerSeen,
       run: () => {
         julietteRoyalGardenFlowerSeen = true;
+        awardPortraitFrom("royalGarden", "juliette_flower");
         renderRoyalGardenScene([
           { who: "NARRATION", t: "Juliette is touching one of the white flowers with two fingers." },
           { who: "NARRATION", t: "She notices you." },
@@ -8200,6 +8612,7 @@ function beginTalk(render = true) {
   const key = currentClientKey();
   if (talkStageIndex === null) return;
   soulProfiles[key].stagesSeen.push(talkStageIndex);
+  awardSceneFrom("stage", `${key}:${talkStageIndex + 1}`);
   currentStageIndex = talkStageIndex;
   talkStageIndex = null;
   talkedThisVisit = true;
@@ -8978,8 +9391,8 @@ function selectSoul(key) {
 
 function renderSoulsOverlay() {
   const overlay = document.getElementById("soulsOverlay");
-  const title = soulsTab === "achievements" ? "Achievements" : "Souls you've met";
-  const bodyHTML = soulsTab === "achievements" ? renderAchievementsListHTML() : renderSoulsListHTML();
+  const title = soulsTab === "achievements" ? "Achievements" : soulsTab === "scenes" ? "Scenes" : "Souls you've met";
+  const bodyHTML = soulsTab === "achievements" ? renderAchievementsListHTML() : soulsTab === "scenes" ? renderScenesTabHTML() : renderSoulsListHTML();
 
   overlay.innerHTML = `
     <div class="overlay-shell">
@@ -8987,6 +9400,7 @@ function renderSoulsOverlay() {
         <h3>${title}</h3>
         <div class="segmented" role="tablist">
           <button role="tab" class="${soulsTab === "souls" ? "active" : ""}" onclick="setSoulsTab('souls')">Souls</button>
+          <button role="tab" class="${soulsTab === "scenes" ? "active" : ""}" onclick="setSoulsTab('scenes')">Scenes</button>
           <button role="tab" class="${soulsTab === "achievements" ? "active" : ""}" onclick="setSoulsTab('achievements')">Achievements</button>
         </div>
         <button class="deck-close" onclick="closeSouls()" aria-label="Close">${icon("close")}</button>
@@ -9081,6 +9495,7 @@ function renderSoulsListHTML() {
         <div class="hearts">${heartsHTML(relationships[i] || 0)}</div>
         ${coreIsDead(i) ? `<div class="soul-deceased">Deceased</div>` : ""}
       </div>
+      ${portraitSlotsHTML(i)}
       <section class="panel"><h4>Preferences</h4>${prefsHTML}</section>
       <section class="panel"><h4>Friendship</h4>${friendshipMilestonesHTML(i)}</section>
       <section class="panel">
@@ -9093,6 +9508,7 @@ function renderSoulsListHTML() {
     detailHTML = `
       <div class="soul-detail-head"><div class="soul-detail-name">${current.name}</div></div>
       <section class="panel"><p class="panel-empty">${["irina", "lucia"].includes(current.key) ? ANGEL_SOUL_NOTE : "You've met her around After City, but she hasn't come to the Studio."}</p></section>
+      ${portraitSlotsHTML(current.key)}
     `;
   }
 
@@ -10062,6 +10478,7 @@ function beginValerySolsticeRound() {
 }
 function resolveValerySolstice(score) {
   valerySolsticeCompleted = true;
+  if (score >= 70) awardSceneFrom("job", "valery_solstice");
   let lines, statusLine;
   if (score >= 90) {
     royalGardenKeyFallbackNeeded = false;

@@ -1011,7 +1011,7 @@ const OLD_QUARTER_ENCOUNTERS = {
       cast: ["margo", "juniper"], // Core Four on screen: skipped once any of them has died
       eligible: () => !seenOldQuarterEncounters["margo_juniper_plant_y1"],
       render: () => renderOldQuarterEncounterLines("margo_juniper_plant_y1", [
-        { who: "NARRATION", t: "Juniper is holding a small potted plant. Margo is inspecting it like evidence." },
+        { who: "NARRATION", t: "In front of the flower shop, Juniper is holding a small potted plant. Margo is inspecting it like evidence." },
         { who: "MARGO", t: "Too much water." },
         { who: "JUNIPER", t: "It rained." },
         { who: "MARGO", t: "Plants don't care whose fault it was." },
@@ -1030,16 +1030,19 @@ const OLD_QUARTER_ENCOUNTERS = {
     {
       id: "holly_icecream_y1",
       cast: ["holly"], // Core Four on screen: skipped once any of them has died
-      eligible: () => !seenOldQuarterEncounters["holly_icecream_y1"],
+      // Maya joins in: DRAFT lines (Claude) around the original exchange.
+      eligible: () => metMaya && !seenOldQuarterEncounters["holly_icecream_y1"],
       render: () => renderOldQuarterEncounterLines("holly_icecream_y1", [
-        { who: "NARRATION", t: "Holly is sitting on the edge of a fountain, eating an ice cream." },
+        { who: "NARRATION", t: "Holly and Maya are sitting on the edge of a fountain, each with an ice cream." },
         { who: "YOU", t: "Didn't expect to see you doing that." },
         { who: "HOLLY", t: "Eating?" },
         { who: "YOU", t: "Enjoying yourself." },
-        { who: "NARRATION", t: "She looks at the ice cream." },
+        { who: "MAYA", t: "She is. I'm supervising." },
+        { who: "NARRATION", t: "Holly looks at the ice cream." },
         { who: "HOLLY", t: "It's adequate." },
         { who: "YOU", t: "What flavor?" },
         { who: "HOLLY", t: "Vanilla." },
+        { who: "MAYA", t: "Every single time." },
         { who: "NARRATION", t: "Of course it is." },
       ]),
     },
@@ -1064,6 +1067,21 @@ const OLD_QUARTER_ENCOUNTERS = {
     },
   ],
   "1-autumn": [
+    {
+      // DRAFT (Claude): Margo buying flowers for someone (Juniper, unspoken).
+      id: "margo_flowers_y1",
+      cast: ["margo"],
+      eligible: () => !coreIsDead(1) && !seenOldQuarterEncounters["margo_flowers_y1"],
+      render: () => renderOldQuarterEncounterLines("margo_flowers_y1", [
+        { who: "NARRATION", t: "Margo is at the flower shop counter, pointing at things." },
+        { who: "MARGO", t: "Not those. Those." },
+        { who: "YOU", t: "Flowers? For you?" },
+        { who: "MARGO", t: "Obviously not." },
+        { who: "YOU", t: "For whom, then?" },
+        { who: "MARGO", t: "Someone who keeps killing hers with kindness." },
+        { who: "NARRATION", t: "She pays without looking at the price and leaves with an armful of green." },
+      ]),
+    },
     {
       id: "margo_judging_y1",
       cast: ["margo"], // Core Four on screen: skipped once any of them has died
@@ -2496,15 +2514,19 @@ const YEAR_END_TEXT = {
    - at most one per month, so they spread from spring to late Year 2
    - each only at its own place ("where"); a Studio beat only on her visit
    - fromMonth: not before that month of Year 2 (Year 3 is always late enough)
+   - skippable: if the player hasn't been to that place for RUMOUR_SKIP_MONTHS
+     months while it waits, the beat is skipped so the story can't stall
+     (never the Studio beats, nor R6/R7, which name the Angels)
    R8 is Ivy's first encounter preparation (E1). */
 const RUMOURS_FROM_MONTH = 2; // March, Year 2
+const RUMOUR_SKIP_MONTHS = 2;
 const ANGEL_RUMOURS = [
-  { id: "r1", where: "oldquarter", lines: [
+  { id: "r1", where: "oldquarter", skippable: true, lines: [
     { who: "NARRATION", t: "Two figures in white stand at the far end of the street." },
     { who: "NARRATION", t: "Nobody walks past them." },
     { who: "NARRATION", t: "When you look again, they are gone." },
   ] },
-  { id: "r2", where: "cafe", lines: [
+  { id: "r2", where: "cafe", skippable: true, lines: [
     { who: "NARRATION", t: "The Café door opens." },
     { who: "NARRATION", t: "Every conversation stops." },
     { who: "NARRATION", t: "Maya looks toward the entrance, waits, then relaxes." },
@@ -2513,7 +2535,7 @@ const ANGEL_RUMOURS = [
     { who: "YOU", t: "Everyone stopped talking." },
     { who: "MAYA", t: "Then enjoy the quiet." },
   ] },
-  { id: "r3", where: "castle", lines: [
+  { id: "r3", where: "castle", skippable: true, lines: [
     { who: "HELENA", t: "If you\u2019re coming to the Castle after dark, don\u2019t wear black." },
     { who: "YOU", t: "Why?" },
     { who: "HELENA", t: "Just don\u2019t." },
@@ -2595,7 +2617,7 @@ const ANGEL_RUMOURS = [
     { who: "IRINA", t: "That\u2019s what we came to see." },
     { who: "NARRATION", t: "They leave the door open behind them. The cold takes longer to go." }, // DRAFT (Claude): a way out of the scene
   ] },
-  { id: "r9", where: "castle", lines: [
+  { id: "r9", where: "castle", skippable: true, lines: [
     { who: "HELENA", t: "If Holly comes to you about the banquet, put armour on her." },
     { who: "YOU", t: "At dinner?" },
     { who: "HELENA", t: "Especially at dinner." },
@@ -2619,7 +2641,7 @@ const ANGEL_SOUL_NOTE = "They came to the Studio uninvited.";
    for her in this order, "requires" met, owned wardrobe can solve it, at
    least PREP_MIN_GAP jobs since the last preparation, at most
    PREPS_MAX_YEAR_TWO in Year 2. */
-const PREP_MIN_GAP = 3;          // never back to back; at most one in three jobs
+const PREP_MIN_GAP = 2;          // never back to back (balance pass: was 3)
 const PREPS_MAX_YEAR_TWO = 4;    // the rest wait for Year 3
 function atLeast(attr, value, n) { return { kind: "atLeast", attr, value, n }; }
 function noneOf(attr, value) { return { kind: "none", attr, value }; }
@@ -2816,15 +2838,7 @@ const LUCIA_VIRTUAL = { name: "Lucia", color: "#dfe6f2", portrait: SECONDARY_POR
   preferences: [pref("color", "White"), pref("color", "Blue"), pref("color", "Gold"), pref("style", "Armour")] };
 
 const ANGEL_JOBS = [
-  { id: "a1", client: "irina", title: "First fitting",
-    lines: [{ who: "IRINA", t: "White. Gold. Something fitted. I\u2019m told you\u2019re good at listening." }],
-    want: [req("color", "White"), req("color", "Gold"), req("fit", "Fitted")],
-    actions: [
-      { after: 1, kind: "add", attr: "style", value: "Armour", who: "IRINA", t: "Pretty is useful. Protected is useful longer." },
-      { after: 3, kind: "noBasics", who: "IRINA", t: "You can do better than ordinary." },
-    ],
-    success: [{ who: "IRINA", t: "Better than I expected." }, { who: "NARRATION", t: "A pause." }, { who: "IRINA", t: "That may become inconvenient." }],
-    failure: [{ who: "IRINA", t: "Oh." }, { who: "NARRATION", t: "She looks at the outfit again." }, { who: "IRINA", t: "They were generous about you." }] },
+  // Lucia's A2 comes first: the balance simulation found A1 the hardest of the five.
   { id: "a2", client: "lucia", title: "Blue room",
     lines: [{ who: "NARRATION", t: "Lucia looks at the cards for several seconds." }, { who: "LUCIA", t: "Blue. Gold." }],
     want: [req("color", "Blue"), req("color", "Gold"), req("style", "Elegant")],
@@ -2834,6 +2848,15 @@ const ANGEL_JOBS = [
     ],
     success: [{ who: "NARRATION", t: "Lucia studies you instead of the outfit." }, { who: "LUCIA", t: "Again." }],
     failure: [{ who: "LUCIA", t: "No." }, { who: "NARRATION", t: "She reaches for the sword." }] },
+  { id: "a1", client: "irina", title: "First fitting",
+    lines: [{ who: "IRINA", t: "White. Gold. Something fitted. I\u2019m told you\u2019re good at listening." }],
+    want: [req("color", "White"), req("color", "Gold"), req("fit", "Fitted")],
+    actions: [
+      { after: 1, kind: "add", attr: "style", value: "Armour", who: "IRINA", t: "Pretty is useful. Protected is useful longer." },
+      { after: 3, kind: "noBasics", who: "IRINA", t: "You can do better than ordinary." },
+    ],
+    success: [{ who: "IRINA", t: "Better than I expected." }, { who: "NARRATION", t: "A pause." }, { who: "IRINA", t: "That may become inconvenient." }],
+    failure: [{ who: "IRINA", t: "Oh." }, { who: "NARRATION", t: "She looks at the outfit again." }, { who: "IRINA", t: "They were generous about you." }] },
   { id: "a3", client: "irina", title: "The invitation",
     lines: [{ who: "IRINA", t: "The Castle asked for restraint. I thought we might give them the appearance of it." }],
     want: [req("color", "White"), req("style", "Elegant"), req("style", "Armour")],
@@ -3124,7 +3147,7 @@ const YEAR_THREE_BRIEFS = {
     { dialogue: [{ who: "MARGO", t: "The Castle has a new curfew." }, { who: "YOU", t: "Will you keep it?" }, { who: "MARGO", t: "Of course not. Make me look elegant enough that nobody asks." }], want: [req("style", "Elegant"), req("style", "Classic")] },
     { dialogue: [{ who: "MARGO", t: "Black." }, { who: "YOU", t: "Tonight?" }, { who: "MARGO", t: "Especially tonight. I refuse to dress for them in my own time. Elegant, too." }], want: [req("color", "Black"), req("style", "Elegant")] },
     { months: [11, 0], dialogue: [{ who: "MARGO", t: "The Solstice again." }, { who: "YOU", t: "You hate the Solstice." }, { who: "MARGO", t: "I hate crowds. Something with an edge. Fitted, obviously." }], want: [req("style", "Bold"), req("fit", "Fitted")], softDirection: "Something warm, if you have it." },
-    { months: [3, 4], dialogue: [{ who: "MARGO", t: "The roses are out early." }, { who: "YOU", t: "Is that good?" }, { who: "MARGO", t: "Nothing in this city is early by accident. Red. Romantic, if you must." }], want: [req("color", "Red"), req("style", "Romantic")] },
+    { months: [3, 4], dialogue: [{ who: "MARGO", t: "The roses are out early." }, { who: "YOU", t: "Is that good?" }, { who: "MARGO", t: "Nothing in this city is early by accident. Romantic, if you must. Bold, so they know it is still me." }], want: [req("style", "Romantic"), req("style", "Bold")] },
   ],
   1: [ // Juniper
     { dialogue: [{ who: "JUNIPER", t: "I\u2019ve started a list of plants that survive anything." }, { who: "YOU", t: "What\u2019s on it?" }, { who: "JUNIPER", t: "Not much. Dress me like I\u2019m on it. Green. And classic, so it lasts." }], want: [req("color", "Green"), req("style", "Classic")] },
@@ -3180,3 +3203,312 @@ STAGE_RULES[3][22] = { year: 3, after: [21] };
 CLIENT_STAGES[3].push([{ who: "HOLLY", t: "I kept a list of names once. Everyone I was responsible for." }, { who: "YOU", t: "Once?" }, { who: "HOLLY", t: "It got long. Now I keep it in my head." }, { who: "YOU", t: "Is there room for one more?" }, { who: "HOLLY", t: "You were on it before you asked." }]);
 STAGE_RULES[3][23] = { year: 3, after: [22] };
 TALK_HEARTS.push({ upTo: 23, hearts: 4 });
+
+
+/* ---------------- COLLECTIBLES ----------------
+   Scene cards and alternative portraits: found by being there, kept in
+   Souls. Neither does anything yet beyond being collected (and a chosen
+   portrait being shown in dialogue). Art: portraits/scenes/<file> and
+   portraits/<file> in the assets repo.
+   Each scene card names where it comes from ("from"); index.html awards it
+   with awardSceneFrom(kind, id). Kinds:
+     encounter  an Old Quarter encounter id
+     castle     a Castle event id
+     stage      "<client key>:<stage number>" (a Studio talk stage, 1-based)
+     job        a special job ("valery_solstice", on success) */
+const ASSETS_BASE = "https://terrirossa.github.io/dead-gorgeous-assets/";
+const SCENE_CARDS = [
+  { id: "juniper_flowershop", title: "Outside the flower shop", file: "scene_juniper_flowershop.png", from: ["encounter", "juniper_octavia_y1"] },
+  { id: "juniper_margo_flowershop", title: "Too much water", file: "scene_juniper_margo_flowershop.png", from: ["encounter", "margo_juniper_plant_y1"] },
+  { id: "holly_maya_icecream", title: "Vanilla", file: "scene_holly_maya_icecream.png", from: ["encounter", "holly_icecream_y1"] },
+  { id: "ivy_smoking", title: "She doesn't smoke", file: "scene_ivy_smoking.png", from: ["encounter", "ivy_smoking"] },
+  { id: "juliette_stars", title: "In case it isn't", file: "scene_juliette_stars.png", from: ["castle", "juliette_stars"] },
+  { id: "margo_atelier", title: "Costumes", file: "scene_margo_atelier.png", from: ["stage", "0:4"] },
+  { id: "juniper_death", title: "The coldest night", file: "scene_juniper_death.png", from: ["stage", "1:24"] },
+  { id: "valery_bed", title: "Valery", file: "scene_valery_bed.png", from: ["job", "valery_solstice"] },
+];
+// Alternative portraits: four per character (default + 4). Slots without
+// an entry yet show as "?" too. charKey: margo, juniper, ivy, holly, maya,
+// helena, juliette, octavia, valery, irina, lucia.
+const ALT_PORTRAIT_SLOTS = 4;
+const ALT_PORTRAITS = {
+  maya: [
+    { id: "maya_cafe", title: "Maya at the Caf\u00E9", file: "portrait_maya_cafe.png", from: ["quartettWin", "maya"] },
+  ],
+  juliette: [
+    // the Royal Garden scene where she touches the white flower
+    { id: "juliette_fountain", title: "Juliette in the Royal Garden", file: "portrait_juliette_fountain.png", from: ["royalGarden", "juliette_flower"] },
+  ],
+  holly: [
+    { id: "holly_cafe", title: "Holly at the Caf\u00E9", file: "portrait_holly_cafe.png", from: ["quartettWin", "holly"] },
+  ],
+  margo: [
+    { id: "margo_flowershopping", title: "Margo, buying flowers", file: "portrait_margo_flowershopping.png", from: ["encounter", "margo_flowers_y1"] },
+  ],
+};
+
+// DRAFT (Claude): Juliette alone on the battlements (gives the scene card).
+const JULIETTE_STARS_SCENE = [
+  { who: "NARRATION", t: "Juliette is alone on the battlements, her helmet under her arm." },
+  { who: "NARRATION", t: "She is looking up." },
+  { who: "YOU", t: "Anything up there?" },
+  { who: "JULIETTE", t: "Same as last night." },
+  { who: "YOU", t: "Then why look?" },
+  { who: "JULIETTE", t: "In case it isn't." },
+  { who: "NARRATION", t: "She doesn't look down again until you've gone." },
+];
+// DRAFT (Claude): a chance encounter in the Old Quarter (gives the scene card).
+const IVY_SMOKING_SCENE = [
+  { who: "NARRATION", t: "Ivy is leaning against a wall in a side street, smoking." },
+  { who: "YOU", t: "I didn't know you smoked." },
+  { who: "IVY", t: "I don't." },
+  { who: "NARRATION", t: "She takes another drag." },
+  { who: "YOU", t: "Ivy." },
+  { who: "IVY", t: "Then you didn't see this." },
+  { who: "NARRATION", t: "She stubs it out on the wall and is gone before you can answer." },
+];
+const IVY_SMOKING_CHANCE = 0.25; // per "Look around" once it's possible
+
+// DRAFT (Claude): Juniper remembers how she died. Year 3 talk stage 24
+// (gives the scene card). There is no canon for this yet -- please rewrite.
+CLIENT_STAGES[1].push([
+  { who: "JUNIPER", t: "I remembered how it ended." },
+  { who: "YOU", t: "The greenhouse?" },
+  { who: "JUNIPER", t: "The heater broke again. It was the coldest night of the year." },
+  { who: "JUNIPER", t: "I stayed to keep the seedlings warm." },
+  { who: "YOU", t: "Juniper\u2026" },
+  { who: "JUNIPER", t: "I'm fairly sure they made it." },
+]);
+STAGE_RULES[1][24] = { year: 3, after: [23] };
+
+
+/* ================= CONTENT AUDIT PASS (all DRAFT, written by Claude) =================
+   Year 3 out in the city, the city reacting to deaths, Holly's armory behind
+   the Castle Wall door, and something to do in the Graveyard. */
+
+// Year 3 "Look around" observations in the Old Quarter.
+Object.assign(OLD_QUARTER_OBSERVATIONS, {
+  "3-spring": [
+    "Someone has painted the flower shop door white. Nobody admits to it.",
+    "Half the window boxes have white flowers this year. The other half are empty.",
+    "Two people stop talking as a stranger in a pale coat walks past. They start again a street later.",
+    "The fountain has been scrubbed so clean it looks new. It is not new.",
+  ],
+  "3-summer": [
+    "A child is selling white ribbons on a corner. Business is good.",
+    "The ice cream stand has a new flavour. It is called Safe.",
+    "Nobody sits with their back to the street anymore.",
+    "The Old Quarter is quieter after dark than it used to be.",
+  ],
+  "3-autumn": [
+    "The leaves come down in the same order as every year. It is a comfort.",
+    "Someone has chalked a list of names on the wall by the fountain. The rain hasn't touched it.",
+    "A shop that sold black gloves has closed. A shop that sells white ones has opened.",
+    "Candles in more windows than last year.",
+  ],
+  "3-winter": [
+    "Frost on every railing except one, where someone keeps a lamp burning.",
+    "The flower shop is selling cuttings in jars. Something to look after.",
+    "You hear laughter from an upstairs window. It sounds braver than it used to.",
+    "Nothing unusual is happening in the Old Quarter tonight. Everyone checks anyway.",
+  ],
+});
+
+// Year 3 Old Quarter encounters.
+Object.assign(OLD_QUARTER_ENCOUNTERS, {
+  "3-spring": [
+    {
+      id: "margo_white_y3", cast: ["margo"],
+      eligible: () => !seenOldQuarterEncounters["margo_white_y3"],
+      render: () => renderOldQuarterEncounterLines("margo_white_y3", [
+        { who: "NARRATION", t: "Margo is standing in front of a shop window full of white dresses." },
+        { who: "YOU", t: "Shopping?" },
+        { who: "MARGO", t: "Grieving." },
+        { who: "YOU", t: "For whom?" },
+        { who: "MARGO", t: "Taste." },
+      ]),
+    },
+    {
+      id: "juniper_seeds_y3", cast: ["juniper"],
+      eligible: () => !seenOldQuarterEncounters["juniper_seeds_y3"],
+      render: () => renderOldQuarterEncounterLines("juniper_seeds_y3", [
+        { who: "NARRATION", t: "Juniper is pressing seeds into the cracks of the pavement, one by one." },
+        { who: "YOU", t: "Is that allowed?" },
+        { who: "JUNIPER", t: "Nobody said it wasn't." },
+        { who: "YOU", t: "What are they?" },
+        { who: "JUNIPER", t: "Something stubborn." },
+      ]),
+    },
+  ],
+  "3-summer": [
+    {
+      id: "angels_fountain_y3", cast: [],
+      eligible: () => angelsMet() && !seenOldQuarterEncounters["angels_fountain_y3"],
+      render: () => renderOldQuarterEncounterLines("angels_fountain_y3", [
+        { who: "NARRATION", t: "Irina is sitting on the edge of the fountain, exactly where people usually eat ice cream." },
+        { who: "NARRATION", t: "Nobody is eating ice cream." },
+        { who: "IRINA", t: "Charming place." },
+        { who: "YOU", t: "It was." },
+        { who: "NARRATION", t: "Irina smiles, as if you've paid her a compliment." },
+      ]),
+    },
+    {
+      id: "ivy_holly_y3", cast: ["ivy", "holly"],
+      eligible: () => !seenOldQuarterEncounters["ivy_holly_y3"],
+      render: () => renderOldQuarterEncounterLines("ivy_holly_y3", [
+        { who: "NARRATION", t: "Holly is walking beside Ivy's bike. Ivy is pushing it, slowly." },
+        { who: "YOU", t: "Is something wrong with it?" },
+        { who: "IVY", t: "No." },
+        { who: "HOLLY", t: "She is walking me home." },
+        { who: "IVY", t: "I'm walking the bike. You happen to be next to it." },
+      ]),
+    },
+  ],
+  "3-autumn": [
+    {
+      id: "holly_list_y3", cast: ["holly"],
+      eligible: () => !seenOldQuarterEncounters["holly_list_y3"],
+      render: () => renderOldQuarterEncounterLines("holly_list_y3", [
+        { who: "NARRATION", t: "Holly is reading the names chalked on the wall by the fountain." },
+        { who: "YOU", t: "Do you know them?" },
+        { who: "HOLLY", t: "Some." },
+        { who: "NARRATION", t: "She takes a piece of chalk from her pocket and adds one." },
+        { who: "NARRATION", t: "She doesn't say whose." },
+      ]),
+    },
+    {
+      id: "lucia_alley_y3", cast: [],
+      eligible: () => angelsMet() && !seenOldQuarterEncounters["lucia_alley_y3"],
+      render: () => renderOldQuarterEncounterLines("lucia_alley_y3", [
+        { who: "NARRATION", t: "At the end of an alley, Lucia is looking at a cat." },
+        { who: "NARRATION", t: "The cat is looking at Lucia." },
+        { who: "NARRATION", t: "Neither of them blinks. You leave before either of them wins." },
+      ]),
+    },
+  ],
+  "3-winter": [
+    {
+      id: "juniper_margo_jars_y3", cast: ["juniper", "margo"],
+      eligible: () => !seenOldQuarterEncounters["juniper_margo_jars_y3"],
+      render: () => renderOldQuarterEncounterLines("juniper_margo_jars_y3", [
+        { who: "NARRATION", t: "Juniper is handing out cuttings in jars outside the flower shop. Margo is taking the money." },
+        { who: "YOU", t: "You two run a business now?" },
+        { who: "MARGO", t: "She gives them away. I am preventing that." },
+        { who: "JUNIPER", t: "People need something to look after." },
+        { who: "MARGO", t: "People need to pay for it." },
+      ]),
+    },
+    {
+      id: "maya_closing_y3", cast: [],
+      eligible: () => metMaya && !seenOldQuarterEncounters["maya_closing_y3"],
+      render: () => renderOldQuarterEncounterLines("maya_closing_y3", [
+        { who: "NARRATION", t: "Maya is walking home through the Old Quarter with the café keys in her hand." },
+        { who: "YOU", t: "You closed early." },
+        { who: "MAYA", t: "Everybody left early." },
+        { who: "NARRATION", t: "She walks you as far as the fountain without saying anything else." },
+      ]),
+    },
+  ],
+});
+
+// Year 3 at the Night Café: Maya, one a month (after the Core Four café
+// scenes have run out). Played in order.
+const MAYA_Y3_CAFE = [
+  [
+    { who: "MAYA", t: "I've started counting the regulars." },
+    { who: "YOU", t: "How many?" },
+    { who: "MAYA", t: "Fewer." },
+  ],
+  [
+    { who: "NARRATION", t: "Maya has put a white cloth on one table. Nobody sits at it." },
+    { who: "YOU", t: "Reserved?" },
+    { who: "MAYA", t: "For whoever needs it." },
+  ],
+  [
+    { who: "MAYA", t: "Do you ever think about leaving?" },
+    { who: "YOU", t: "After City?" },
+    { who: "MAYA", t: "The Studio." },
+    { who: "YOU", t: "No." },
+    { who: "MAYA", t: "Good. Nor do I. The café, I mean." },
+  ],
+  [
+    { who: "MAYA", t: "Someone asked me today whether white suits them." },
+    { who: "YOU", t: "What did you say?" },
+    { who: "MAYA", t: "That I'm not the stylist. Then I sent them to you." },
+  ],
+  [
+    { who: "MAYA", t: "Irina came in last night." },
+    { who: "YOU", t: "What did she order?" },
+    { who: "MAYA", t: "Nothing. She asked what everyone else was having." },
+    { who: "YOU", t: "And?" },
+    { who: "MAYA", t: "I told her it was off the menu." },
+  ],
+  [
+    { who: "MAYA", t: "Three years." },
+    { who: "YOU", t: "Of what?" },
+    { who: "MAYA", t: "Of you. Sitting there. Ordering the same thing." },
+    { who: "YOU", t: "Is that a complaint?" },
+    { who: "MAYA", t: "It's a toast." },
+  ],
+];
+
+// The café after a death: the first visit after each one.
+const CAFE_MOURNING = {
+  0: [
+    { who: "NARRATION", t: "Maya has set a cup of black coffee at the end of the counter." },
+    { who: "MAYA", t: "She never liked how I made it." },
+    { who: "MAYA", t: "She drank it anyway." },
+  ],
+  1: [
+    { who: "NARRATION", t: "There is a jar of cuttings on the counter. Nobody remembers who left it." },
+    { who: "MAYA", t: "I'm not good with plants." },
+    { who: "MAYA", t: "I'm going to try." },
+  ],
+  2: [
+    { who: "NARRATION", t: "The bell above the door rings. Everyone looks up." },
+    { who: "NARRATION", t: "It's only the wind." },
+    { who: "MAYA", t: "She always came in too fast. Rang it twice." },
+  ],
+  3: [
+    { who: "NARRATION", t: "Two guards from the Castle are sitting where Holly used to sit. They don't order." },
+    { who: "MAYA", t: "They come every night now. In case." },
+    { who: "YOU", t: "In case of what?" },
+    { who: "MAYA", t: "They don't say." },
+  ],
+};
+
+// HOLLY'S ARMORY: the iron door in the Castle Wall (Royal Garden) is the back
+// door of the guard's armory. Holly gives you her key on a Studio visit after
+// the banquet (E2); if she has died, Helena does, at the Castle.
+// Inside, once a season, you may take one armour piece.
+const HOLLY_ARMORY_LINES = [
+  { who: "HOLLY", t: "Hold out your hand." },
+  { who: "NARRATION", t: "She puts an iron key in it. It is heavier than it looks." },
+  { who: "YOU", t: "What does it open?" },
+  { who: "HOLLY", t: "The armory. The door in the Castle wall, behind the Royal Garden. And the one inside the gate." },
+  { who: "YOU", t: "Am I allowed in there?" },
+  { who: "HOLLY", t: "No." },
+  { who: "HOLLY", t: "Take what you need. One piece a season. I'll know if you take more." },
+];
+const HELENA_ARMORY_LINES = [
+  { who: "NARRATION", t: "Helena is waiting at the gate. She doesn't greet you." },
+  { who: "HELENA", t: "Holly left instructions. Most of them were about the gate." },
+  { who: "NARRATION", t: "She holds out an iron key." },
+  { who: "HELENA", t: "This one was about you. The armory. One piece a season." },
+  { who: "HELENA", t: "Don't make me regret following them." },
+];
+const ARMORY_FIRST_LINES = [
+  { who: "NARRATION", t: "Racks of armour in the dark, polished by someone who cared." },
+  { who: "NARRATION", t: "Most of it is silver. Some of it, lately, is white." },
+];
+const ARMORY_TAKEN_LINE = "You've taken your piece this season. The rest stays where Holly left it.";
+const ARMORY_EMPTY_LINE = "There is nothing here you don't already own.";
+
+// GRAVEYARD: leave a candle at a grave, once a season each. She is
+// remembered with one of these, in order.
+const GRAVE_MEMORIES = {
+  0: ["You think of her saying \u201CNo\u201D before you'd finished the question.", "You think of the green dress she made for someone she couldn't remember.", "You think of her taking the plant from Juniper's hands, because it needed her."],
+  1: ["You think of her plants moving when there was no wind.", "You think of her pressing seeds into the pavement, one by one.", "You think of her saying people need something to look after."],
+  2: ["You think of the bell ringing twice.", "You think of her saying she hated standing still.", "You think of the bike, and how fast it went."],
+  3: ["You think of her standing up straighter when you came in.", "You think of her eating vanilla ice cream like it was a duty.", "You think of the list of names she kept in her head, and how you were on it."],
+};

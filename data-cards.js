@@ -223,11 +223,11 @@ const DECK = [
   { id: 362, name: "Blue Cardigan", category: "Top", fit: "Fitted", style: "Sweet", style2: "Cozy", color: "Blue", rarity: "Uncommon",
     lore: "Powder-blue ruffles and tiny buttons for days requiring aggressive levels of sweetness.",
     fullArt: "https://terrirossa.github.io/dead-gorgeous-assets/cards/card_362_ruffled_cardigan_blue.svg" },
-  { id: 363, name: "Blue Ruffles", category: "Bottom", fit: "Fitted", style: "Sweet", style2: "Romantic", color: "Blue", rarity: "Uncommon", set: "Blue Ruffled Set",
+  { id: 363, name: "Blue Ruffles", category: "Bottom", fit: "Fitted", style: "Sweet", style2: "Romantic", color: "Blue", rarity: "Uncommon", set: "blueRuffles",
     lore: "Tiered blue ruffles with very little fabric and absolutely no shortage of enthusiasm.",
     fullArt: "https://terrirossa.github.io/dead-gorgeous-assets/cards/card_363_ruffled_mini_skirt_blue.svg" },
 
-  { id: 365, name: "Ruffle Mini", category: "Bottom", fit: "Regular", style: "Romantic", style2: "Classic", color: "Blue", rarity: "Uncommon", set: "Blue Ruffled Set",
+  { id: 365, name: "Ruffle Mini", category: "Bottom", fit: "Regular", style: "Romantic", style2: "Classic", color: "Blue", rarity: "Uncommon", set: "blueRuffles",
     lore: "A blue ruffled mini with just enough structure to keep all that sweetness organized.",
     fullArt: "https://terrirossa.github.io/dead-gorgeous-assets/cards/card_365_ruffled_skirt_blue.svg" },
   { id: 366, name: "Ruffle Maxi (White)", category: "Bottom", fit: "Regular", style: "Romantic", style2: "Elegant", color: "White", rarity: "Rare",
