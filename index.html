@@ -2902,7 +2902,7 @@ function updateSceneBackground() {
 
 // Shown small on the title screen, so it's easy to confirm which version
 // the browser actually loaded (GitHub Pages and browsers cache aggressively).
-const BUILD_ID = "2026-09-30 · test start 1";
+const BUILD_ID = "2026-09-30 · test start 2";
 const stage = document.getElementById("stage");
 
 /* ---------------- CONVERSATION PRESENTATION ----------------
@@ -5023,6 +5023,8 @@ function locationStatus(key) {
 const LOCATION_STATUS_LABEL = { new: "", quiet: "Quiet tonight", closed: "Closed for the season", puzzle: "The window is waiting", spent: "Tomorrow night", firstnight: "After your first client" };
 
 function renderMap() {
+  // The map is always in-game: its top bar (Souls, Deck) is always shown.
+  document.getElementById("topBar").classList.remove("hidden");
   // The map is the one stable "hub" screen -- no mid-job transient state to
   // worry about here, so this is the single autosave checkpoint that covers
   // the whole gameplay loop (after a result, after shopping, after a season
@@ -10302,6 +10304,7 @@ function devQuickStart() {
     peril.angelStudioJobsDone = ["a1"];
   }
 
+  clearTimeout(introTimer); // beginGame()'s intro sequence must not carry on
   saveGame();
   renderMap();
 }
